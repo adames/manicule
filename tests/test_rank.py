@@ -15,9 +15,9 @@ def _entries():
 def test_fixture_order_and_scores():
     entries = _entries()
     by_id = {e.id: e.vector for e in entries}
-    kept = [by_id[i] for i in FIX["kept"]]
-    dismissed = [by_id[i] for i in FIX["dismissed"]]
-    ranked = rank(entries, kept, dismissed, lam=FIX["lambda"], kept_ids={i: by_id[i] for i in FIX["kept"]})
+    picked = [by_id[i] for i in FIX["picked"]]
+    passed = [by_id[i] for i in FIX["passed"]]
+    ranked = rank(entries, picked, passed, lam=FIX["lambda"], picked_ids={i: by_id[i] for i in FIX["picked"]})
     assert [s.entry.id for s in ranked] == FIX["expected_order"]
     for s in ranked:
         if s.entry.id in FIX["expected_scores"]:

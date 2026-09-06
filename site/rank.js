@@ -24,21 +24,21 @@
   // int8 + one scale per vector, as written by manicule.py's quantize().
   function dequantize(q, s) { const v = new Array(q.length); for (let i = 0; i < q.length; i++) v[i] = q[i] / 127 * s; return v; }
 
-  // entries: [{id, vector|null, ...}]; kept/dismissed: arrays of vectors;
-  // keptById: {id: vector} for the "nearest kept" explanation.
-  // Returns null on cold start (nothing kept) — caller keeps recency order.
-  function rank(entries, kept, dismissed, lam = LAMBDA, keptById = null) {
-    const pos = centroid(kept);
+  // entries: [{id, vector|null, ...}]; picked/passed: arrays of vectors;
+  // pickedById: {id: vector} for the "nearest picked" explanation.
+  // Returns null on cold start (nothing picked) — caller keeps recency order.
+  function rank(entries, picked, passed, lam = LAMBDA, pickedById = null) {
+    const pos = centroid(picked);
     if (!pos) return null;
-    const neg = centroid(dismissed);
+    const neg = centroid(passed);
     const out = entries.map((e) => {
       if (!e.vector) return { entry: e, score: -Infinity, pos: 0, neg: 0, nearest: null };
       const p = cosine(e.vector, pos);
       const n = neg ? cosine(e.vector, neg) : 0;
       let nearest = null;
-      if (keptById) {
+      if (pickedById) {
         let best = -Infinity;
-        for (const id in keptById) { const c = cosine(e.vector, keptById[id]); if (c > best) { best = c; nearest = id; } }
+        for (const id in pickedById) { const c = cosine(e.vector, pickedById[id]); if (c > best) { best = c; nearest = id; } }
       }
       return { entry: e, score: p - lam * n, pos: p, neg: n, nearest };
     });

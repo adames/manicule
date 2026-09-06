@@ -11,11 +11,11 @@
   // ---- the listing. Notes are keyed by a substring of the code line so
   // they survive edits; each fires once, on the first line that matches.
   const NOTES = [
-    ["return None", "nothing kept: newest first"],
+    ["return None", "nothing picked: newest first"],
     ['float("-inf")', "no words: sinks, never dropped"],
     ["p - lam * n", "the whole method", true],
     ["out.sort(", "best first"],
-    ["cosine(e.vector, kept_ids[k])", "the near line"],
+    ["cosine(e.vector, picked_ids[k])", "the near line"],
   ];
   function owner() {
     const m = location.hostname.match(/^([^.]+)\.github\.io$/i);
@@ -65,8 +65,8 @@
   }
 
   // ---- the visitor's taste: the hash first, else this browser's mirror.
-  // Cold (nothing kept with text) uses a pretend taste so the arithmetic
-  // still has numbers: the newest row kept, the next newest dismissed.
+  // Cold (nothing picked with text) uses a pretend taste so the arithmetic
+  // still has numbers: the newest row picked, the next newest passed.
   let corpus = null, byId = {};
   function taste() {
     const h = Shell.marksIn(location.hash);
@@ -90,8 +90,8 @@
   const hashOf = (t) => Shell.hashOf(t.m, t.d, t.lam);
   function rankAt(t, lam) {
     const vec = (ids) => ids.map((i) => byId[i].vector);
-    const keptById = {}; for (const i of t.m) keptById[i] = byId[i].vector;
-    return Manicule.rank(corpus.entries, vec(t.m), vec(t.d), lam, keptById);
+    const pickedById = {}; for (const i of t.m) pickedById[i] = byId[i].vector;
+    return Manicule.rank(corpus.entries, vec(t.m), vec(t.d), lam, pickedById);
   }
   const fmt = (x) => (x < 0 ? "−" : "+") + Math.abs(x).toFixed(2);
   const num = (x) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
@@ -102,17 +102,17 @@
   function renderWorked() {
     const t = taste();
     const rows = rankAt(t, t.lam);
-    // the top row with text the visitor has not marked
+    // the top row with text the visitor has not picked
     const at = rows.findIndex((r) => r.score !== -Infinity && !t.m.includes(r.entry.id) && !t.d.includes(r.entry.id));
     const r = rows[at], e = r.entry;
     const t2 = t.d.length ? ` <span class="t2">− ${t.lam.toFixed(2)} × ${num(r.neg)}</span> <span class="eq sr-only">=</span> ` : " ";
     const lo = Math.min(r.pos, r.score), hi = Math.max(r.pos, r.score);
-    const bar = `<span class="sbar" role="img" aria-label="score ${fmt(r.score)} of ${fmt(r.pos)} kept, the rest is what λ took"><i class="fill" style="width:${pct(r.score)}"></i><i class="hollow" style="left:${pct(lo)};width:${pct(hi - lo)}"></i></span>`;
+    const bar = `<span class="sbar" role="img" aria-label="score ${fmt(r.score)} of ${fmt(r.pos)} picked, the rest is what λ took"><i class="fill" style="width:${pct(r.score)}"></i><i class="hollow" style="left:${pct(lo)};width:${pct(hi - lo)}"></i></span>`;
     const near = r.nearest && byId[r.nearest];
     $("worked").innerHTML = `
       <dt>entry</dt><dd><span class="t">${esc(e.title || e.link)}</span> <span class="sub mono muted">${esc(e.feed)} · ${dateOf(e.published)}</span></dd>
-      <dt>cos(entry, kept)</dt><dd class="mono">${fmt(r.pos)}</dd>
-      <dt>cos(entry, dismissed)</dt><dd class="mono">${t.d.length ? num(r.neg) : `0.00 <span class="muted">· nothing waved off</span>`}</dd>
+      <dt>cos(entry, picked)</dt><dd class="mono">${fmt(r.pos)}</dd>
+      <dt>cos(entry, passed)</dt><dd class="mono">${t.d.length ? num(r.neg) : `0.00 <span class="muted">· nothing passed</span>`}</dd>
       <dt>λ</dt><dd class="mono">${t.lam.toFixed(2)}</dd>
       <dt>score</dt><dd><div class="worked-score"><div class="calc">${t.d.length ? `<span class="t1">${fmt(r.pos)}</span>` : ""}${t2}<span class="tot">${fmt(r.score)}</span></div>${bar}</div></dd>
       <dt>nearest</dt><dd>${near ? `${hand("rest")}<span class="t">${esc(near.title)}</span> <span class="mono muted">${fmt(Manicule.cosine(e.vector, near.vector))}</span>` : ""}</dd>`;
@@ -122,7 +122,7 @@
     $("worked-link").hidden = false; // an empty link is a nameless tab stop, so it stays hidden until it has words
     $("worked-note").hidden = !t.pretend;
     // the pretend rows are picked newest-first; "row 2" would collide with the ranked row number in the link
-    $("worked-note").textContent = t.pretend ? "pretend taste · newest pointed at, next newest passed on" : "";
+    $("worked-note").textContent = t.pretend ? "pretend taste · newest picked, next newest passed" : "";
 
     // the same row at other λ, the visitor's own λ among them
     const lams = [...new Set([0, 0.25, 0.5, 1, t.lam])].sort((a, b) => a - b);

@@ -8,10 +8,10 @@ const FIX = JSON.parse(readFileSync(new URL("./fixture.json", import.meta.url)))
 
 test("fixture order and scores match Python", () => {
   const byId = Object.fromEntries(FIX.entries.map((e) => [e.id, e.vector]));
-  const kept = FIX.kept.map((i) => byId[i]);
-  const dismissed = FIX.dismissed.map((i) => byId[i]);
-  const keptById = Object.fromEntries(FIX.kept.map((i) => [i, byId[i]]));
-  const ranked = M.rank(FIX.entries, kept, dismissed, FIX.lambda, keptById);
+  const picked = FIX.picked.map((i) => byId[i]);
+  const passed = FIX.passed.map((i) => byId[i]);
+  const pickedById = Object.fromEntries(FIX.picked.map((i) => [i, byId[i]]));
+  const ranked = M.rank(FIX.entries, picked, passed, FIX.lambda, pickedById);
   assert.deepEqual(ranked.map((s) => s.entry.id), FIX.expected_order);
   for (const s of ranked) {
     if (s.entry.id in FIX.expected_scores) assert.ok(Math.abs(s.score - FIX.expected_scores[s.entry.id]) < 1e-3, s.entry.id);

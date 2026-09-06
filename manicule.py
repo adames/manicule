@@ -1,20 +1,20 @@
 """manicule — a pointing hand for your feeds.
 
-Rank what's new by what you've kept. No database, no server, no account.
+Rank what's new by what you've picked. No database, no server, no account.
 
 The whole method:
 
-    score(entry) = cos(entry, kept) - LAMBDA * cos(entry, dismissed)
+    score(entry) = cos(entry, picked) - LAMBDA * cos(entry, passed)
 
-where `kept` is the mean embedding of everything you've marked ("more like
-this") and `dismissed` is the mean embedding of everything you've waved off
-("less like this"). Two averages and a subtraction. No training. If you have
-kept nothing yet, there is no taste to rank by and the list stays newest-first.
+where `picked` is the mean embedding of everything you picked and `passed` is
+the mean embedding of everything you passed on. Two averages and a
+subtraction. No training. If you have picked nothing yet, there is no taste to
+rank by and the list stays newest-first.
 
 Two subcommands:
 
-    manicule.py rank   feeds.opml --kept notes/ [--dismissed nope/]   # your daily page
-    manicule.py corpus feeds.opml -o site/corpus.json                 # the static demo's data
+    manicule.py rank   feeds.opml --picked notes/ [--passed nope/]   # your daily page
+    manicule.py corpus feeds.opml -o site/corpus.json                # the static demo's data
 
 Embeddings run locally (fastembed, BAAI/bge-small-en-v1.5, 384 dimensions);
 nothing leaves the machine except the feed fetches themselves.
@@ -36,9 +36,9 @@ from xml.etree import ElementTree
 
 import feedparser
 
-LAMBDA = 0.25          # how hard a resemblance to dismissed things pushes an entry down
+LAMBDA = 0.25          # how hard a resemblance to passed things pushes an entry down
 SNIPPET_CHARS = 400    # embed the headline plus a short blurb, never the whole post
-KEPT_CHARS = 2000      # a kept note is embedded from its first ~2000 characters
+NOTE_CHARS = 2000      # a note is embedded from its first ~2000 characters
 MODEL = "BAAI/bge-small-en-v1.5"
 DIM = 384
 
@@ -82,25 +82,25 @@ class Entry:
 class Scored:
     entry: Entry
     score: float            # -inf when the entry has no text to compare
-    pos: float              # cos(entry, kept)
-    neg: float              # cos(entry, dismissed), 0 when nothing is dismissed
-    nearest: str | None     # id of the kept entry it most resembles, if any
+    pos: float              # cos(entry, picked)
+    neg: float              # cos(entry, passed), 0 when nothing is passed
+    nearest: str | None     # id of the picked entry it most resembles, if any
 
 
 def rank(
     entries: list[Entry],
-    kept: list[list[float]],
-    dismissed: list[list[float]],
+    picked: list[list[float]],
+    passed: list[list[float]],
     lam: float = LAMBDA,
-    kept_ids: dict[str, list[float]] | None = None,
+    picked_ids: dict[str, list[float]] | None = None,
 ) -> list[Scored] | None:
     """Order `entries` best-first by taste. Returns None on cold start (nothing
-    kept) so the caller keeps its own order — recency, usually. An entry with
+    picked) so the caller keeps its own order — recency, usually. An entry with
     no vector sinks to the bottom but is never dropped."""
-    pos = centroid(kept)
+    pos = centroid(picked)
     if pos is None:
         return None
-    neg = centroid(dismissed)
+    neg = centroid(passed)
     out: list[Scored] = []
     for e in entries:
         if e.vector is None:
@@ -109,8 +109,8 @@ def rank(
         p = cosine(e.vector, pos)
         n = cosine(e.vector, neg) if neg is not None else 0.0
         nearest = None
-        if kept_ids:
-            nearest = max(kept_ids, key=lambda k: cosine(e.vector, kept_ids[k]))
+        if picked_ids:
+            nearest = max(picked_ids, key=lambda k: cosine(e.vector, picked_ids[k]))
         out.append(Scored(e, p - lam * n, p, n, nearest))
     out.sort(key=lambda s: s.score, reverse=True)
     return out
@@ -242,7 +242,7 @@ def embed_entries(entries: list[Entry]) -> None:
 # ---------------------------------------------------------------- taste from files
 
 def read_notes(folder: Path | None) -> list[str]:
-    """Every .md/.txt under `folder`, first KEPT_CHARS characters each."""
+    """Every .md/.txt under `folder`, first NOTE_CHARS characters each."""
     if folder is None or not folder.exists():
         return []
     texts = []
@@ -250,7 +250,7 @@ def read_notes(folder: Path | None) -> list[str]:
         if p.suffix.lower() in {".md", ".txt"} and p.is_file():
             body = p.read_text(errors="ignore").strip()
             if body:
-                texts.append(body[:KEPT_CHARS])
+                texts.append(body[:NOTE_CHARS])
     return texts
 
 
@@ -259,20 +259,20 @@ def read_notes(folder: Path | None) -> list[str]:
 def cmd_rank(args: argparse.Namespace) -> int:
     print("fetching…", file=sys.stderr)
     entries = fetch(parse_opml(Path(args.opml)), per_feed=args.per_feed)
-    kept_texts = read_notes(Path(args.kept) if args.kept else None)
-    dis_texts = read_notes(Path(args.dismissed) if args.dismissed else None)
-    print(f"embedding {len(entries)} entries, {len(kept_texts)} kept, {len(dis_texts)} dismissed…", file=sys.stderr)
+    picked_texts = read_notes(Path(args.picked) if args.picked else None)
+    passed_texts = read_notes(Path(args.passed) if args.passed else None)
+    print(f"embedding {len(entries)} entries, {len(picked_texts)} picked, {len(passed_texts)} passed…", file=sys.stderr)
     embed_entries(entries)
-    kept = embed(kept_texts)
-    dismissed = embed(dis_texts)
-    ranked = rank(entries, kept, dismissed, lam=args.lam)
+    picked = embed(picked_texts)
+    passed = embed(passed_texts)
+    ranked = rank(entries, picked, passed, lam=args.lam)
 
     lines: list[str] = []
     if ranked is None:
-        lines.append("# newest first — nothing kept yet, so there is no taste to rank by\n")
+        lines.append("# newest first — nothing picked yet, so there is no taste to rank by\n")
         rows = [(e, None) for e in entries[: args.limit]]
     else:
-        lines.append(f"# ranked by taste — {len(kept)} kept, {len(dismissed)} dismissed, λ={args.lam}\n")
+        lines.append(f"# ranked by taste — {len(picked)} picked, {len(passed)} passed, λ={args.lam}\n")
         rows = [(s.entry, s) for s in ranked[: args.limit]]
     for e, s in rows:
         badge = {"video": "VID", "podcast": "POD"}.get(e.kind, "WEB")
@@ -329,10 +329,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="manicule", description=__doc__.split("\n\n")[1])
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    r = sub.add_parser("rank", help="rank what's new in your feeds by what you've kept")
+    r = sub.add_parser("rank", help="rank what's new in your feeds by what you've picked")
     r.add_argument("opml")
-    r.add_argument("--kept", help="folder of .md/.txt you'd want more of (an Obsidian export works)")
-    r.add_argument("--dismissed", help="folder of .md/.txt you'd want less of")
+    r.add_argument("--picked", help="folder of .md/.txt you'd want more of (an Obsidian export works)")
+    r.add_argument("--passed", help="folder of .md/.txt you'd want less of")
     r.add_argument("--lambda", dest="lam", type=float, default=LAMBDA)
     r.add_argument("--per-feed", type=int, default=20)
     r.add_argument("--limit", type=int, default=50)

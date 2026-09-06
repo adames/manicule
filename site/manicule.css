@@ -228,25 +228,19 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .tb-acts{display:none;gap:var(--space-2)}
 
 /* 6 · the ledger: column heads on the 2px rule, then the rows (rank · entry · receipt · hands) */
-.thead,.row{display:grid;grid-template-columns:3ch minmax(0,1fr) var(--receipt-w) calc(2 * var(--control-sm) + var(--space-1));column-gap:var(--space-4);align-items:start}
-.thead{padding:var(--space-2) 0 var(--space-2) var(--space-2);border-bottom:var(--border-w-strong) solid var(--text);align-items:end;text-transform:lowercase}
-.thead>span{font-family:var(--font-mono);font-size:var(--text-2xs);color:var(--muted);letter-spacing:-.01em;line-height:var(--leading-tight)}
-.thead>span:first-child,.thead .r{text-align:right}
-.thead .c{display:flex;justify-content:center;color:var(--muted)}
-.thead .c svg{width:var(--hand-sm);height:var(--hand-sm)}
 .list{list-style:none;padding:0;margin:0}
-.ledger.cold .thead,.ledger.cold .row{grid-template-columns:3ch minmax(0,1fr) calc(2 * var(--control-sm) + var(--space-1))}
-.ledger.cold .thead .r,.ledger.cold .calc,.ledger.nodis .thead .w{display:none}
-.ledger.dead .toolbar>:not(.status),.ledger.dead .thead{display:none} /* couldn't load: only the status line stays */
 .row{position:relative;padding:var(--space-3) 0 var(--space-3) var(--space-2);border-bottom:var(--border-w) solid var(--border);transition:background var(--transition-fast)}
+/* rank · entry · receipt · the one control */
+.row{display:grid;grid-template-columns:3ch minmax(0,1fr) var(--receipt-w) var(--control-sm);column-gap:var(--space-4);align-items:start}
+.ledger.cold .row{grid-template-columns:3ch minmax(0,1fr) var(--control-sm)} /* no receipt before anything is picked */
+.ledger.cold .calc{display:none}
+.ledger.dead .toolbar>:not(.status){display:none} /* couldn't load: only the status line stays */
 .row::before{content:"";position:absolute;left:0;top:var(--space-3);bottom:var(--space-3);width:0;border-left:var(--border-w-strong) solid transparent}
 .row:hover{background:var(--surface)}
 /* the row's own edge repeats the control's state in the margin: solid ink for
-   a row you pointed at, dashed for one you passed on. Ink, never the accent.
-   (.kept / .dismissed are the internal class names; the page says pointed at
-   and passed on.) */
-.row.kept::before{border-left-color:var(--text)}
-.row.dismissed::before{border-left-style:dashed;border-left-color:var(--border-strong)}
+   a row you picked, dashed for one you passed on. Ink, never the accent. */
+.row.picked::before{border-left-color:var(--text)}
+.row.passed::before{border-left-style:dashed;border-left-color:var(--border-strong)}
 .row .n{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--muted);letter-spacing:-.01em;text-align:right;padding-top:var(--space-0)}
 .row .body{min-width:0}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);font-family:var(--font-mono);font-size:var(--text-2xs);color:var(--muted);letter-spacing:-.01em;line-height:var(--leading-tight)}
@@ -264,9 +258,9 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .calc{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-secondary);letter-spacing:-.01em;line-height:var(--leading-tight);text-align:right;padding-top:var(--space-0)}
 .calc span{display:block;white-space:nowrap}
 .calc .tot{margin-top:var(--space-1);padding-top:var(--space-1);border-top:var(--border-w) solid var(--border-strong);font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--text)}
-.calc .tot:first-child,.calc>.sr-only:first-child+.tot{margin-top:0;padding-top:0;border-top:0} /* the lone total (nothing dismissed) has no rule; a hidden = before a three-line total is never first */
+.calc .tot:first-child,.calc>.sr-only:first-child+.tot{margin-top:0;padding-top:0;border-top:0} /* the lone total (nothing passed) has no rule; a hidden = before a three-line total is never first */
 .calc .notext{color:var(--muted);white-space:normal}
-/* the two hands: outline squares on --raised, the hand at 18px; kept = ember stroke and edge, dismissed = dashed ink */
+
 .hands{display:flex;justify-content:flex-end}
 /* one control, three states. Meaning is form, not colour: empty by default,
    inverse ink when you point at a row, dashed ink when you pass on one. The
@@ -279,10 +273,10 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .mk.point:hover{color:var(--bg);background:var(--text)}
 .mk.pass{color:var(--text);background:var(--raised);border-color:var(--text);border-style:dashed}
 .mk.pass:hover{color:var(--text);background:var(--surface-press)}
-.row.dismissed .title a{color:var(--muted)}
-.row.dismissed .snip{display:none}
-.row.dismissed .kind{background:none;color:var(--muted);border-color:var(--border)}
-.row.dismissed .calc .tot{color:var(--muted);font-weight:var(--weight-normal)}
+.row.passed .title a{color:var(--muted)}
+.row.passed .snip{display:none}
+.row.passed .kind{background:none;color:var(--muted);border-color:var(--border)}
+.row.passed .calc .tot{color:var(--muted);font-weight:var(--weight-normal)}
 .more{display:flex;justify-content:center;padding:var(--space-4) 0}
 .more .btn .n{font-family:var(--font-mono);letter-spacing:-.01em}
 
@@ -305,7 +299,7 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 /* toast: ink on paper, the one hard edge. always in the DOM (a live region), invisible while empty */
 .toast{position:fixed;left:50%;bottom:var(--space-5);transform:translateX(-50%);max-width:calc(100% - var(--space-6));padding:var(--space-2) var(--space-4);background:var(--text);color:var(--bg);font-size:var(--text-xs);text-transform:lowercase;border-radius:var(--radius);box-shadow:var(--shadow-pop);z-index:10;transition:opacity var(--transition)}
 .toast:empty{opacity:0;pointer-events:none}
-/* the printed link: the share url typeset as a specimen, ember only on the kept ids */
+/* the printed link: the share url typeset as a specimen, ember only on the picked ids */
 .specimen .lbl{display:flex;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-1);font-family:var(--font-mono);font-size:var(--text-2xs);color:var(--muted);letter-spacing:-.01em;text-transform:lowercase}
 .specimen .link{padding:var(--space-2) var(--space-3);background:var(--raised);border:var(--border-w) solid var(--border);font-family:var(--font-mono);font-size:var(--text-xs);line-height:var(--leading-body);color:var(--text);letter-spacing:-.01em;text-transform:none;overflow-wrap:anywhere}
 .specimen .host,.specimen .k{color:var(--muted)}
@@ -359,7 +353,7 @@ table.dt .grow{width:100%}
 .grp.key .note{color:var(--text);font-weight:var(--weight-medium)}
 .grp.key pre{background:var(--fill-1)}
 .grp.key pre .ln{color:var(--text-secondary)} /* the key line's number stays AA on the wash */
-/* the worked row (how.html): the receipt beside its ScoreBar, an 8px meter: solid ink to the score, a dashed hollow to cos(entry, kept) */
+/* the worked row (how.html): the receipt beside its ScoreBar, an 8px meter: solid ink to the score, a dashed hollow to cos(entry, picked) */
 .worked-score{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--space-3) var(--space-4)}
 .worked-score .calc{display:inline-block;padding-top:0}
 .worked-score .sbar{flex:1 1 var(--ruler-w);margin-bottom:var(--space-1)}
@@ -394,12 +388,10 @@ pre .c{color:var(--muted)}
    the column head folds with the rows and drops its receipt legend (the receipt sits under the title now);
    borrowed hides the head entirely, so a stranger's first screen with marks shows a row with its receipt */
 @media (max-width:719.98px){
+  .row,.ledger.cold .row{grid-template-columns:2.5ch minmax(0,1fr) var(--control-sm);column-gap:var(--space-3)}
   .page>main>*+*{margin-top:var(--space-4)}
   .spec{font-size:var(--text-2xs)}
-  .thead,.ledger.cold .thead,.row,.ledger.cold .row{grid-template-columns:2.5ch minmax(0,1fr) calc(2 * var(--control-sm) + var(--space-1));column-gap:var(--space-3)}
-  .thead .r{display:none}
   .vr{display:none}
-  .ledger.borrowed .thead{display:none} /* a stranger's first phone screen needs the room for a receipt; cold and own keep the head */
   .ruler-wrap{width:auto;flex:1 1 var(--ruler-w)}
   .how-body{grid-template-columns:1fr}
   .formula{padding:var(--space-3);gap:var(--space-1) var(--space-3)}

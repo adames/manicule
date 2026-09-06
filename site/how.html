@@ -66,15 +66,15 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <main id="main" tabindex="-1">
       <section class="mast" aria-label="the method">
         <h1>how it works</h1>
-        <p class="reading">every entry turns into a vector and your browser averages the vectors you marked into one kept vector, or one you dismissed into one dismissed vector. then we score it</p>
+        <p class="reading">every entry turns into a vector and your browser averages the vectors you picked into one picked vector, or one you passed into one passed vector. then we score it</p>
         <p class="spec"><span>manicule.py</span><span>rank()</span><span>same math in rank.js</span></p>
       </section>
 
       <!-- the formula, as on the feed, with his kicker under it -->
       <div>
-        <div class="formula" role="img" aria-label="score equals cosine of entry and kept, minus lambda times cosine of entry and dismissed">
-          <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, kept)</span><span class="lbl">what you pointed at</span></span></span>
-          <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, dismissed)</span><span class="lbl">what you passed on × λ</span></span></span>
+        <div class="formula" role="img" aria-label="score equals cosine of entry and picked, minus lambda times cosine of entry and passed">
+          <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, picked)</span><span class="lbl">what you picked</span></span></span>
+          <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, passed)</span><span class="lbl">what you passed × λ</span></span></span>
         </div>
         <p class="kicker-line">two averages and a subtraction</p>
       </div>

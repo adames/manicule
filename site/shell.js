@@ -6,7 +6,7 @@
 
   // ---- the hand: Commonplace's manicule, one path set, three poses.
   // point = pointing left, at the entry beside it; rest = the classic ☞;
-  // up/down are kept for anything that still wants them.
+  // up/down remain for anything that still wants them.
   const PATHS =
     '<path d="M7.6 11.5 V6 a1.3 1.3 0 0 1 2.6 0 V11"/>' +
     '<path d="M10.2 11 a1.1 1.1 0 0 1 2.2 0 a1.05 1.05 0 0 1 2.1 0 a1 1 0 0 1 1.7 0.5 V17.8 a2.2 2.2 0 0 1 -2.2 2.2 H9.4 a2 2 0 0 1 -2 -2 V11.5"/>' +

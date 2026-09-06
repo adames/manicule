@@ -8,10 +8,10 @@ static demo page
 ## The whole method
 
 ```
-score(entry) = cos(entry, kept) − λ · cos(entry, dismissed)
+score(entry) = cos(entry, picked) − λ · cos(entry, passed)
 ```
 
-`kept` is the mean embedding of what you pointed at. `dismissed` is the mean
+`picked` is the mean embedding of what you picked. `passed` is the mean
 embedding of what you passed on. Two averages and a subtraction (and a λ)
 
 λ is how much a pass counts. 0.25 by default, so it's a nudge. push it to 1.0
@@ -21,7 +21,7 @@ entries are embedded from headline plus a short blurb, locally, with
 [fastembed](https://github.com/qdrant/fastembed) (`BAAI/bge-small-en-v1.5`,
 384 dimensions). nothing leaves your machine but the feed fetches.
 
-point at nothing and there's no taste to rank by, so it stays newest first. an
+pick nothing and there's no taste to rank by, so it stays newest first. an
 entry with no words sinks to the bottom, but it never gets dropped.
 
 the idea comes from [Commonplace](https://github.com/adames/commonplace), an
@@ -31,14 +31,14 @@ unreleased library I was developing
 
 ```bash
 uv sync
-uv run manicule.py rank feeds.opml --kept ~/notes -o today.md
+uv run manicule.py rank feeds.opml --picked ~/notes -o today.md
 ```
 
-`--kept` is any folder of `.md`/`.txt`. An Obsidian folder, saved articles,
+`--picked` is any folder of `.md`/`.txt`. An Obsidian folder, saved articles,
 whatever you have. point it at notes you already keep, not a folder you
 maintain for this.
 
-there's a `--dismissed` too, for a folder of things you passed on. most
+there's a `--passed` too, for a folder of things you passed on. most
 people won't have one, and the ranker doesn't need it.
 
 Put it on a cron and read `today.md` with coffee.

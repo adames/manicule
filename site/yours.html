@@ -89,13 +89,13 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <h2 class="sect" id="feeds"><span>your own feeds</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></h2>
 <pre>uv sync
 uv run manicule.py rank feeds.opml \
-  --kept ~/notes \
+  --picked ~/notes \
   -o today.md</pre>
-        <p><button class="btn" type="button" data-copy="uv sync&#10;uv run manicule.py rank feeds.opml --kept ~/notes -o today.md">copy</button></p>
-        <p><code>--kept</code> is any folder of <code>.md</code>/<code>.txt</code>. an obsidian folder, saved articles, whatever you have. point it at notes you already keep, not a folder you maintain for this</p>
+        <p><button class="btn" type="button" data-copy="uv sync&#10;uv run manicule.py rank feeds.opml --picked ~/notes -o today.md">copy</button></p>
+        <p><code>--picked</code> is any folder of <code>.md</code>/<code>.txt</code>. an obsidian folder, saved articles, whatever you have. point it at notes you already keep, not a folder you maintain for this</p>
         <p>put it on a cron and read <code>today.md</code> with coffee</p>
         <dl class="kv">
-          <dt>cron</dt><dd><span class="mono t">17 6 * * *  uv run manicule.py rank feeds.opml <span class="nowrap">--kept ~/notes</span> <span class="nowrap">-o today.md</span></span></dd>
+          <dt>cron</dt><dd><span class="mono t">17 6 * * *  uv run manicule.py rank feeds.opml <span class="nowrap">--picked ~/notes</span> <span class="nowrap">-o today.md</span></span></dd>
         </dl>
       </section>
     </main>

@@ -72,9 +72,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       </section>
 
       <!-- the formula, always visible -->
-      <div class="formula" role="img" aria-label="score equals cosine of entry and kept, minus lambda times cosine of entry and dismissed">
-        <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, kept)</span><span class="lbl">what you pointed at</span></span></span>
-        <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, dismissed)</span><span class="lbl">what you passed on × λ</span></span></span>
+      <div class="formula" role="img" aria-label="score equals cosine of entry and picked, minus lambda times cosine of entry and passed">
+        <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, picked)</span><span class="lbl">what you picked</span></span></span>
+        <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, passed)</span><span class="lbl">what you passed × λ</span></span></span>
       </div>
 
       <!-- how it works: the details, with the how.html link beside the summary (a link inside a summary is two controls in one) -->
@@ -82,13 +82,13 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <details class="how" id="how">
         <summary>how it works</summary>
         <div class="how-body">
-          <p>every entry turns into a vector and your browser averages the vectors you marked into one kept vector, or one you dismissed into one dismissed vector. then we score it</p>
+          <p>every entry turns into a vector and your browser averages the vectors you picked into one picked vector, or one you passed into one passed vector. then we score it</p>
           <dl class="kv kv--tight">
             <dt>entry</dt><dd>title + blurb, one vector, <span class="mono">384</span> dims</dd>
-            <dt>kept</dt><dd>the mean of what you pointed at</dd>
-            <dt>dismissed</dt><dd>the mean of what you passed on</dd>
+            <dt>picked</dt><dd>the mean of what you picked</dd>
+            <dt>passed</dt><dd>the mean of what you passed on</dd>
             <dt>λ</dt><dd><span class="mono">0.25</span>, low</dd>
-            <dt>nothing kept</dt><dd>newest first</dd>
+            <dt>nothing picked</dt><dd>newest first</dd>
             <dt>no words</dt><dd>sinks to the bottom, never dropped</dd>
           </dl>
         </div>
@@ -128,12 +128,6 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <span class="acts"><button class="btn" type="button" data-act="fresh">start fresh</button></span>
         </div>
 
-        <div class="thead" aria-hidden="true">
-          <span>#</span>
-          <span>entry</span>
-          <span class="r">pointed at<span class="w"><br>− λ · passed on</span></span>
-          <span class="c" data-hand="rest"></span>
-        </div>
         <span id="newtab" hidden>opens in a new tab</span>
         <ol class="list" id="list" tabindex="-1" role="list"></ol><!-- role=list: WebKit drops list semantics from a list-style:none list -->
         <div class="more" id="more" hidden><button class="btn quiet" id="morebtn" type="button">below the fold</button></div>
@@ -158,9 +152,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <span class="kicker">cli</span>
 <pre>uv run manicule.py \
   rank feeds.opml \
-  --kept ~/notes \
+  --picked ~/notes \
   -o today.md</pre>
-          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --kept ~/notes -o today.md">copy</button>
+          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --picked ~/notes -o today.md">copy</button>
           <p>put it on a cron and read today.md with coffee</p>
         </div>
       </div>
