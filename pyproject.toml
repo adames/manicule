@@ -1,0 +1,16 @@
+[project]
+name = "manicule"
+version = "0.1.0"
+description = "A pointing hand for your feeds: rank what's new by what you've kept."
+requires-python = ">=3.11"
+dependencies = [
+  "fastembed>=0.8.0",
+  "feedparser>=6.0.11",
+  "numpy>=1.26",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

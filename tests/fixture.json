@@ -1,0 +1,18 @@
+{
+  "comment": "Hand-computed. kept=[e1], dismissed=[e2], lambda=0.25. Order and scores must match in Python and JS.",
+  "lambda": 0.25,
+  "entries": [
+    {"id": "e1", "vector": [1, 0, 0, 0]},
+    {"id": "e2", "vector": [0, 1, 0, 0]},
+    {"id": "e3", "vector": [0.9, 0.1, 0, 0]},
+    {"id": "e4", "vector": [0, 0.9, 0.1, 0]},
+    {"id": "e5", "vector": [0, 0, 1, 0]},
+    {"id": "e6", "vector": [0.5, 0.5, 0, 0]},
+    {"id": "e7", "vector": null}
+  ],
+  "kept": ["e1"],
+  "dismissed": ["e2"],
+  "expected_order": ["e1", "e3", "e6", "e5", "e4", "e2", "e7"],
+  "expected_scores": {"e1": 1.0, "e3": 0.9663, "e6": 0.5303, "e5": 0.0, "e4": -0.2485, "e2": -0.25},
+  "expected_nearest": {"e3": "e1", "e4": "e1", "e5": "e1"}
+}

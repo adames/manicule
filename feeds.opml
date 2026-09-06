@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>manicule sample — deliberately mixed, so taste has something to sort</title></head>
+  <body>
+    <outline text="code + ai">
+      <outline text="Simon Willison" type="rss" xmlUrl="https://simonwillison.net/atom/everything/" htmlUrl="https://simonwillison.net/"/>
+      <outline text="Hacker News front page" type="rss" xmlUrl="https://hnrss.org/frontpage" htmlUrl="https://news.ycombinator.com/"/>
+      <outline text="Ars Technica" type="rss" xmlUrl="https://feeds.arstechnica.com/arstechnica/index" htmlUrl="https://arstechnica.com/"/>
+    </outline>
+    <outline text="science">
+      <outline text="Quanta Magazine" type="rss" xmlUrl="https://www.quantamagazine.org/feed/" htmlUrl="https://www.quantamagazine.org/"/>
+      <outline text="Kurzgesagt (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q" htmlUrl="https://www.youtube.com/@kurzgesagt"/>
+      <outline text="Veritasium (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA" htmlUrl="https://www.youtube.com/@veritasium"/>
+      <outline text="3Blue1Brown (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw" htmlUrl="https://www.youtube.com/@3blue1brown"/>
+    </outline>
+    <outline text="essays + ideas">
+      <outline text="Aeon" type="rss" xmlUrl="https://aeon.co/feed.rss" htmlUrl="https://aeon.co/"/>
+      <outline text="The Marginalian" type="rss" xmlUrl="https://www.themarginalian.org/feed/" htmlUrl="https://www.themarginalian.org/"/>
+      <outline text="Astral Codex Ten" type="rss" xmlUrl="https://www.astralcodexten.com/feed" htmlUrl="https://www.astralcodexten.com/"/>
+    </outline>
+    <outline text="podcasts">
+      <outline text="99% Invisible" type="rss" xmlUrl="https://feeds.99percentinvisible.org/99percentinvisible" htmlUrl="https://99percentinvisible.org/"/>
+      <outline text="Radiolab" type="rss" xmlUrl="https://feeds.simplecast.com/EmVW7VGp" htmlUrl="https://radiolab.org/"/>
+    </outline>
+    <outline text="everything else, on purpose">
+      <outline text="NPR News" type="rss" xmlUrl="https://feeds.npr.org/1001/rss.xml" htmlUrl="https://www.npr.org/"/>
+      <outline text="ESPN" type="rss" xmlUrl="https://www.espn.com/espn/rss/news" htmlUrl="https://www.espn.com/"/>
+      <outline text="Smitten Kitchen" type="rss" xmlUrl="https://smittenkitchen.com/feed/" htmlUrl="https://smittenkitchen.com/"/>
+      <outline text="Rock Paper Shotgun" type="rss" xmlUrl="https://www.rockpapershotgun.com/feed" htmlUrl="https://www.rockpapershotgun.com/"/>
+      <outline text="Sidebar (design)" type="rss" xmlUrl="https://sidebar.io/feed.xml" htmlUrl="https://sidebar.io/"/>
+    </outline>
+  </body>
+</opml>
