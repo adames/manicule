@@ -1,6 +1,6 @@
 # manicule ☞
 
-Rank what's new by what you've kept.
+☞ remember your tastes
 
 No database, no server, no account needed. One Python file for your own feeds, and a
 static demo page.
