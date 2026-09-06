@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>manicule</title>
-<meta name="description" content="A pointing hand for your feeds. Mark a few things; watch everything else reorder by taste. Nothing is stored — your marks live in the URL.">
+<title>manicule feed</title>
+<meta name="description" content="manicule feed. mark what you like, the rest reorders. marks live in the URL.">
 <script>
 /* Theme: a stamped choice wins; otherwise the OS decides via prefers-color-scheme. */
 try{var t=localStorage.getItem("manicule-theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t;}catch(_){}
@@ -215,7 +215,7 @@ ol.list{list-style:none;padding:0;margin:0}
   <section class="intro">
     <h1>get to the <span class="hand glyph">☞</span></h1>
     <p class="lead">what's new across code, science, essays, sports, and food. etc.</p>
-    <p class="corpus mono" id="corpus" aria-live="polite"><span>loading the corpus…</span></p>
+    <p class="corpus mono" id="corpus" aria-live="polite"><span>loading…</span></p>
 
     <details class="method" id="method">
       <summary>how it works</summary>
@@ -232,37 +232,37 @@ ol.list{list-style:none;padding:0;margin:0}
 
   <section aria-label="Ranked entries">
     <div class="bar">
-      <div class="status" id="status" aria-live="polite">loading the corpus…</div>
+      <div class="status" id="status" aria-live="polite">loading…</div>
       <div class="tools">
         <label class="lam">λ <input type="range" id="lam" min="0" max="1" step="0.05" value="0.25" aria-label="lambda, how much a dismissal counts"> <output id="lamv" for="lam">0.25</output></label>
-        <button class="btn" id="share" type="button">share this taste</button>
-        <button class="btn danger" id="forget" type="button"><span aria-hidden="true">!</span> forget everything</button>
+        <button class="btn" id="share" type="button">share</button>
+        <button class="btn danger" id="forget" type="button"><span aria-hidden="true">!</span> forget</button>
       </div>
     </div>
     <details class="sources" id="sources">
-      <summary><span>filter by source</span> <span class="count" id="srccount"></span></summary>
+      <summary><span>sources</span> <span class="count" id="srccount"></span></summary>
       <div class="chips" id="chips" role="group" aria-label="filter by source"></div>
     </details>
 
     <ol class="list" id="list"></ol>
     <div class="more" id="more" hidden><button class="btn quiet" id="morebtn" type="button">show more</button></div>
-    <div class="empty" id="empty" hidden>nothing matches those sources.</div>
+    <div class="empty" id="empty" hidden>nothing matches</div>
   </section>
 </main>
 
 <footer class="foot">
   <div class="wrap">
-    <h2>run it on your own feeds</h2>
-    <p>Same math, one Python file; your marks come from any folder of notes:</p>
+    <h2>your own feeds</h2>
+    <p>same math, one file, marks from a folder of notes:</p>
     <pre>uv run manicule.py rank feeds.opml --kept ~/notes/kept --dismissed ~/notes/nope -o today.md</pre>
-    <p>This is a demo of my sample feeds, and there are no accounts. To rank <em>your</em> feeds with your marks kept on your own site, <a href="https://github.com/adames/manicule#make-it-yours-fork-it">fork it</a> — swap the feed list, turn on Pages, done.</p>
+    <p>my feeds, no accounts. for yours, <a href="https://github.com/adames/manicule#make-it-yours-fork-it">fork it</a>: swap the feed list, turn on Pages.</p>
     <div class="cols">
       <nav aria-label="Elsewhere">
         <a href="https://github.com/adames/manicule">github</a>
-        <a href="https://github.com/adames/manicule#what-this-taught-me-about-taste">what this taught me</a>
+        <a href="https://github.com/adames/manicule#what-this-taught-me-about-taste">notes</a>
         <a href="https://adames.cc">adames.cc</a>
       </nav>
-      <p class="mono" style="margin:0">manicule · no accounts, no server, no database</p>
+      <p class="mono" style="margin:0">no accounts, no server, no database</p>
     </div>
   </div>
 </footer>
@@ -325,7 +325,7 @@ ol.list{list-style:none;padding:0;margin:0}
   const setLam = () => { $("lam").value = state.lam; $("lamv").value = state.lam.toFixed(2); };
 
   function scoreLine(r, e) {
-    if (r.score === -Infinity) return `<p class="score"><span>sinks — no text to compare</span></p>`;
+    if (r.score === -Infinity) return `<p class="score"><span>no text, sinks</span></p>`;
     const pct = Math.round(Math.max(0, Math.min(1, r.score)) * 100);
     const neg = state.dismissed.size ? ` − ${state.lam.toFixed(2)}×<i>${r.neg.toFixed(2)}</i>` : "";
     const nearE = r.nearest && byId[r.nearest] && r.nearest !== e.id ? byId[r.nearest] : null;
@@ -341,7 +341,7 @@ ol.list{list-style:none;padding:0;margin:0}
 
     $("status").innerHTML = cold
       ? `<b>newest first</b>`
-      : `<b>ranked by taste</b> <span class="count">${state.marked.size} kept</span><span class="count">${state.dismissed.size} dismissed</span><span class="count">λ ${state.lam.toFixed(2)}</span>`;
+      : `<b>ranked</b> <span class="count">${state.marked.size} kept</span><span class="count">${state.dismissed.size} dismissed</span><span class="count">λ ${state.lam.toFixed(2)}</span>`;
 
     $("list").innerHTML = visible.slice(0, state.shown).map((r, i) => {
       const e = r.entry, m = state.marked.has(e.id), d = state.dismissed.has(e.id);
@@ -359,7 +359,7 @@ ol.list{list-style:none;padding:0;margin:0}
     }).join("");
     $("more").hidden = visible.length <= state.shown;
     $("empty").hidden = visible.length > 0;
-    $("morebtn").textContent = `show more (${Math.max(0, visible.length - state.shown)} left)`;
+    $("morebtn").textContent = `more (${Math.max(0, visible.length - state.shown)} left)`;
     writeHash();
   }
 
@@ -387,7 +387,7 @@ ol.list{list-style:none;padding:0;margin:0}
   $("forget").addEventListener("click", () => { state.marked.clear(); state.dismissed.clear(); state.lam = Manicule.LAMBDA; setLam(); state.shown = PAGE; render(); toast("forgotten"); });
   $("share").addEventListener("click", async () => {
     if (!state.marked.size && !state.dismissed.size) return toast("mark something first");
-    try { await navigator.clipboard.writeText(location.href); toast("link copied — it carries your marks"); } catch (_) { toast("copy the address bar — it carries your marks"); }
+    try { await navigator.clipboard.writeText(location.href); toast("link copied, it carries your marks"); } catch (_) { toast("copy the address bar, it carries your marks"); }
   });
   window.addEventListener("hashchange", () => { readHash(); setLam(); render(); });
 
@@ -398,12 +398,12 @@ ol.list{list-style:none;padding:0;margin:0}
   fetch("corpus.json", { cache: "no-cache" }).then((r) => r.json()).then((c) => {
     corpus = c;
     for (const e of c.entries) { e.vector = e.q ? Manicule.dequantize(e.q, e.s) : null; delete e.q; byId[e.id] = e; }
-    $("corpus").innerHTML = `<span>corpus refreshed ${esc(c.generated.slice(0, 10))}</span><span>${c.entries.length} entries</span><span>${c.feeds.length} feeds</span>`;
+    $("corpus").innerHTML = `<span>refreshed ${esc(c.generated.slice(0, 10))}</span><span>${c.entries.length} entries</span><span>${c.feeds.length} feeds</span>`;
     readHash(); setLam();
     // Marks that point at entries no longer in the corpus are dropped quietly.
     for (const s of [state.marked, state.dismissed]) for (const id of [...s]) if (!byId[id]) s.delete(id);
     renderChips(); render();
-  }).catch(() => { $("status").textContent = "couldn't load the corpus — try again in a moment."; $("corpus").textContent = ""; });
+  }).catch(() => { $("status").textContent = "couldn't load"; $("corpus").textContent = ""; });
 })();
 </script>
 </body>
