@@ -55,3 +55,9 @@ def test_quantize_preserves_cosine():
 def test_snippet_strips_html_and_cuts_on_word():
     s = snippet("<p>Hello &amp; <b>world</b>, this is a long sentence about things</p>", limit=20)
     assert s.startswith("Hello & world,") and s.endswith("…") and "<" not in s
+
+
+def test_snippet_drops_hacker_news_boilerplate():
+    raw = "<p>Article URL: <a href=\"https://x.org/p\">https://x.org/p</a></p><p>Comments URL: <a href=\"https://news.ycombinator.com/item?id=1\">https://news.ycombinator.com/item?id=1</a></p><p>Points: 125</p><p># Comments: 41</p>"
+    assert snippet(raw) == ""
+    assert snippet("Real blurb here. Points: 3") == "Real blurb here."

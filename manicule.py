@@ -151,6 +151,9 @@ def parse_opml(path: Path) -> list[tuple[str, str]]:
 _BLOCK = re.compile(r"</(?:p|div|li|h\d|tr|blockquote)>|<br\s*/?>", re.I)
 _TAG = re.compile(r"<[^>]+>")
 _WS = re.compile(r"\s+")
+# Hacker News summaries are nothing but this scaffolding; strip it so the
+# entry embeds from its headline alone instead of from URLs and counts.
+_HN = re.compile(r"(?:Article URL|Comments URL):\s*\S+|(?:Points|#\s*Comments):\s*\d+", re.I)
 
 
 def snippet(raw: str | None, limit: int = SNIPPET_CHARS) -> str:
@@ -159,7 +162,7 @@ def snippet(raw: str | None, limit: int = SNIPPET_CHARS) -> str:
         return ""
     # Block boundaries become spaces so paragraphs don't run together; inline
     # tags vanish so "<b>world</b>," doesn't grow a space before the comma.
-    text = _WS.sub(" ", html.unescape(_TAG.sub("", _BLOCK.sub(" ", raw)))).strip()
+    text = _WS.sub(" ", _HN.sub(" ", html.unescape(_TAG.sub("", _BLOCK.sub(" ", raw))))).strip()
     if len(text) <= limit:
         return text
     cut = text[:limit].rsplit(" ", 1)[0]
