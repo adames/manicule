@@ -83,7 +83,6 @@ main{padding-block:var(--section) calc(var(--section) * 1.2)}
 .intro h1{font-size:clamp(1.9rem,1.7rem + 1vw,2.5rem);line-height:1.04;letter-spacing:-.015em}
 .intro h1 .hand{font-family:var(--font-serif);color:var(--text)}
 .intro .lead{font-size:var(--step-1);line-height:1.5;margin-top:var(--space-4)}
-.intro .lead + p{margin-top:var(--space-3);color:var(--text-secondary)}
 .corpus{display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-3);margin-top:var(--space-4);text-transform:lowercase}
 .corpus span+span::before{content:"·";margin-right:var(--space-3);opacity:.6}
 
@@ -214,9 +213,8 @@ ol.list{list-style:none;padding:0;margin:0}
 
 <main class="wrap">
   <section class="intro">
-    <h1>a pointing hand <span class="hand glyph">☞</span> for your feeds</h1>
-    <p class="lead">Below is what's new across seventeen deliberately mismatched feeds — code, science, essays, podcasts, sports, food, games. Point at a few things you'd actually read. Wave off a couple you wouldn't. Watch everything else reorder.</p>
-    <p>Nothing is stored anywhere; your marks live in this page's address, so the link <em>is</em> your taste.</p>
+    <h1>get to the <span class="hand glyph">☞</span></h1>
+    <p class="lead">what's new across code, science, essays, sports, and food. etc.</p>
     <p class="corpus mono" id="corpus" aria-live="polite"><span>loading the corpus…</span></p>
 
     <details class="method" id="method">
@@ -343,7 +341,7 @@ ol.list{list-style:none;padding:0;margin:0}
     const visible = list.filter((r) => !state.sources.size || state.sources.has(r.entry.feed));
 
     $("status").innerHTML = cold
-      ? `<b>newest first</b> — nothing marked yet, so there is no taste to rank by. point <span class="hand glyph">☞</span> at a few things.`
+      ? `<b>newest first</b>`
       : `<b>ranked by taste</b> <span class="count">${state.marked.size} kept</span><span class="count">${state.dismissed.size} dismissed</span><span class="count">λ ${state.lam.toFixed(2)}</span>`;
 
     $("list").innerHTML = visible.slice(0, state.shown).map((r, i) => {
