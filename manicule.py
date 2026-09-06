@@ -39,6 +39,9 @@ import feedparser
 LAMBDA = 0.25          # how hard a resemblance to passed things pushes an entry down
 SNIPPET_CHARS = 400    # embed the headline plus a short blurb, never the whole post
 NOTE_CHARS = 2000      # a note is embedded from its first ~2000 characters
+# Feeds the demo taste never picks from. No judgement on the writing: a demo
+# built on one person's blog shows off that person, not the ranker.
+DEMO_SKIP = {"Simon Willison's Weblog"}
 MODEL = "BAAI/bge-small-en-v1.5"
 DIM = 384
 
@@ -208,6 +211,7 @@ def _summary(item) -> str:
 
 def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Entry]:
     entries: list[Entry] = []
+    seen_uids: set[str] = set()
     for title, url in feeds:
         parsed = feedparser.parse(url)
         if parsed.bozo and not parsed.entries:
@@ -218,8 +222,15 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Entry]:
             link = (item.get("link") or "").strip()
             if not link:
                 continue
+            # The guid identifies an entry; the link sometimes does not. Radiolab
+            # gives every episode the same link (its homepage), so hashing the
+            # link collapsed fourteen episodes into one id.
+            uid = (item.get("id") or item.get("guid") or link).strip() or link
+            if uid in seen_uids:
+                continue
+            seen_uids.add(uid)
             entries.append(Entry(
-                id=hashlib.sha1(link.encode()).hexdigest()[:8],
+                id=hashlib.sha1(uid.encode()).hexdigest()[:8],
                 title=snippet(item.get("title"), 200),
                 link=link,
                 snippet=snippet(_summary(item)),
@@ -298,6 +309,50 @@ def quantize(v: list[float]) -> tuple[list[int], float]:
     return [max(-127, min(127, round(x / scale * 127))) for x in v], scale
 
 
+def demo_taste(entries: list[Entry], picks: int = 3) -> dict[str, list[str]] | None:
+    """A deliberately plural taste for the demo link.
+
+    One centroid collapses a plural taste, so a demo built from three things
+    that sit far apart is the honest showcase: the list it produces mixes
+    feeds instead of burrowing into one.
+
+    Each feed nominates the entry closest to its own mean, which is the most
+    typical thing that feed published, then the three nominees furthest apart
+    win. Typical-within-feed matters: picking the entry least like everything
+    else would keep reaching for whatever is most unusual that day, and the
+    most unusual thing in a feed is often the one somebody would rather not
+    meet on a stranger's front page. The one to pass on is whatever most
+    resembles the first pick, so the second term visibly bites.
+    """
+    pool = [e for e in entries if e.vector and e.snippet and e.feed not in DEMO_SKIP]
+    if len(pool) < picks + 1:
+        return None
+    by_feed: dict[str, list[Entry]] = {}
+    for e in pool:
+        by_feed.setdefault(e.feed, []).append(e)
+    nominees = []
+    for feed, es in by_feed.items():
+        mid = centroid([e.vector for e in es])
+        nominees.append(max(es, key=lambda e: cosine(e.vector, mid)))
+    if len(nominees) < picks:
+        return None
+    # start from the pair furthest apart, then keep adding the nominee whose
+    # closest neighbour among the chosen is still the most distant
+    chosen = list(min(
+        ((a, b) for i, a in enumerate(nominees) for b in nominees[i + 1:]),
+        key=lambda ab: cosine(ab[0].vector, ab[1].vector),
+    ))
+    while len(chosen) < picks:
+        rest = [e for e in nominees if e not in chosen]
+        if not rest:
+            break
+        chosen.append(min(rest, key=lambda e: max(cosine(e.vector, c.vector) for c in chosen)))
+    ids = {e.id for e in chosen}
+    rest = [e for e in pool if e.id not in ids]
+    passed = max(rest, key=lambda e: cosine(e.vector, chosen[0].vector)) if rest else None
+    return {"m": [e.id for e in chosen], "d": [passed.id] if passed else []}
+
+
 def cmd_corpus(args: argparse.Namespace) -> int:
     feeds = parse_opml(Path(args.opml))
     print(f"fetching {len(feeds)} feeds…", file=sys.stderr)
@@ -310,6 +365,7 @@ def cmd_corpus(args: argparse.Namespace) -> int:
         "dim": DIM,
         "lambda": LAMBDA,
         "feeds": sorted({e.feed for e in entries}),
+        "demo": demo_taste(entries),
         "entries": [],
     }
     for e in entries:

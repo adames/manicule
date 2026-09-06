@@ -23,7 +23,6 @@
       <outline text="Radiolab" type="rss" xmlUrl="https://feeds.simplecast.com/EmVW7VGp" htmlUrl="https://radiolab.org/"/>
     </outline>
     <outline text="everything else, on purpose">
-      <outline text="NPR News" type="rss" xmlUrl="https://feeds.npr.org/1001/rss.xml" htmlUrl="https://www.npr.org/"/>
       <outline text="ESPN" type="rss" xmlUrl="https://www.espn.com/espn/rss/news" htmlUrl="https://www.espn.com/"/>
       <outline text="Smitten Kitchen" type="rss" xmlUrl="https://smittenkitchen.com/feed/" htmlUrl="https://smittenkitchen.com/"/>
       <outline text="Rock Paper Shotgun" type="rss" xmlUrl="https://www.rockpapershotgun.com/feed" htmlUrl="https://www.rockpapershotgun.com/"/>

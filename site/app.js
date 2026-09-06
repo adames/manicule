@@ -62,7 +62,20 @@
   // ---- render
   const fmt = (x) => (x < 0 ? "−" : "+") + Math.abs(x).toFixed(2);
   const num = (x) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
-  const dateOf = (iso) => iso ? iso.slice(0, 10) : "undated";
+  // Dates read as "yesterday" / "3 days ago", the way adames.cc writes them.
+  // The ISO date stays in datetime and title, so nothing is lost.
+  const UNITS = [["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]];
+  const RTF = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  function dateOf(iso) {
+    if (!iso) return "undated";
+    const t = Date.parse(iso);
+    if (isNaN(t)) return iso.slice(0, 10);
+    // A feed that stamps an entry slightly ahead of now would otherwise read
+    // "in 5 hours"; nothing in a feed is genuinely from the reader's future.
+    const diff = Math.min(0, Math.round((t - Date.now()) / 1000)), abs = Math.abs(diff);
+    for (const [unit, secs] of UNITS) if (abs >= secs) return RTF.format(Math.round(diff / secs), unit);
+    return "just now";
+  }
   const cut = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
   // the ruler, its readout, and what a screen reader calls the value
   function setLam() {
@@ -90,12 +103,17 @@
   }
   // the near line: the picked item this one most resembles; on a picked
   // row just "picked"; on a passed row how far the λ term moved it
+  // Printed only when the nearest picked item changes: a run of rows that all
+  // sit near the same thing says it once, and the rest of the run is quiet.
+  let lastNear = null;
   function near(r, e, m, d, sank) {
     if (r.score === -Infinity) return "";
-    if (m) return `<p class="near">picked</p>`;
-    if (d) return `<p class="near"><span>${sank > 0 ? `sank ${sank}, still here` : "still here"}</span></p>`;
+    if (m) { lastNear = null; return `<p class="near">picked</p>`; }
+    if (d) { lastNear = null; return `<p class="near"><span>${sank > 0 ? `sank ${sank}, still here` : "still here"}</span></p>`; }
     const n = r.nearest && byId[r.nearest];
-    return n ? `<p class="near">${hand("rest")}<span>near</span><span class="t" title="${esc(n.title)}">“${esc(cut(n.title, 48))}”</span></p>` : "";
+    if (!n || r.nearest === lastNear) return "";
+    lastNear = r.nearest;
+    return `<p class="near">${hand("rest")}<span>near</span><span class="t" title="${esc(n.title)}">“${esc(cut(n.title, 48))}”</span></p>`;
   }
   // a feed whose summary is only dots has no snippet
   const snippetOf = (e) => (e.snippet || "").replace(/[.…\s]/g, "") ? e.snippet : "";
@@ -119,7 +137,7 @@
     $("ledger").classList.toggle("borrowed", state.borrowed);
     // the spaces between the spans are for screen readers (the dots are CSS)
     $("status").innerHTML = cold
-      ? `<b>newest first</b>`
+      ? `<b>newest first</b>${corpus.demo ? ` <button class="btn quiet" data-act="demo" type="button">try a taste</button>` : ""}`
       : `<b>ranked</b> <span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n">λ ${state.lam.toFixed(2)}</span>`;
     // taste stays focusable while cold (aria-disabled), so a press can say why
     $("tab-taste").setAttribute("aria-disabled", cold);
@@ -129,12 +147,13 @@
     $("banner").hidden = !state.borrowed;
 
     keepFocus(() => {
+      lastNear = null;
       $("list").innerHTML = visible.slice(0, state.shown).map((r, i) => {
         const e = r.entry, m = state.picked.has(e.id), d = state.passed.has(e.id), snip = snippetOf(e);
         return `<li class="row${m ? " picked" : ""}${d ? " passed" : ""}" data-id="${esc(e.id)}">
           <span class="n" aria-hidden="true">${i + 1}</span>
           <div class="body">
-            <div class="meta"><span class="kind">${KIND[e.kind] || "web"}</span><span class="feed" title="${esc(e.feed)}">${esc(e.feed)}</span><time datetime="${esc(e.published)}">${dateOf(e.published)}</time></div>
+            <div class="meta"><span class="kind">${KIND[e.kind] || "web"}</span><span class="feed" title="${esc(e.feed)}">${esc(e.feed)}</span><time datetime="${esc(e.published)}" title="${esc((e.published || "").slice(0, 10))}">${dateOf(e.published)}</time></div>
             <h2 class="title" id="t-${esc(e.id)}"><a href="${esc(e.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(e.title || e.link)}</a></h2>
             ${snip ? `<p class="snip">${esc(snip)}</p>` : ""}
             ${cold ? "" : near(r, e, m, d, sank[e.id])}
@@ -207,6 +226,15 @@
   document.addEventListener("click", (ev) => {
     if (ev.target.closest('[data-act="forget"]')) { forget(); toast("forgotten"); }
     else if (ev.target.closest('[data-act="fresh"]')) forget();
+    // the demo taste: three entries chosen at build time to sit far apart, so a
+    // cold visitor can watch the ranker mix feeds without picking anything first
+    else if (ev.target.closest('[data-act="demo"]') && corpus && corpus.demo) {
+      state.picked = new Set(corpus.demo.m || []);
+      state.passed = new Set(corpus.demo.d || []);
+      state.tab = "taste"; state.borrowed = false; state.shown = PAGE;
+      render();
+      $("list").focus({ preventScroll: true });
+    }
   });
   // a fragment (#list from the skip link, typed or from history) is not a state
   addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) load(); });
