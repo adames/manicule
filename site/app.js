@@ -83,7 +83,7 @@
   // the receipt: two terms, a rule (the equals), the total. with nothing
   // dismissed there is no subtraction, so only the total prints
   function receipt(r) {
-    if (r.score === -Infinity) return `<div class="calc"><span class="notext">no text, sinks</span></div>`;
+    if (r.score === -Infinity) return `<div class="calc"><span class="notext">no words, sinks</span></div>`;
     // a hidden "score" names the arithmetic for screen readers (the column legend is decoration)
     if (!state.dismissed.size) return `<div class="calc"><span class="sr-only">score</span> <span class="tot">${fmt(r.score)}</span></div>`;
     return `<div class="calc"><span class="sr-only">score</span> <span class="t1">${fmt(r.pos)}</span> <span class="t2">− ${state.lam.toFixed(2)} × ${num(r.neg)}</span> <span class="eq sr-only">=</span> <span class="tot">${fmt(r.score)}</span></div>`;
@@ -183,7 +183,7 @@
   $("tab-taste").addEventListener("click", () => {
     if (ranked(state.lam)) { state.tab = "taste"; render(); return; }
     // cold with a mark means the only kept row has no vector: say so, not "mark something"
-    toast(state.marked.size ? "no text, sinks" : "mark something first");
+    toast(state.marked.size ? "no words, sinks" : "mark something first");
   });
   $("tab-date").addEventListener("click", () => { if (ranked(state.lam)) { state.tab = "date"; render(); } });
   $("morebtn").addEventListener("click", () => {

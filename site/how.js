@@ -12,7 +12,7 @@
   // they survive edits; each fires once, on the first line that matches.
   const NOTES = [
     ["return None", "nothing kept: newest first"],
-    ['float("-inf")', "no text: sinks, never dropped"],
+    ['float("-inf")', "no words: sinks, never dropped"],
     ["p - lam * n", "the whole method", true],
     ["out.sort(", "best first"],
     ["cosine(e.vector, kept_ids[k])", "the near line"],

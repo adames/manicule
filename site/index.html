@@ -28,7 +28,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
     <a href="how.html" data-page="how">how</a>
     <a href="yours.html" data-page="yours">fork</a>
-    <a href="colophon.html" data-page="colophon">colophon</a>
+    <a href="about.html" data-page="about">about</a>
     <span class="gap"></span>
     <a href="https://github.com/adames/manicule">github</a>
     <a href="https://adames.cc">adames.cc</a>
@@ -48,7 +48,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <a href="./" data-page="feed">feed</a>
       <a href="how.html" data-page="how">how</a>
       <a href="yours.html" data-page="yours">fork</a>
-      <a href="colophon.html" data-page="colophon">colophon</a>
+      <a href="about.html" data-page="about">about</a>
       <a href="https://github.com/adames/manicule">github</a>
     </nav>
   </header>
@@ -85,15 +85,14 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <p>every entry turns into a vector and your browser averages the vectors you marked into one kept vector, or one you dismissed into one dismissed vector. then we score it</p>
           <dl class="kv kv--tight">
             <dt>entry</dt><dd>title + blurb, one vector, <span class="mono">384</span> dims</dd>
-            <dt>kept</dt><dd>the mean of what you pointed at</dd>
-            <dt>dismissed</dt><dd>the mean of what you waved off</dd>
-            <dt>λ</dt><dd><span class="mono">0.25</span>. a nudge, not a veto</dd>
+            <dt>kept</dt><dd>the mean of what you like</dd>
+            <dt>dismissed</dt><dd>the mean of what you dislike</dd>
+            <dt>λ</dt><dd><span class="mono">0.25</span>, low</dd>
             <dt>nothing kept</dt><dd>newest first</dd>
-            <dt>no text</dt><dd>sinks, never dropped</dd>
+            <dt>no words</dt><dd>sinks to the bottom, never dropped</dd>
           </dl>
         </div>
       </details>
-      <a class="how-link" href="how.html">one file, read it</a>
       </div>
 
       <!-- the ledger -->
@@ -125,7 +124,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         </div>
 
         <div class="banner" id="banner" role="status" hidden>
-          <span><b>a friend's marks</b> rank this feed · point at one and it's yours</span>
+          <span><b>these marks came with the link</b> · point at one and it's yours</span>
           <span class="acts"><button class="btn" type="button" data-act="fresh">start fresh</button></span>
         </div>
 
@@ -171,7 +170,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       </div>
       <div class="colophon-line">
         <span>no accounts, no server, no database</span>
-        <nav aria-label="elsewhere"><a href="https://github.com/adames/manicule">github</a><a href="colophon.html">colophon</a><a href="https://adames.cc">adames.cc</a></nav>
+        <nav aria-label="elsewhere"><a href="https://github.com/adames/manicule">github</a><a href="about.html">about</a><a href="https://adames.cc">adames.cc</a></nav>
       </div>
     </footer>
   </div>

@@ -174,7 +174,6 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .how summary::after{content:"+";content:"+" / "";font-family:var(--font-mono);font-size:var(--text-md);color:var(--muted);width:1ch;text-align:center}
 .how[open] summary::after{content:"−";content:"−" / ""}
 .how summary:hover::after{color:var(--text)}
-.how-link{position:absolute;top:var(--border-w);right:calc(var(--space-4) + var(--space-1));display:inline-flex;align-items:center;height:max(var(--control-sm),calc(var(--text-md) * var(--leading-normal) + 2 * var(--space-2)));font-size:var(--text-xs)} /* the summary's own height, so the two baselines meet */
 .how-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-3) var(--space-6);padding:var(--space-2) 0 var(--space-4)}
 .how-body p{font-size:var(--text-sm);line-height:var(--leading-normal);color:var(--text-secondary);max-width:var(--measure);text-wrap:pretty;text-transform:lowercase}
 
