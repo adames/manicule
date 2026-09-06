@@ -1,9 +1,9 @@
-# manicule ☞
+# ☞ manicule
 
-☞ remember your tastes
+remember your tastes
 
-No database, no server, no account needed. One Python file for your own feeds, and a
-static demo page.
+no database, no server, no account needed. One Python file for your own feeds, and a
+static demo page
 
 ## The whole method
 
@@ -12,14 +12,14 @@ score(entry) = cos(entry, kept) − λ · cos(entry, dismissed)
 ```
 
 `kept` is the mean embedding of what you liked. `dismissed` is the mean
-embedding of what you didn't like. Two averages and a subtraction (and a λ).
+embedding of what you didn't like. Two averages and a subtraction (and a λ)
 
-Entries are embedded from headline plus a short blurb, locally, with
+entries are embedded from headline plus a short blurb, locally, with
 [fastembed](https://github.com/qdrant/fastembed) (`BAAI/bge-small-en-v1.5`,
 384 dimensions). At first run it's newest first.
 
-The idea comes from [Commonplace](https://github.com/adames/commonplace), an 
-unreleased library I was developing.
+the idea comes from [Commonplace](https://github.com/adames/commonplace), an 
+unreleased library I was developing
 
 ## Your own feeds
 
