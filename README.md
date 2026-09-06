@@ -50,7 +50,7 @@ makes a taste shareable and means nothing is stored anywhere.
 ## Tests
 
 ```bash
-uv run pytest -q && node --test tests/
+uv run pytest -q && node --test tests/rank.test.mjs
 ```
 
 `tests/fixture.json` is hand-computed and checked by both the Python and the

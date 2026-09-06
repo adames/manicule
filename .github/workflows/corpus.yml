@@ -22,7 +22,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv python install 3.12
       - run: uv sync --group dev
-      - run: uv run pytest -q && node --test tests/
+      - run: uv run pytest -q && node --test tests/rank.test.mjs
       - run: uv run manicule.py corpus feeds.opml -o site/corpus.json
       - name: commit corpus
         run: |
