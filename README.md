@@ -25,7 +25,7 @@ unreleased library I was developing
 
 ```bash
 uv sync
-uv run manicule.py rank feeds.opml --kept ~/notes/kept --dismissed ~/notes/nope -o today.md
+uv run manicule.py rank feeds.opml --kept ~/notes/liked --dismissed ~/notes/disliked -o today.md
 ```
 
 `--kept` is any folder of `.md`/`.txt`. An Obsidian folder, saved articles,
