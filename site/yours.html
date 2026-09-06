@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en" data-dialect="square">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fork · manicule feed</title>
+<meta name="description" content="remember your tastes">
+<meta property="og:type" content="website">
+<meta property="og:title" content="manicule feed">
+<meta property="og:description" content="remember your tastes">
+<meta property="og:image" content="https://adames.github.io/manicule/og.png">
+<meta property="og:url" content="https://adames.github.io/manicule/yours.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c2f39' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cstyle%3E@media(prefers-color-scheme:dark){path{stroke:%23df938b}}%3C/style%3E%3Cg transform='rotate(90 12 12)'%3E%3Cpath d='M7.6 11.5V6a1.3 1.3 0 0 1 2.6 0V11'/%3E%3Cpath d='M10.2 11a1.1 1.1 0 0 1 2.2 0a1.05 1.05 0 0 1 2.1 0a1 1 0 0 1 1.7.5V17.8a2.2 2.2 0 0 1-2.2 2.2H9.4a2 2 0 0 1-2-2V11.5'/%3E%3Cpath d='M7.4 13.8a1.4 1.4 0 0 1-1.7-.5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="manicule.css">
+<script>
+/* Theme before paint: ?theme= in the query, else the stamped choice, else the OS. */
+try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getItem("manicule-theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(_){}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">skip to the page</a>
+
+<!-- the rail: Commonplace's table of contents -->
+<aside class="rail" aria-label="site">
+  <a class="mark" href="./" aria-label="manicule, home" data-hand="rest"></a>
+  <nav aria-label="pages">
+    <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
+    <a href="how.html" data-page="how">how</a>
+    <a href="yours.html" data-page="yours">fork</a>
+    <a href="colophon.html" data-page="colophon">colophon</a>
+    <span class="gap"></span>
+    <a href="https://github.com/adames/manicule">github</a>
+    <a href="https://adames.cc">adames.cc</a>
+    <span class="gap"></span>
+    <button class="theme" type="button"><span class="g"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></span><span class="moon">dark</span><span class="sun">light</span></button>
+  </nav>
+</aside>
+
+<div class="main">
+  <!-- mobile only: brand row, then the words -->
+  <header class="topbar">
+    <div class="brand">
+      <a href="./"><span data-hand="rest"></span><span>manicule</span></a>
+      <button class="theme" type="button"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></button>
+    </div>
+    <nav class="words" aria-label="pages">
+      <a href="./" data-page="feed">feed</a>
+      <a href="how.html" data-page="how">how</a>
+      <a href="yours.html" data-page="yours">fork</a>
+      <a href="colophon.html" data-page="colophon">colophon</a>
+      <a href="https://github.com/adames/manicule">github</a>
+    </nav>
+  </header>
+
+  <!-- app header: page word · wordmark · no actions on this page -->
+  <header class="apphead">
+    <span class="pagename">fork</span>
+    <span class="wordmark">manicule</span>
+  </header>
+
+  <div class="page">
+    <main id="main" tabindex="-1">
+      <section class="mast" aria-label="make it yours">
+        <h1>make it yours</h1>
+        <p class="lead">the hosted page ranks my feeds. for yours:</p>
+      </section>
+
+      <!-- the fork: his README steps, as rows -->
+      <section class="prose" aria-labelledby="fork">
+        <h2 class="sect" id="fork"><span>fork it</span></h2>
+        <ol class="steps">
+          <li><span>fork this repo</span></li>
+          <li><span>replace <code>feeds.opml</code> with yours (any reader exports one; each <code>&lt;outline xmlUrl="…"&gt;</code> is a feed)</span></li>
+          <li><span>in the fork's settings, pages → source: github actions</span></li>
+          <li><span>push, or run the <code>corpus</code> workflow by hand</span></li>
+        </ol>
+        <div class="specimen">
+          <div class="lbl"><span>your site</span><span>refreshed daily at 06:17 utc</span></div>
+          <div class="link"><span class="host">https://</span>&lt;you&gt;<span class="host">.github.io/manicule/</span></div>
+        </div>
+        <p>your marks stay in your browser and your links</p>
+        <p><a class="btn primary" href="https://github.com/adames/manicule/fork">fork it</a></p>
+        <p class="muted lc">if you want the ranker without a website, skip this and use the cli below</p>
+      </section>
+
+      <!-- the cli: his README block, a copy button, his two lines, the cron -->
+      <section class="prose" aria-labelledby="feeds">
+        <h2 class="sect" id="feeds"><span>your own feeds</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></h2>
+<pre>uv sync
+uv run manicule.py rank feeds.opml \
+  --kept ~/notes/kept \
+  --dismissed ~/notes/nope \
+  -o today.md</pre>
+        <p><button class="btn" type="button" data-copy="uv sync&#10;uv run manicule.py rank feeds.opml --kept ~/notes/kept --dismissed ~/notes/nope -o today.md">copy</button></p>
+        <p><code>--kept</code> is any folder of <code>.md</code>/<code>.txt</code>. an obsidian folder, saved articles, whatever you have</p>
+        <p>put it on a cron and read <code>today.md</code> with coffee</p>
+        <dl class="kv">
+          <dt>cron</dt><dd><span class="mono t">17 6 * * *  uv run manicule.py rank feeds.opml <span class="nowrap">--kept ~/notes/kept</span> <span class="nowrap">-o today.md</span></span></dd>
+        </dl>
+      </section>
+    </main>
+
+    <!-- the three doors -->
+    <footer class="foot">
+      <div class="doors">
+        <div class="door">
+          <span class="kicker">play</span>
+          <p>the link carries your marks</p>
+          <div class="specimen" data-specimen></div>
+          <a class="go" href="./">the feed</a>
+        </div>
+        <div class="door">
+          <span class="kicker">fork</span>
+          <p>fork it. swap feeds.opml. pages → source: github actions.</p>
+          <span class="addr">&lt;you&gt;.github.io/manicule/</span>
+          <p class="mono">refreshed daily at 06:17 utc</p>
+          <a class="go" href="#fork">fork it, above</a><!-- the page's one ember button is up in its section; the door points at it in ink -->
+        </div>
+        <div class="door">
+          <span class="kicker">cli</span>
+<pre>uv run manicule.py \
+  rank feeds.opml \
+  --kept ~/notes/kept \
+  --dismissed ~/notes/nope \
+  -o today.md</pre>
+          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --kept ~/notes/kept --dismissed ~/notes/nope -o today.md">copy</button>
+          <p>put it on a cron and read today.md with coffee</p>
+        </div>
+      </div>
+      <div class="colophon-line">
+        <span>no accounts, no server, no database</span>
+        <nav aria-label="elsewhere"><a href="https://github.com/adames/manicule">github</a><a href="colophon.html">colophon</a><a href="https://adames.cc">adames.cc</a></nav>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="shell.js"></script>
+</body>
+</html>

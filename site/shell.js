@@ -1,0 +1,182 @@
+// shell.js: what every page shares: the theme, the rail, the hand, the
+// toast, the printed link. Loads before app.js; exposes window.Shell.
+(function () {
+  const root = document.documentElement;
+  const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
+
+  // ---- the hand: Commonplace's manicule, one path set, three poses.
+  // up = more like this (as drawn), down = the same hand flipped,
+  // rest = the classic ☞ (rotated a quarter turn).
+  const PATHS =
+    '<path d="M7.6 11.5 V6 a1.3 1.3 0 0 1 2.6 0 V11"/>' +
+    '<path d="M10.2 11 a1.1 1.1 0 0 1 2.2 0 a1.05 1.05 0 0 1 2.1 0 a1 1 0 0 1 1.7 0.5 V17.8 a2.2 2.2 0 0 1 -2.2 2.2 H9.4 a2 2 0 0 1 -2 -2 V11.5"/>' +
+    '<path d="M7.4 13.8 a1.4 1.4 0 0 1 -1.7 -0.5"/>';
+  const POSE = { up: "", down: "translate(0,24) scale(1,-1)", rest: "rotate(90 12 12)" };
+  function hand(pose = "rest", size) {
+    const inner = POSE[pose] ? `<g transform="${POSE[pose]}">${PATHS}</g>` : PATHS;
+    const dim = size ? ` width="${size}" height="${size}"` : "";
+    return `<svg class="hand-svg" viewBox="0 0 24 24"${dim} fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${inner}</svg>`;
+  }
+  // Any element marked data-hand="up|down|rest" gets the drawing at load.
+  for (const el of $$("[data-hand]")) el.innerHTML = hand(el.dataset.hand);
+
+  // ---- theme: a stamped choice wins; otherwise the OS decides. ?theme=dark
+  // in the query stamps without persisting (screenshots, links).
+  const q = new URLSearchParams(location.search).get("theme");
+  if (q === "dark" || q === "light") root.dataset.theme = q;
+  function isDark() {
+    return root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  // the button is named by the theme a press gives (the rail word says the same)
+  function labelTheme() { for (const b of $$(".theme")) b.setAttribute("aria-label", isDark() ? "light" : "dark"); }
+  function toggleTheme() {
+    root.dataset.theme = isDark() ? "light" : "dark";
+    try { localStorage.setItem("manicule-theme", root.dataset.theme); } catch (_) {}
+    labelTheme();
+  }
+  for (const b of $$(".theme")) b.addEventListener("click", toggleTheme);
+  labelTheme();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", labelTheme);
+
+  // ---- active nav: the page word from the path. "" and index.html are the feed.
+  const file = location.pathname.split("/").pop() || "index.html";
+  const page = file.replace(/\.html$/, "").replace(/^index$/, "feed");
+  for (const a of $$("[data-page]")) {
+    const on = a.dataset.page === page;
+    a.classList.toggle("active", on);
+    if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  }
+
+  // ---- the marks. A hash reads as {m, d, l}; the mirror is this browser's
+  // copy of its own marks (localStorage "manicule"); hashOf prints them back
+  // as the feed's hash, ids comma-separated so the link stays readable.
+  function marksIn(hash) {
+    const h = new URLSearchParams((hash || "").replace(/^#/, ""));
+    return {
+      m: (h.get("m") || "").split(",").filter(Boolean),
+      d: (h.get("d") || "").split(",").filter(Boolean),
+      l: h.get("l"),
+    };
+  }
+  function mirror() {
+    try { return JSON.parse(localStorage.getItem("manicule") || "null"); } catch (_) { return null; }
+  }
+  function hashOf(m, d, l) {
+    const parts = [];
+    if (m.length) parts.push("m=" + m.join(","));
+    if (d.length) parts.push("d=" + d.join(","));
+    if (l != null) parts.push("l=" + l);
+    return parts.length ? "#" + parts.join("&") : "";
+  }
+  // the hash is the marks: empty, or #m=…&d=…&l=…. anything else (#main,
+  // #list) is a fragment, never a state.
+  const isMarks = (h) => h === "" || /^#[mdl]=/.test(h);
+  // a typed address carries no hash; a bookmark may carry only a λ. if this
+  // browser has marks, the mirror supplies them before anything reads
+  // location.hash (a λ in the hash wins over the mirror's), so the printed
+  // link, share and the rail links agree with the feed on every page.
+  const here = marksIn(location.hash);
+  if (isMarks(location.hash) && !here.m.length && !here.d.length) {
+    const saved = mirror() || {}, m = saved.m || [], d = saved.d || [];
+    const l = isNaN(lam(here.l)) ? lam(saved.l) : lam(here.l);
+    if (m.length || d.length) history.replaceState(null, "", hashOf(m, d, isNaN(l) ? null : l));
+  }
+
+  // ---- hash carry-along: marks travel between pages. Every same-site link
+  // without a hash of its own gets location.hash appended, now and whenever
+  // the hash changes (app.js calls carry() after it rewrites the hash).
+  function carry() {
+    for (const a of $$("a[href]")) {
+      const raw = a.dataset.href || a.getAttribute("href");
+      if (/^(https?:|mailto:|#)/.test(raw) || raw.includes("#")) continue;
+      a.dataset.href = raw;
+      a.setAttribute("href", raw + location.hash);
+    }
+  }
+  carry();
+  addEventListener("hashchange", () => { if (isMarks(location.hash)) { carry(); renderSpecimens(); } });
+  // same-page links (the skip link, "fork it, above") scroll and focus by
+  // hand: a fragment in the address bar would replace the marks, read as a
+  // new state, and push a history entry with every press.
+  document.addEventListener("click", (ev) => {
+    const a = ev.target.closest('a[href^="#"]');
+    if (!a || ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+    const el = document.getElementById(a.getAttribute("href").slice(1));
+    if (!el) return;
+    ev.preventDefault();
+    if (!el.hasAttribute("tabindex")) el.tabIndex = -1;
+    el.scrollIntoView();
+    el.focus({ preventScroll: true });
+  });
+
+  // ---- the rail count: the feed page writes it after loading corpus.json;
+  // the other pages show the last number seen.
+  try {
+    const n = localStorage.getItem("manicule-count");
+    if (n) for (const el of $$("[data-count]")) el.textContent = n;
+  } catch (_) {}
+
+  // ---- toast: one line, role=status, gone in 1.8s. The element is always
+  // in the page and empty (a live region has to exist before it speaks);
+  // the stylesheet hides it while empty.
+  let timer;
+  function toast(msg) {
+    let t = document.getElementById("toast");
+    if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+    t.textContent = msg;
+    clearTimeout(timer); timer = setTimeout(() => { t.textContent = ""; }, 1800);
+  }
+
+  // ---- λ from a hash or a mirror: clamped to 0..1 and snapped to the
+  // ruler's 0.05 step so the thumb, the readout and the receipts agree.
+  function lam(x) {
+    const v = parseFloat(x);
+    return isNaN(v) ? NaN : Math.round(Math.min(1, Math.max(0, v)) * 20) / 20;
+  }
+
+  // ---- copy: clipboard, true on success
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (_) { return false; }
+  }
+
+  // ---- the printed link: the share url typeset as a specimen. Ember only
+  // on the kept ids; dismissed ids struck through; host from location.
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // the feed's address: this host, the site folder, the marks. share copies
+  // exactly what the specimen prints (no query, never a forced theme).
+  const dir = () => location.pathname.replace(/[^/]*$/, "");
+  const feedUrl = () => location.origin + dir() + location.hash;
+  function specimen(hash) {
+    const { m, d, l } = marksIn(hash);
+    const host = location.host, path = dir();
+    const marked = m.length || d.length;
+    const label = marked ? `${(hash || "").length} chars` : "point at something";
+    let body = `<span class="host">${esc(host)}</span><br><span class="host">${esc(path)}</span>`;
+    if (marked) {
+      if (m.length) body += `<br><span class="k">#m=</span>` + m.map((id) => `<span class="m">${esc(id)}</span>`).join('<span class="k">,</span>');
+      if (d.length) body += `<br><span class="k">${m.length ? "&amp;" : "#"}d=</span>` + d.map((id) => `<span class="d">${esc(id)}</span>`).join('<span class="k">,</span>');
+      if (l) body += `<br><span class="k">&amp;l=</span>${esc(l)}`;
+    }
+    return `<div class="lbl"><span>the link</span><span>${label}</span></div><div class="link">${body}</div>`;
+  }
+  function renderSpecimens(hash = location.hash) {
+    for (const el of $$("[data-specimen]")) el.innerHTML = specimen(hash);
+  }
+  renderSpecimens();
+
+  // ---- shared actions: share copies the address (it carries the marks);
+  // data-copy copies its own text.
+  document.addEventListener("click", async (ev) => {
+    const share = ev.target.closest('[data-act="share"]');
+    if (share) {
+      const { m, d } = marksIn(location.hash);
+      if (!m.length && !d.length) return toast("mark something first");
+      toast((await copy(feedUrl())) ? "link copied, it carries your marks" : "copy the address bar, it carries your marks");
+      return;
+    }
+    const c = ev.target.closest("[data-copy]");
+    if (c) toast((await copy(c.dataset.copy)) ? "copied" : "couldn't copy");
+  });
+
+  window.Shell = { hand, toast, copy, carry, specimen, renderSpecimens, marksIn, mirror, hashOf, lam, isMarks, isDark, esc };
+})();

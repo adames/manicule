@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" data-dialect="square" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>manicule og</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c2f39' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cstyle%3E@media(prefers-color-scheme:dark){path{stroke:%23df938b}}%3C/style%3E%3Cg transform='rotate(90 12 12)'%3E%3Cpath d='M7.6 11.5V6a1.3 1.3 0 0 1 2.6 0V11'/%3E%3Cpath d='M10.2 11a1.1 1.1 0 0 1 2.2 0a1.05 1.05 0 0 1 2.1 0a1 1 0 0 1 1.7.5V17.8a2.2 2.2 0 0 1-2.2 2.2H9.4a2 2 0 0 1-2-2V11.5'/%3E%3Cpath d='M7.4 13.8a1.4 1.4 0 0 1-1.7-.5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="manicule.css">
+<style>
+/* og.png is rendered from this file at 1200×630 with headless Chrome. */
+html,body{width:1200px;height:630px;overflow:hidden}
+/* sized to read as a 300px card: the formula is the differentiator, so it is nearly the size of the tagline */
+body{display:flex;flex-direction:column;justify-content:center;padding:0 96px}
+.og-brand{display:flex;align-items:center;gap:var(--space-4);color:var(--text);font-size:48px;font-weight:var(--weight-semibold);letter-spacing:-.01em;text-transform:lowercase}
+.og-brand svg{width:64px;height:64px;color:var(--ember)}
+.og-tag{margin-top:var(--space-5);font-size:84px;font-weight:var(--weight-semibold);line-height:1.05;letter-spacing:-.02em;text-transform:lowercase;color:var(--text)}
+.og-formula{margin-top:var(--space-6);font-family:var(--font-mono);font-size:42px;line-height:1.3;color:var(--text);letter-spacing:-.01em}
+.og-formula .op{color:var(--muted)}
+.og-meta{margin-top:var(--space-4);font-family:var(--font-mono);font-size:28px;color:var(--muted);letter-spacing:-.01em}
+</style>
+</head>
+<body>
+<div class="og-brand"><span data-hand="rest"></span><span>manicule</span></div>
+<div class="og-tag">remember your tastes</div>
+<div class="og-formula">score <span class="op">=</span> cos(entry, kept)<br><span class="op">−</span> λ · cos(entry, dismissed)</div>
+<div class="og-meta">no accounts, no server, no database</div>
+<script src="shell.js"></script>
+</body>
+</html>
