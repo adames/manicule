@@ -61,3 +61,11 @@ def test_snippet_drops_hacker_news_boilerplate():
     raw = "<p>Article URL: <a href=\"https://x.org/p\">https://x.org/p</a></p><p>Comments URL: <a href=\"https://news.ycombinator.com/item?id=1\">https://news.ycombinator.com/item?id=1</a></p><p>Points: 125</p><p># Comments: 41</p>"
     assert snippet(raw) == ""
     assert snippet("Real blurb here. Points: 3") == "Real blurb here."
+
+
+def test_snippet_drops_feed_tails():
+    wp = "Deep thought. The post Live from ICM 2026: What Is Math For? first appeared on Quanta Magazine."
+    assert snippet(wp) == "Deep thought."
+    yt = "ADHD meds change signalling. #kurzgesagt #science #adhd Sources & further reading: https://example.org/x"
+    assert snippet(yt) == "ADHD meds change signalling."
+    assert snippet("C# and F# are languages") == "C# and F# are languages"
