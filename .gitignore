@@ -6,3 +6,5 @@ kept/
 dismissed/
 *.pyc
 .DS_Store
+COPY.md
+.claude/
