@@ -11,14 +11,20 @@ static demo page
 score(entry) = cos(entry, kept) − λ · cos(entry, dismissed)
 ```
 
-`kept` is the mean embedding of what you liked. `dismissed` is the mean
-embedding of what you didn't like. Two averages and a subtraction (and a λ)
+`kept` is the mean embedding of what you like. `dismissed` is the mean
+embedding of what you dislike. Two averages and a subtraction (and a λ)
+
+λ is how much a dislike counts. 0.25 by default, so it's a nudge. push it to
+1.0 and a dislike weighs as much as a like.
 
 entries are embedded from headline plus a short blurb, locally, with
 [fastembed](https://github.com/qdrant/fastembed) (`BAAI/bge-small-en-v1.5`,
-384 dimensions). At first run it's newest first.
+384 dimensions). nothing leaves your machine but the feed fetches.
 
-the idea comes from [Commonplace](https://github.com/adames/commonplace), an 
+like nothing and there's no taste to rank by, so it stays newest first. an
+entry with no words sinks to the bottom, but it never gets dropped.
+
+the idea comes from [Commonplace](https://github.com/adames/commonplace), an
 unreleased library I was developing
 
 ## Your own feeds
@@ -29,14 +35,17 @@ uv run manicule.py rank feeds.opml --kept ~/notes/liked --dismissed ~/notes/disl
 ```
 
 `--kept` is any folder of `.md`/`.txt`. An Obsidian folder, saved articles,
-whatever you have. Put it on a cron and read `today.md` with coffee.
+whatever you have. `--dismissed` is optional. Put it on a cron and read
+`today.md` with coffee.
 
 ## The demo
 
 `site/` is a static page. A GitHub Action rebuilds `site/corpus.json` daily
 (`manicule.py corpus feeds.opml`) from the mixed sample in `feeds.opml`: code,
-science, essays, podcasts, sports, food, games. Vectors ship int8; the browser does the
-math in `site/rank.js`. Marks live in the URL.
+science, essays, podcasts, sports, food, games. mixed on purpose, so marking two
+things visibly reorders everything. Vectors ship int8; the browser does the
+math in `site/rank.js`, same math as the Python. Marks live in the URL, so a
+link is a taste.
 
 ## Make it yours: fork it
 
