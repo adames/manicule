@@ -140,9 +140,11 @@
             ${cold ? "" : near(r, e, m, d, sank[e.id])}
           </div>
           ${cold ? "" : receipt(r)}
-          <div class="hands"><!-- each hand is described by its row's title, so a list of 120 buttons still tells them apart -->
-            <button class="hand up" type="button" data-act="mark" aria-pressed="${m}" aria-label="more like this" title="more like this" aria-describedby="t-${esc(e.id)}">${hand("up")}</button>
-            <button class="hand down" type="button" data-act="dismiss" aria-pressed="${d}" aria-label="less like this" title="less like this" aria-describedby="t-${esc(e.id)}">${hand("down")}</button>
+          <div class="hands">
+            <!-- one control, three states: empty, pointed at, passed on. A click
+                 advances it. Described by its row's title, so a page of them
+                 still tells them apart. -->
+            <button class="mk ${m ? "point" : d ? "pass" : ""}" type="button" data-act="cycle" aria-label="${m ? "pointed at, press to pass on" : d ? "passed on, press to clear" : "point at this"}" title="${m ? "pointed at" : d ? "passed on" : "point at this"}" aria-describedby="t-${esc(e.id)}">${m ? hand("point") : d ? hand("bird") : hand("point")}</button>
           </div>
         </li>`;
       }).join("");
@@ -169,8 +171,10 @@
     const b = ev.target.closest("button[data-act]"); if (!b) return;
     const id = b.closest(".row").dataset.id;
     // a mark clears a dismissal and vice versa; pressing again undoes
-    if (b.dataset.act === "mark") { state.dismissed.delete(id); state.marked.has(id) ? state.marked.delete(id) : state.marked.add(id); }
-    else { state.marked.delete(id); state.dismissed.has(id) ? state.dismissed.delete(id) : state.dismissed.add(id); }
+    // one control, so a press advances: nothing -> pointed at -> passed on -> nothing
+    if (state.marked.has(id)) { state.marked.delete(id); state.dismissed.add(id); }
+    else if (state.dismissed.has(id)) { state.dismissed.delete(id); }
+    else { state.marked.add(id); }
     adopt(); render();
   });
   $("chips").addEventListener("click", (ev) => {
