@@ -97,7 +97,7 @@
   const num = (x) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
   const pct = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
   const dateOf = (iso) => iso ? iso.slice(0, 10) : "undated";
-  const READS = { 0: "dismissals ignored", 0.25: "a nudge, default weight", 0.5: "half a veto", 1: "a dismissal can overrule" };
+  const READS = { 0: "ignored", 0.25: "a nudge, the default", 0.5: "half weight", 1: "full weight" };
 
   function renderWorked() {
     const t = taste();
@@ -122,7 +122,7 @@
     $("worked-link").hidden = false; // an empty link is a nameless tab stop, so it stays hidden until it has words
     $("worked-note").hidden = !t.pretend;
     // the pretend rows are picked newest-first; "row 2" would collide with the ranked row number in the link
-    $("worked-note").textContent = t.pretend ? "pretend taste · newest kept, next newest dismissed" : "";
+    $("worked-note").textContent = t.pretend ? "pretend taste · newest pointed at, next newest passed on" : "";
 
     // the same row at other λ, the visitor's own λ among them
     const lams = [...new Set([0, 0.25, 0.5, 1, t.lam])].sort((a, b) => a - b);

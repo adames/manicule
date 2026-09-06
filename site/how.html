@@ -74,7 +74,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <div>
         <div class="formula" role="img" aria-label="score equals cosine of entry and kept, minus lambda times cosine of entry and dismissed">
           <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, kept)</span><span class="lbl">what you pointed at</span></span></span>
-          <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, dismissed)</span><span class="lbl">what you waved off × λ</span></span></span>
+          <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, dismissed)</span><span class="lbl">what you passed on × λ</span></span></span>
         </div>
         <p class="kicker-line">two averages and a subtraction</p>
       </div>
@@ -100,7 +100,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <h2 class="sect"><span>the same row, other λ</span></h2>
         <div class="dt-wrap">
           <table class="dt">
-            <thead><tr><th scope="col" class="lc">λ</th><th scope="col" class="num">score</th><th scope="col" class="num">rank</th><th scope="col" class="grow">reads as</th></tr></thead>
+            <thead><tr><th scope="col" class="lc">λ</th><th scope="col" class="num">score</th><th scope="col" class="num">rank</th><th scope="col" class="grow">what it does</th></tr></thead>
             <tbody id="lam-rows"></tbody>
           </table>
         </div>

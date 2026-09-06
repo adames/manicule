@@ -92,7 +92,7 @@
   // just "kept"; on a dismissed row how far the λ term moved it
   function near(r, e, m, d, sank) {
     if (r.score === -Infinity) return "";
-    if (m) return `<p class="near">kept</p>`;
+    if (m) return `<p class="near">pointed at</p>`;
     if (d) return `<p class="near"><span>${sank > 0 ? `sank ${sank}, still here` : "still here"}</span></p>`;
     const n = r.nearest && byId[r.nearest];
     return n ? `<p class="near">${hand("rest")}<span>near</span><span class="t" title="${esc(n.title)}">“${esc(cut(n.title, 48))}”</span></p>` : "";
@@ -120,7 +120,7 @@
     // the spaces between the spans are for screen readers (the dots are CSS)
     $("status").innerHTML = cold
       ? `<b>newest first</b>`
-      : `<b>ranked</b> <span class="n">${state.marked.size} kept</span> <span class="n">${state.dismissed.size} dismissed</span> <span class="n">λ ${state.lam.toFixed(2)}</span>`;
+      : `<b>ranked</b> <span class="n">${state.marked.size} pointed at</span> <span class="n">${state.dismissed.size} passed on</span> <span class="n">λ ${state.lam.toFixed(2)}</span>`;
     // taste stays focusable while cold (aria-disabled), so a press can say why
     $("tab-taste").setAttribute("aria-disabled", cold);
     $("tab-taste").title = cold ? "mark something first" : "";

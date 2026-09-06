@@ -74,7 +74,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <!-- the formula, always visible -->
       <div class="formula" role="img" aria-label="score equals cosine of entry and kept, minus lambda times cosine of entry and dismissed">
         <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, kept)</span><span class="lbl">what you pointed at</span></span></span>
-        <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, dismissed)</span><span class="lbl">what you waved off × λ</span></span></span>
+        <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, dismissed)</span><span class="lbl">what you passed on × λ</span></span></span>
       </div>
 
       <!-- how it works: the details, with the how.html link beside the summary (a link inside a summary is two controls in one) -->
@@ -85,8 +85,8 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <p>every entry turns into a vector and your browser averages the vectors you marked into one kept vector, or one you dismissed into one dismissed vector. then we score it</p>
           <dl class="kv kv--tight">
             <dt>entry</dt><dd>title + blurb, one vector, <span class="mono">384</span> dims</dd>
-            <dt>kept</dt><dd>the mean of what you like</dd>
-            <dt>dismissed</dt><dd>the mean of what you dislike</dd>
+            <dt>kept</dt><dd>the mean of what you pointed at</dd>
+            <dt>dismissed</dt><dd>the mean of what you passed on</dd>
             <dt>λ</dt><dd><span class="mono">0.25</span>, low</dd>
             <dt>nothing kept</dt><dd>newest first</dd>
             <dt>no words</dt><dd>sinks to the bottom, never dropped</dd>
@@ -104,7 +104,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </div>
           <span class="vr" aria-hidden="true"></span>
           <div class="ruler-wrap">
-            <label for="lam">λ · how much a dismissal counts</label>
+            <label for="lam">λ · how much a pass counts</label>
             <div class="ruler-row">
               <span class="ruler"><input type="range" id="lam" min="0" max="1" step="0.05" value="0.25" aria-valuetext="λ 0.25"></span>
               <output id="lamv" for="lam" aria-live="off">0.25</output><!-- not live: the slider's valuetext and the status already say the number -->
@@ -131,7 +131,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <div class="thead" aria-hidden="true">
           <span>#</span>
           <span>entry</span>
-          <span class="r">kept<span class="w"><br>− λ · waved off</span></span>
+          <span class="r">pointed at<span class="w"><br>− λ · passed on</span></span>
           <span class="c" data-hand="rest"></span>
         </div>
         <span id="newtab" hidden>opens in a new tab</span>
@@ -145,26 +145,22 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <footer class="foot">
       <div class="doors">
         <div class="door">
-          <span class="kicker">save</span>
-          <p>the link carries your likes</p>
+          <span class="kicker">share</span>
+          <p>the link carries your marks</p>
           <span class="addr" data-addr></span>
           <button class="btn" type="button" data-act="share">share</button>
         </div>
         <div class="door">
           <span class="kicker">fork</span>
-          <p>fork it. swap feeds.opml. pages → source: github actions.</p>
-          <span class="addr">&lt;you&gt;.github.io/manicule/</span>
-          <p class="mono">refreshed daily at 06:17 utc</p>
-          <a class="go" href="https://github.com/adames/manicule/fork">fork it</a>
+          <a class="go addr" href="https://github.com/adames/manicule/fork">&lt;you&gt;.github.io/manicule/</a>
         </div>
         <div class="door">
           <span class="kicker">cli</span>
 <pre>uv run manicule.py \
   rank feeds.opml \
-  --kept ~/notes/liked \
-  --dismissed ~/notes/disliked \
+  --kept ~/notes \
   -o today.md</pre>
-          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --kept ~/notes/liked --dismissed ~/notes/disliked -o today.md">copy</button>
+          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --kept ~/notes -o today.md">copy</button>
           <p>put it on a cron and read today.md with coffee</p>
         </div>
       </div>

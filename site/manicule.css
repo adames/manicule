@@ -145,6 +145,7 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .door .addr{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text);letter-spacing:-.01em;text-transform:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .door pre{align-self:stretch;font-size:var(--text-2xs);padding:var(--space-2) var(--space-3);white-space:pre-wrap}
 .door .go{font-size:var(--text-xs)}
+.door a.addr{color:var(--ember)} /* the fork cell's address is its link, so it takes the accent */
 .door .go[href^="#"]{color:var(--text-secondary);text-decoration-line:underline;text-decoration-thickness:.08em} /* yours.html: the door points up at the page's one ember button, in ink */
 /* standalone text links reach a 24px target without growing visually */
 .door .go,.sect a,.colophon-line nav a{display:inline-flex;align-items:center;min-height:var(--space-5)}
