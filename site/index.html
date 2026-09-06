@@ -101,9 +101,10 @@ main{padding-block:var(--section) calc(var(--section) * 1.2)}
 
 /* ── toolbar: the 2px ink rule under the app header ───────────────────── */
 .bar{margin-top:var(--section);padding-bottom:var(--space-3);border-bottom:var(--border-w-strong) solid var(--text);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3) var(--space-4)}
-.status{flex:1 1 16rem;font-size:var(--step--1);color:var(--text-secondary);text-transform:lowercase;line-height:1.45}
+.status{flex:1 1 20rem;font-size:var(--step--1);color:var(--text-secondary);text-transform:lowercase;line-height:1.45}
 .status b{color:var(--text);font-weight:500}
 .status .count{font-family:var(--font-mono);color:var(--muted);letter-spacing:-.01em}
+.status .count{white-space:nowrap}
 .status .count+.count::before{content:"·";margin:0 var(--space-2);opacity:.6}
 .status .hand{font-family:var(--font-serif)}
 .tools{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-3)}
