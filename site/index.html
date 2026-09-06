@@ -93,9 +93,9 @@ main{padding-block:var(--section) calc(var(--section) * 1.2)}
 .method summary::after{content:"+";font-family:var(--font-mono);color:var(--muted)}
 .method[open] summary::after{content:"−"}
 .method summary:hover{color:var(--text)}
-.method .body{padding-bottom:var(--space-4);color:var(--text-secondary);font-size:var(--step--1);line-height:1.6}
+.method .body{padding-bottom:var(--space-2);color:var(--text-secondary);font-size:var(--step--1);line-height:1.6}
 .method .body p+p{margin-top:var(--space-3)}
-.formula{display:grid;grid-template-columns:auto auto auto auto auto;column-gap:var(--space-2);row-gap:var(--space-1);align-items:baseline;justify-content:start;margin-block:var(--space-4);padding:var(--space-3) var(--space-4);background:var(--surface);border-radius:var(--radius);font-family:var(--font-mono);font-size:var(--step--1);color:var(--text);overflow-x:auto}
+.formula{display:grid;grid-template-columns:auto auto auto auto auto;column-gap:var(--space-2);row-gap:var(--space-1);align-items:baseline;justify-content:start;margin-block:var(--space-4) var(--space-2);padding:var(--space-3) var(--space-4);background:var(--surface);border-radius:var(--radius);font-family:var(--font-mono);font-size:var(--step--1);color:var(--text);overflow-x:auto}
 .formula .op{color:var(--muted)}
 .formula .lbl{grid-row:2;font-family:var(--font-sans);font-size:var(--step--1);color:var(--muted);text-transform:lowercase;line-height:1.3}
 
@@ -218,15 +218,14 @@ ol.list{list-style:none;padding:0;margin:0}
     <p class="corpus mono" id="corpus" aria-live="polite"><span>loading the corpus…</span></p>
 
     <details class="method" id="method">
-      <summary>how it works, in full</summary>
+      <summary>how it works</summary>
       <div class="body">
-        <p>Every entry's headline and blurb was turned into a 384-number vector once, on the machine that built this page (a small local model, no API). Your browser averages the vectors of what you marked into one <em>kept</em> vector, and what you dismissed into one <em>dismissed</em> vector. Then each entry is scored:</p>
+        <p>every entry turns into a vector and your browser averages the vectors you marked into one kept vector, or one you dismissed into one dismissed vector. then we score it</p>
         <div class="formula" role="img" aria-label="score equals cosine of entry and kept, minus lambda times cosine of entry and dismissed">
           <span>score</span><span class="op">=</span><span>cos(entry, kept)</span><span class="op">−</span><span>λ · cos(entry, dismissed)</span>
-          <span class="lbl" style="grid-column:3">how much it resembles what you pointed at</span>
-          <span class="lbl" style="grid-column:5">how much it resembles what you waved off, scaled by λ</span>
+          <span class="lbl" style="grid-column:3">what you pointed at</span>
+          <span class="lbl" style="grid-column:5">what you waved off × λ</span>
         </div>
-        <p>That's the whole algorithm. No training, no history, no model of you — two averages and a subtraction. λ keeps a dismissal a nudge rather than a veto; drag it to feel the difference. Each score is shown decomposed, with the kept item it most resembles, so you can always see <em>why</em> something is where it is. Until you mark something there is no taste to rank by, so the list stays newest-first.</p>
       </div>
     </details>
   </section>
