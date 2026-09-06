@@ -102,31 +102,6 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 
     <!-- the three doors -->
     <footer class="foot">
-      <div class="doors">
-        <div class="door">
-          <span class="kicker">play</span>
-          <p>the link carries your marks</p>
-          <div class="specimen" data-specimen></div>
-          <button class="btn" type="button" data-act="share">share</button>
-        </div>
-        <div class="door">
-          <span class="kicker">fork</span>
-          <p>fork it. swap feeds.opml. pages → source: github actions.</p>
-          <span class="addr">&lt;you&gt;.github.io/manicule/</span>
-          <p class="mono">refreshed daily at 06:17 utc</p>
-          <a class="go" href="https://github.com/adames/manicule/fork">fork it</a>
-        </div>
-        <div class="door">
-          <span class="kicker">cli</span>
-<pre>uv run manicule.py \
-  rank feeds.opml \
-  --kept ~/notes/kept \
-  --dismissed ~/notes/nope \
-  -o today.md</pre>
-          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --kept ~/notes/kept --dismissed ~/notes/nope -o today.md">copy</button>
-          <p>put it on a cron and read today.md with coffee</p>
-        </div>
-      </div>
       <div class="colophon-line">
         <span>no accounts, no server, no database</span>
         <nav aria-label="elsewhere"><a href="https://github.com/adames/manicule">github</a><a href="about.html">about</a><a href="https://adames.cc">adames.cc</a></nav>

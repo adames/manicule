@@ -145,9 +145,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <footer class="foot">
       <div class="doors">
         <div class="door">
-          <span class="kicker">play</span>
-          <p>the link carries your marks</p>
-          <div class="specimen" data-specimen></div>
+          <span class="kicker">save</span>
+          <p>the link carries your likes</p>
+          <span class="addr" data-addr></span>
           <button class="btn" type="button" data-act="share">share</button>
         </div>
         <div class="door">
@@ -161,10 +161,10 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <span class="kicker">cli</span>
 <pre>uv run manicule.py \
   rank feeds.opml \
-  --kept ~/notes/kept \
-  --dismissed ~/notes/nope \
+  --kept ~/notes/liked \
+  --dismissed ~/notes/disliked \
   -o today.md</pre>
-          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --kept ~/notes/kept --dismissed ~/notes/nope -o today.md">copy</button>
+          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --kept ~/notes/liked --dismissed ~/notes/disliked -o today.md">copy</button>
           <p>put it on a cron and read today.md with coffee</p>
         </div>
       </div>

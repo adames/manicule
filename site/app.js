@@ -49,7 +49,7 @@
     // A borrowed link does not overwrite this browser's own marks until the
     // first press adopts it.
     if (!state.borrowed) try { localStorage.setItem("manicule", JSON.stringify({ m: [...state.marked], d: [...state.dismissed], l: state.lam })); } catch (_) {}
-    Shell.carry(); Shell.renderSpecimens();
+    Shell.carry(); Shell.renderAddrs();
   }
 
   // ---- ranking

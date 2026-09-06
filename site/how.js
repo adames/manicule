@@ -97,7 +97,7 @@
   const num = (x) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
   const pct = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
   const dateOf = (iso) => iso ? iso.slice(0, 10) : "undated";
-  const READS = { 0: "dismissals ignored", 0.25: "a nudge, not a veto", 0.5: "half a veto", 1: "a dismissal can overrule" };
+  const READS = { 0: "dismissals ignored", 0.25: "a nudge, default weight", 0.5: "half a veto", 1: "a dismissal can overrule" };
 
   function renderWorked() {
     const t = taste();

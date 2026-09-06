@@ -94,7 +94,7 @@
     }
   }
   carry();
-  addEventListener("hashchange", () => { if (isMarks(location.hash)) { carry(); renderSpecimens(); } });
+  addEventListener("hashchange", () => { if (isMarks(location.hash)) { carry(); renderAddrs(); } });
   // same-page links (the skip link, "fork it, above") scroll and focus by
   // hand: a fragment in the address bar would replace the marks, read as a
   // new state, and push a history entry with every press.
@@ -139,30 +139,17 @@
     try { await navigator.clipboard.writeText(text); return true; } catch (_) { return false; }
   }
 
-  // ---- the printed link: the share url typeset as a specimen. Ember only
-  // on the kept ids; dismissed ids struck through; host from location.
+  // ---- the address the share button copies, printed on one line in the
+  // save door. Same string as share, so the page never shows a link it
+  // would not hand you.
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  // the feed's address: this host, the site folder, the marks. share copies
-  // exactly what the specimen prints (no query, never a forced theme).
   const dir = () => location.pathname.replace(/[^/]*$/, "");
   const feedUrl = () => location.origin + dir() + location.hash;
-  function specimen(hash) {
-    const { m, d, l } = marksIn(hash);
-    const host = location.host, path = dir();
-    const marked = m.length || d.length;
-    const label = marked ? `${(hash || "").length} chars` : "point at something";
-    let body = `<span class="host">${esc(host)}</span><br><span class="host">${esc(path)}</span>`;
-    if (marked) {
-      if (m.length) body += `<br><span class="k">#m=</span>` + m.map((id) => `<span class="m">${esc(id)}</span>`).join('<span class="k">,</span>');
-      if (d.length) body += `<br><span class="k">${m.length ? "&amp;" : "#"}d=</span>` + d.map((id) => `<span class="d">${esc(id)}</span>`).join('<span class="k">,</span>');
-      if (l) body += `<br><span class="k">&amp;l=</span>${esc(l)}`;
-    }
-    return `<div class="lbl"><span>the link</span><span>${label}</span></div><div class="link">${body}</div>`;
+  const address = (hash = location.hash) => location.host + dir() + (hash || "");
+  function renderAddrs(hash = location.hash) {
+    for (const el of $$("[data-addr]")) el.textContent = address(hash);
   }
-  function renderSpecimens(hash = location.hash) {
-    for (const el of $$("[data-specimen]")) el.innerHTML = specimen(hash);
-  }
-  renderSpecimens();
+  renderAddrs();
 
   // ---- shared actions: share copies the address (it carries the marks);
   // data-copy copies its own text.
@@ -178,5 +165,5 @@
     if (c) toast((await copy(c.dataset.copy)) ? "copied" : "couldn't copy");
   });
 
-  window.Shell = { hand, toast, copy, carry, specimen, renderSpecimens, marksIn, mirror, hashOf, lam, isMarks, isDark, esc };
+  window.Shell = { hand, toast, copy, carry, address, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, isDark, esc };
 })();

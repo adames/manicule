@@ -142,13 +142,14 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .door+.door{border-left:var(--border-w) solid var(--border)}
 .door .kicker{font-family:var(--font-mono);font-size:var(--text-2xs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .door p{font-size:var(--text-xs);color:var(--text-secondary);line-height:var(--leading-normal);text-wrap:pretty}
-.door .addr{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text);letter-spacing:-.01em;text-transform:none}
+.door .addr{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text);letter-spacing:-.01em;text-transform:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .door pre{align-self:stretch;font-size:var(--text-2xs);padding:var(--space-2) var(--space-3);white-space:pre-wrap}
-.door .specimen{align-self:stretch}
 .door .go{font-size:var(--text-xs)}
 .door .go[href^="#"]{color:var(--text-secondary);text-decoration-line:underline;text-decoration-thickness:.08em} /* yours.html: the door points up at the page's one ember button, in ink */
 /* standalone text links reach a 24px target without growing visually */
 .door .go,.sect a,.colophon-line nav a{display:inline-flex;align-items:center;min-height:var(--space-5)}
+/* on the three pages with no doors strip, the colophon line sits straight under the foot rule */
+.foot>.colophon-line:first-child{margin-top:0}
 .colophon-line{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--space-2) var(--space-4);margin-top:var(--space-4);font-family:var(--font-mono);font-size:var(--text-2xs);color:var(--muted);letter-spacing:-.01em}
 .colophon-line nav{display:flex;gap:var(--space-2)}
 .colophon-line nav a{color:var(--muted)}
@@ -301,7 +302,6 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .specimen .host,.specimen .k{color:var(--muted)}
 .specimen .m{color:var(--ember)}
 .specimen .d{text-decoration:line-through;text-decoration-color:var(--text)}
-.specimen+.btn{margin-top:var(--space-2)}
 /* KVList: mono keys in a fixed column, ui values, one unbroken hairline per row. --tight drops the rules, --wide widens the keys */
 .kv{display:grid;grid-template-columns:var(--kv-key) minmax(0,1fr);column-gap:0;row-gap:0;font-size:var(--text-sm)}
 .kv dt{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text);letter-spacing:-.01em;padding:var(--space-3) 0;border-bottom:var(--border-w) solid var(--border)}
