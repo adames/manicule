@@ -206,6 +206,106 @@
     el("hash").textContent = taste.pretend ? "#m=…&d=…&l=0.25" : linkTo(taste);
   }
 
+  // ── the map ──────────────────────────────────────────────────────────────
+  // 384 numbers to two: the first two principal directions, by power
+  // iteration on the centred vectors. Rough on purpose; the table has the
+  // real numbers.
+
+  function principal(rows, n) {
+    const dim = rows[0].length;
+    const mean = new Float64Array(dim);
+    for (const row of rows) for (let j = 0; j < dim; j++) mean[j] += row[j] / rows.length;
+    const centred = rows.map((row) => row.map((x, j) => x - mean[j]));
+    const axes = [];
+    for (let k = 0; k < n; k++) {
+      let v = Float64Array.from({ length: dim }, (_, j) => Math.sin(j * (k + 1) + 1));
+      for (let it = 0; it < 40; it++) {
+        const next = new Float64Array(dim);
+        for (const row of centred) {
+          let dot = 0;
+          for (let j = 0; j < dim; j++) dot += row[j] * v[j];
+          for (let j = 0; j < dim; j++) next[j] += dot * row[j];
+        }
+        for (const axis of axes) {
+          let dot = 0;
+          for (let j = 0; j < dim; j++) dot += next[j] * axis[j];
+          for (let j = 0; j < dim; j++) next[j] -= dot * axis[j];
+        }
+        const norm = Math.hypot(...next) || 1;
+        v = next.map((x) => x / norm);
+      }
+      axes.push(v);
+    }
+    const project = (row) => axes.map((axis) => row.reduce((sum, x, j) => sum + (x - mean[j]) * axis[j], 0));
+    return project;
+  }
+
+  function renderMap(taste) {
+    const withWords = corpus.entries.filter((entry) => entry.vector);
+    const project = principal(withWords.map((entry) => entry.vector), 2);
+    const points = withWords.map((entry) => ({ entry, xy: project(entry.vector) }));
+    const xs = points.map((p) => p.xy[0]);
+    const ys = points.map((p) => p.xy[1]);
+    const W = 640, H = 400, PAD = 18;
+    const sx = (x) => PAD + ((x - Math.min(...xs)) / (Math.max(...xs) - Math.min(...xs) || 1)) * (W - 2 * PAD);
+    const sy = (y) => H - PAD - ((y - Math.min(...ys)) / (Math.max(...ys) - Math.min(...ys) || 1)) * (H - 2 * PAD);
+
+    const picked = new Set(taste.picked);
+    const passed = new Set(taste.passed);
+    const at = (ids) => {
+      const chosen = points.filter((p) => ids.has(p.entry.id));
+      if (!chosen.length) return null;
+      return [chosen.reduce((s, p) => s + p.xy[0], 0) / chosen.length, chosen.reduce((s, p) => s + p.xy[1], 0) / chosen.length];
+    };
+    const pickedAt = at(picked);
+    const passedAt = at(passed);
+
+    const dots = points.map((p) => {
+      const cls = picked.has(p.entry.id) ? "dot pick" : passed.has(p.entry.id) ? "dot pass" : "dot";
+      const r = picked.has(p.entry.id) || passed.has(p.entry.id) ? 5 : 3;
+      return `<circle class="${cls}" cx="${sx(p.xy[0]).toFixed(1)}" cy="${sy(p.xy[1]).toFixed(1)}" r="${r}"><title>${esc(p.entry.title)} · ${esc(p.entry.feed)}</title></circle>`;
+    });
+    const ties = pickedAt
+      ? points.filter((p) => picked.has(p.entry.id)).map((p) =>
+          `<line class="tie" x1="${sx(p.xy[0]).toFixed(1)}" y1="${sy(p.xy[1]).toFixed(1)}" x2="${sx(pickedAt[0]).toFixed(1)}" y2="${sy(pickedAt[1]).toFixed(1)}"/>`)
+      : [];
+    const rings = [
+      pickedAt ? `<circle class="mean" cx="${sx(pickedAt[0]).toFixed(1)}" cy="${sy(pickedAt[1]).toFixed(1)}" r="9"><title>the average of your picks</title></circle>` : "",
+      passedAt ? `<circle class="mean pass" cx="${sx(passedAt[0]).toFixed(1)}" cy="${sy(passedAt[1]).toFixed(1)}" r="9"><title>the average of your passes</title></circle>` : "",
+    ];
+    el("map").innerHTML =
+      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${points.length} entries as dots, your picks filled, their average ringed">` +
+      ties.join("") + dots.join("") + rings.join("") +
+      `<text x="${PAD}" y="${H - 6}">${points.length} entries</text></svg>`;
+  }
+
+  // ── the numbers behind the map ───────────────────────────────────────────
+
+  function renderNeighbours(taste, scored) {
+    const entry = scored.entry;
+    const others = corpus.entries
+      .filter((other) => other.vector && other.id !== entry.id)
+      .map((other) => ({ other, cos: Manicule.cosine(entry.vector, other.vector) }))
+      .sort((a, b) => b.cos - a.cos);
+    const rows = [...others.slice(0, 3), ...others.slice(-3)];
+    const row = ({ other, cos }) =>
+      `<tr><td><span class="t">${esc(other.title)}</span></td><td class="lc">${esc(other.feed)}</td><td class="num">${signed(cos)}</td></tr>`;
+    el("neighbours").innerHTML = rows.map(row).join("");
+    el("neighbours-cap").textContent =
+      `“${entry.title}” against the three nearest and the three farthest. +1 would be the same words; near 0 is nothing in common`;
+  }
+
+  function renderPicks(taste) {
+    const average = Manicule.centroid(taste.picked.map((id) => entryById[id].vector));
+    el("picks").innerHTML = taste.picked.map((id) => {
+      const pick = entryById[id];
+      return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.feed)}</td><td class="num">${signed(Manicule.cosine(pick.vector, average))}</td></tr>`;
+    }).join("");
+    el("picks-cap").textContent = taste.pretend
+      ? "on the pretend taste. pick a few things on the feed and this table is yours"
+      : "each pick against the average of all of them. close together and every number is high; a pick from left field pulls the average away from the rest";
+  }
+
   function renderWorked() {
     const taste = tasteNow();
     const ranked = rankAt(taste, taste.lambda);
@@ -216,6 +316,9 @@
 
     renderWorkedRow(taste, scored, place + 1);
     renderLambdaTable(taste, scored.entry);
+    renderMap(taste);
+    renderNeighbours(taste, scored);
+    renderPicks(taste);
   }
 
   // ── boot ─────────────────────────────────────────────────────────────────

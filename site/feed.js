@@ -13,6 +13,7 @@
     passed: new Set(),
     lambda: Manicule.LAMBDA,
     borrowed: false,  // the link carries marks this browser did not make
+    order: null,      // ids in the order on screen; null is newest first
     rowsShown: ROWS_PER_PAGE,
   };
   let entries = null;      // corpus.json, once it lands
@@ -85,20 +86,6 @@
     return Manicule.rank(entries.entries, vectorsOf(state.picked), vectorsOf(state.passed), lambda, pickedVectors);
   }
 
-  // How far the λ term pushed each passed row down: its place with the term
-  // against its place without it.
-  function placesLost(ranked) {
-    const lost = {};
-    if (!state.passed.size) return lost;
-    const placeOf = (rows) => Object.fromEntries(rows.map((row, i) => [row.entry.id, i]));
-    const without = placeOf(rankBy(0));
-    const with_ = placeOf(ranked);
-    for (const id of state.passed) {
-      if (with_[id] !== undefined) lost[id] = with_[id] - without[id];
-    }
-    return lost;
-  }
-
   // ── words and numbers ────────────────────────────────────────────────────
 
   const shorten = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
@@ -139,14 +126,10 @@
   // The picked entry this one most resembles, printed only when it changes:
   // a run of rows that all sit near the same thing says it once.
   let lastNearest = null;
-  function nearHtml(scored, isPicked, isPassed, placesSank) {
+  function nearHtml(scored, isPicked, isPassed) {
     if (scored.score === -Infinity) return "";
     if (isPicked) { lastNearest = null; return `<p class="near">picked</p>`; }
-    if (isPassed) {
-      lastNearest = null;
-      const words = placesSank > 0 ? `passed · sank ${placesSank} rows, still here` : "passed · still here";
-      return `<p class="near"><span>${words}</span></p>`;
-    }
+    if (isPassed) { lastNearest = null; return `<p class="near">passed</p>`; }
     const nearest = scored.nearest && entryById[scored.nearest];
     if (!nearest || scored.nearest === lastNearest) return "";
     lastNearest = scored.nearest;
@@ -164,7 +147,7 @@
     return `<button class="mk ${shape}" type="button" data-act="cycle" aria-label="${says}" title="${now}" aria-describedby="t-${esc(entry.id)}">${drawing}</button>`;
   }
 
-  function rowHtml(scored, place, cold, placesSank) {
+  function rowHtml(scored, place, cold) {
     const entry = scored.entry;
     const isPicked = state.picked.has(entry.id);
     const isPassed = state.passed.has(entry.id);
@@ -176,7 +159,7 @@
             <div class="meta"><span class="kind">${KIND_LABEL[entry.kind] || "web"}</span><span class="feed" title="${esc(entry.feed)}">${esc(entry.feed)}</span><time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
             <h2 class="title" id="t-${esc(entry.id)}"><a href="${esc(entry.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(entry.title || entry.link)}</a></h2>
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
-            ${cold ? "" : nearHtml(scored, isPicked, isPassed, placesSank)}
+            ${cold ? "" : nearHtml(scored, isPicked, isPassed)}
           </div>
           ${cold ? "" : receiptHtml(scored)}
           <div class="hands">
@@ -260,19 +243,28 @@
     el("lam").setAttribute("aria-valuetext", "λ " + state.lambda.toFixed(2));
   }
 
+  // The order on screen is a choice, not a consequence: a press changes the
+  // scores and nothing moves until the button is pressed.
   function drawStatus(cold) {
-    // The spaces between the spans are for screen readers; the dots are CSS.
+    const counts = `<span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n">λ ${state.lambda.toFixed(2)}</span>`;
+    const button = `<button class="btn quiet" data-act="order" type="button">order by taste</button>`;
     el("status").innerHTML = cold
-      ? `<b>newest first</b> <span class="n">pick something and it reorders</span>`
-      : `<b>ranked</b> <span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n">λ ${state.lambda.toFixed(2)}</span>`;
+      ? `<b>newest first</b> <span class="n">pick something, then order by taste</span>`
+      : `<b>${state.order ? "by taste" : "newest first"}</b> ${counts} ${button}`;
   }
 
   function draw() {
     const ranked = rankBy(state.lambda);
     const cold = ranked === null;
-    const sank = cold ? {} : placesLost(ranked);
+    if (cold) state.order = null;
 
-    const visible = cold ? entries.entries.map((entry) => ({ entry })) : ranked;
+    // Scores follow the marks; the order follows state.order.
+    const scoredById = {};
+    for (const row of ranked || []) scoredById[row.entry.id] = row;
+    const inOrder = state.order
+      ? state.order.map((id) => entryById[id]).filter(Boolean)
+      : entries.entries;
+    const visible = inOrder.map((entry) => scoredById[entry.id] || { entry });
 
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
@@ -285,7 +277,7 @@
       lastNearest = null;
       el("list").innerHTML = visible
         .slice(0, state.rowsShown)
-        .map((scored, i) => rowHtml(scored, i + 1, cold, sank[scored.entry.id]))
+        .map((scored, i) => rowHtml(scored, i + 1, cold))
         .join("");
     });
 
@@ -296,9 +288,17 @@
     writeTheLink();
   }
 
+  function orderByTaste() {
+    const ranked = rankBy(state.lambda);
+    state.order = ranked ? ranked.map((row) => row.entry.id) : null;
+  }
+
+  // Marks that arrive with the page (a link, or this browser's own) land
+  // ordered by taste; that is what the marks are for.
   function drawEverything() {
     readTheLink();
     setRuler();
+    orderByTaste();
     draw();
   }
 
@@ -309,6 +309,7 @@
     state.passed.clear();
     state.lambda = Manicule.LAMBDA;
     state.borrowed = false;
+    state.order = null;
     state.rowsShown = ROWS_PER_PAGE;
     setRuler();
     gliding(draw);
@@ -329,7 +330,7 @@
     else if (state.passed.has(id)) { state.passed.delete(id); }
     else { state.picked.add(id); }
     state.borrowed = false; // the first press makes a borrowed link yours
-    gliding(() => holdingPlace(id, draw));
+    draw();                 // the scores change; the order holds
   });
 
   // Moving the ruler re-ranks, but it is not a mark, so it does not adopt a
@@ -337,7 +338,7 @@
   el("lam").addEventListener("input", (event) => {
     state.lambda = parseFloat(event.target.value);
     setRuler();
-    gliding(() => holdingPlace(null, draw));
+    draw();
   });
 
   el("morebtn").addEventListener("click", () => {
@@ -356,6 +357,12 @@
   document.addEventListener("click", (event) => {
     if (event.target.closest('[data-act="forget"]')) { forget(); toast("forgotten"); }
     else if (event.target.closest('[data-act="fresh"]')) forget();
+    else if (event.target.closest('[data-act="order"]') && entries) {
+      orderByTaste();
+      state.rowsShown = ROWS_PER_PAGE;
+      gliding(() => holdingPlace(null, draw));
+      el("list").focus({ preventScroll: true });
+    }
   });
 
   // A plain fragment (#list, from the skip link) is not a state.
@@ -375,7 +382,7 @@
 
       el("spec").innerHTML = [
         `<span title="${esc(utcStamp(entries.generated))}">updated ${esc(timeAgo(entries.generated))}</span>`,
-        `<span>once a day</span>`,
+        `<span>updates once a day</span>`,
         `<span>${entries.feeds.length} feeds</span>`,
       ].join(" ");
 

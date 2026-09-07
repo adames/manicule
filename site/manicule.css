@@ -523,7 +523,7 @@ samp {
   color: var(--muted);
   letter-spacing: -.01em;
   text-transform: lowercase;
-} /* the foot: a hairline, the doors strip, the colophon line */
+} /* the foot: a hairline, the colophon line */
 
 .foot {
   margin-top: var(--space-7);
@@ -532,83 +532,14 @@ samp {
   text-transform: lowercase;
 }
 
-.doors {
-  display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
-  background: var(--raised);
-  border: var(--border-w) solid var(--border);
-}
-
-.door {
-  padding: var(--space-4);
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-}
-
-.door+.door {
-  border-left: var(--border-w) solid var(--border);
-}
-
-.door .kicker {
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.door p {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
-  text-wrap: pretty;
-}
-
-.door .addr {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--text);
-  letter-spacing: -.01em;
-  text-transform: none;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.door pre {
-  align-self: stretch;
-  font-size: var(--text-2xs);
-  padding: var(--space-2) var(--space-3);
-  white-space: pre-wrap;
-}
-
-.door .go {
-  font-size: var(--text-xs);
-}
-
-.door a.addr {
-  color: var(--ember);
-} /* the fork cell's address is its link, so it takes the accent */
-
-.door .go[href^="#"] {
-  color: var(--text-secondary);
-  text-decoration-line: underline;
-  text-decoration-thickness: .08em;
-} /* fork.html: the door points up at the page's one ember button, in ink */
-
 /* standalone text links reach a 24px target without growing visually */
 
-.door .go,
 .sect a,
 .colophon-line nav a {
   display: inline-flex;
   align-items: center;
   min-height: var(--space-5);
-} /* on the three pages with no doors strip, the colophon line sits straight under the foot rule */
+}
 
 .foot>.colophon-line:first-child {
   margin-top: 0;
@@ -1497,6 +1428,57 @@ samp {
   max-width: var(--measure);
 }
 
+/* the map: every entry as a dot, the picks in ember, the two averages as rings */
+
+.map {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--surface);
+  border: var(--border-w) solid var(--border);
+}
+
+.map .dot {
+  fill: var(--muted);
+  opacity: .55;
+}
+
+.map .dot.pick {
+  fill: var(--ember);
+  opacity: 1;
+}
+
+.map .dot.pass {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 2;
+  opacity: 1;
+}
+
+.map .mean {
+  fill: none;
+  stroke: var(--ember);
+  stroke-width: 2;
+}
+
+.map .mean.pass {
+  stroke: var(--text);
+  stroke-dasharray: 3 3;
+}
+
+.map .tie {
+  stroke: var(--ember);
+  stroke-width: 1;
+  opacity: .5;
+}
+
+.map text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--muted);
+}
+
 /* DataTable: uppercase micro head on the 2px ink rule, hairline body rows; the last column takes the slack */
 
 .dt-wrap {
@@ -1750,13 +1732,6 @@ pre .c {
 @media (max-width:899.98px) {
   .page {
     padding: var(--space-4);
-  }
-  .doors {
-    grid-template-columns: 1fr;
-  }
-  .door+.door {
-    border-left: 0;
-    border-top: var(--border-w) solid var(--border);
   }
 }
 

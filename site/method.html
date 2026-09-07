@@ -63,10 +63,32 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <p>that is all the model does. it puts each entry on the map, once, on the machine that builds this page. it never sees you</p>
       </section>
 
+      <!-- the map: every entry, flattened to two numbers -->
+      <section aria-label="the map" id="themap">
+        <h2 class="sect"><span>the map</span><a href="./">your feed</a></h2>
+        <p class="caption">every entry on the feed today, its 384 numbers squashed to two so they fit on a page (the two directions that spread the entries most). filled ember is what you picked, the ember ring is their average, the dashed ring is the average of what you passed. hover a dot</p>
+        <div id="map"></div>
+        <p class="caption">the squash loses a lot, so distances here are rough. the numbers in the table below are the real ones</p>
+        <div class="dt-wrap">
+          <table class="dt">
+            <thead><tr><th scope="col" class="grow">against the top entry on your feed</th><th scope="col">feed</th><th scope="col" class="num">cos</th></tr></thead>
+            <tbody id="neighbours"><tr><td colspan="3">loading</td></tr></tbody>
+          </table>
+        </div>
+        <p class="caption" id="neighbours-cap">the three nearest and the three farthest. +1 would be the same words; near 0 is nothing in common</p>
+      </section>
+
       <section class="prose" aria-labelledby="average">
         <h2 class="sect" id="average"><span>an average is a taste</span></h2>
         <p>pick three entries. average their three vectors and you get one point, sitting between them. that point is your taste: not a profile, not a history, a spot in the same space the entries live in</p>
         <p>cos(entry, picked) is how close an entry sits to that spot. +1 is the same direction, 0 is unrelated, and below 0 is pointed the other way. sort by it and the feed is ranked</p>
+        <div class="dt-wrap">
+          <table class="dt">
+            <thead><tr><th scope="col" class="grow">what you picked</th><th scope="col">feed</th><th scope="col" class="num">cos to the average</th></tr></thead>
+            <tbody id="picks"><tr><td colspan="3">loading</td></tr></tbody>
+          </table>
+        </div>
+        <p class="caption" id="picks-cap">each pick against the average of all of them. close together and every number is high; a pick from left field pulls the average away from the rest</p>
         <p>the catch is that one average flattens a taste with two sides. pick a recipe and a chip teardown and the average lands halfway between them, a spot that is not very close to either. so the feed also names the one pick each entry sits closest to. that is the near line: it says which of your picks this entry is like</p>
       </section>
 
@@ -133,7 +155,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       </section>
     </main>
 
-    <!-- the three doors -->
+    <!-- the foot -->
     <footer class="foot">
       <div class="colophon-line">
         <span>no accounts, no server, no database</span>
