@@ -78,7 +78,6 @@
   --bar-h: 8px;
   --thumb: 12px;
   --tick-h: 8px;
-  --receipt-w: 14ch;
   --ruler-w: 12rem;
   --note-w: 17rem;
   --kv-key: 9rem;
@@ -814,8 +813,16 @@ samp {
   margin-left: auto;
   font-size: var(--text-xs);
   color: var(--muted);
-  white-space: nowrap;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) 0;
+  justify-content: flex-end;
 }
+
+.status>* {
+  white-space: nowrap;
+} /* the counts each stay whole; the line wraps between them when it has to */
 
 .status b {
   color: var(--text);
@@ -858,21 +865,13 @@ samp {
   padding: var(--space-3) 0 var(--space-3) var(--space-2);
   border-bottom: var(--border-w) solid var(--border);
   transition: background var(--transition-fast);
-} /* rank · entry · receipt · the one control */
+} /* rank · entry · the one control, with the score under it */
 
 .row {
   display: grid;
-  grid-template-columns: 3ch minmax(0,1fr) var(--receipt-w) var(--control-sm);
+  grid-template-columns: 3ch minmax(0,1fr) var(--control-sm);
   column-gap: var(--space-4);
   align-items: start;
-}
-
-.ledger.cold .row {
-  grid-template-columns: 3ch minmax(0,1fr) var(--control-sm);
-} /* no receipt before anything is picked */
-
-.ledger.cold .calc {
-  display: none;
 }
 
 .ledger.dead .toolbar>:not(.status) {
@@ -993,6 +992,8 @@ samp {
 
 .near {
   margin-top: var(--space-1);
+  height: 1.3em;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -1027,8 +1028,8 @@ samp {
   opacity: .7;
   letter-spacing: -.01em;
   line-height: var(--leading-tight);
-  text-align: right;
-  padding-top: var(--space-0);
+  text-align: center;
+  width: var(--control-sm);
 }
 
 .calc span {
@@ -1037,20 +1038,9 @@ samp {
 }
 
 .calc .tot {
-  margin-top: var(--space-1);
-  padding-top: var(--space-1);
-  border-top: var(--border-w) solid var(--border);
-  font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   color: var(--text-secondary);
-} /* the receipt is a window on the arithmetic, not a thing to read: it sits back from the title */
-
-.calc .tot:first-child,
-.calc>.sr-only:first-child+.tot {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-} /* the lone total (nothing passed) has no rule; a hidden = before a three-line total is never first */
+} /* the score is a window on the arithmetic, not a thing to read: it sits back from the title */
 
 .calc .notext {
   color: var(--muted);
@@ -1059,8 +1049,10 @@ samp {
 
 .hands {
   display: flex;
-  justify-content: flex-end;
-}
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+} /* the score sits under the finger that made it */
 
 /* one control, three states. Meaning is form, not colour: empty by default, inverse ink when you point at a row, dashed ink when you pass on one. The hand shows faintly on hover so an empty box still invites a press. */
 
@@ -1747,8 +1739,7 @@ pre .c {
 /* < 720px: the row folds. hands stay top-right; the receipt is one line with a visible =; the banner is one row; the column head folds with the rows and drops its receipt legend (the receipt sits under the title now); borrowed hides the head entirely, so a stranger's first screen with marks shows a row with its receipt */
 
 @media (max-width:719.98px) {
-  .row,
-  .ledger.cold .row {
+  .row {
     grid-template-columns: 2.5ch minmax(0,1fr) var(--control-sm);
     column-gap: var(--space-3);
   }
@@ -1780,44 +1771,7 @@ pre .c {
     flex: none;
     margin-left: var(--space-2);
   }
-  .body {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .hands {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .calc {
-    grid-column: 2 / 4;
-    grid-row: 2;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 var(--space-2);
-    text-align: left;
-    padding-top: 0;
-    margin-top: var(--space-1);
-  } /* runs under the hands too, so it stays one line at 375 */
-  .calc span {
-    display: inline;
-  }
-  .calc .tot {
-    order: -2;
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  .calc .eq {
-    position: static;
-    width: auto;
-    height: auto;
-    margin: 0;
-    overflow: visible;
-    clip: auto;
-    order: -1;
-    color: var(--muted);
-  }
+
   .calc .notext {
     width: 100%;
   }

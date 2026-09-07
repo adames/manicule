@@ -120,14 +120,15 @@
   }
 
   // The picked entry this one most resembles, printed only when it changes:
-  // a run of rows that all sit near the same thing says it once.
+  // a run of rows that all sit near the same thing says it once. The line is
+  // always in the row, with words or without, and it never mentions the mark:
+  // pressing a control must not move the words under anyone's eye.
   let lastNearest = null;
+  const NO_NEAR = `<p class="near"></p>`;
   function nearHtml(scored, isPicked, isPassed) {
-    if (scored.score === -Infinity) return "";
-    if (isPicked) { lastNearest = null; return `<p class="near">picked</p>`; }
-    if (isPassed) { lastNearest = null; return `<p class="near">passed</p>`; }
+    if (scored.score === -Infinity || isPicked || isPassed) return NO_NEAR;
     const nearest = scored.nearest && entryById[scored.nearest];
-    if (!nearest || scored.nearest === lastNearest) return "";
+    if (!nearest || scored.nearest === lastNearest) return NO_NEAR;
     lastNearest = scored.nearest;
     return `<p class="near">${hand("rest")}<span>near your pick</span><span class="t" title="${esc(nearest.title)}">“${esc(shorten(nearest.title, 48))}”</span></p>`;
   }
@@ -157,9 +158,9 @@
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
             ${cold ? "" : nearHtml(scored, isPicked, isPassed)}
           </div>
-          ${cold ? "" : receiptHtml(scored)}
           <div class="hands">
             ${controlHtml(entry, isPicked, isPassed)}
+            ${cold ? "" : receiptHtml(scored)}
           </div>
         </li>`;
   }
@@ -264,7 +265,6 @@
 
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
-    ledger.classList.toggle("nodis", !state.passed.size);
     ledger.classList.toggle("borrowed", state.borrowed);
     drawStatus(cold);
     el("banner").hidden = !state.borrowed;
