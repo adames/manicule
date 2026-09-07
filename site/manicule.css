@@ -168,6 +168,7 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .formula .term{display:inline-flex;flex-direction:column}
 .formula .lbl{margin-top:var(--space-1);padding-top:var(--space-1);border-top:var(--border-w) solid var(--border-strong);font-family:var(--font-ui);font-size:var(--text-2xs);color:var(--muted);letter-spacing:0;text-transform:lowercase;white-space:nowrap}
 .kicker-line{margin-top:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);text-transform:lowercase}
+.prior{margin-top:var(--space-1);font-size:var(--text-xs);color:var(--muted);max-width:var(--measure);text-wrap:pretty}
 /* the details: hairlines above and below, +/− at right; the how.html link sits beside the summary, not inside it */
 .how-wrap{position:relative}
 .how{border-top:var(--border-w) solid var(--border);border-bottom:var(--border-w) solid var(--border)}
