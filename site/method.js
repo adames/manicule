@@ -77,6 +77,34 @@
       `https://github.com/${source.owner}/manicule/blob/main/manicule.py#L${first + 1}-L${last + 1}`;
   }
 
+  // ── the proof ────────────────────────────────────────────────────────────
+  // evaluate() in manicule.py, run at every build; the numbers are today's.
+
+  const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+  const mono = (words) => `<span class="mono">${esc(words)}</span>`;
+
+  function renderProof(proof) {
+    if (!proof) {
+      el("proof-rows").innerHTML = `<tr><td colspan="5">too few entries to say</td></tr>`;
+      return;
+    }
+    el("proof-n").textContent = proof.entries;
+    el("proof-rows").innerHTML = Object.entries(proof.median_rank).map(([picks, row]) =>
+      `<tr><td class="mono">${picks}</td><td class="num">${row.ranker}</td><td class="num">${row.words}</td><td class="num">${row.newest}</td><td class="num">${row.shuffled}</td></tr>`).join("");
+    el("proof-cap").textContent =
+      `median rank of the rest of that feed, out of ${proof.entries} · ${proof.trials} trials at 2 picks · recomputed each morning`;
+
+    const two = proof.median_rank["2"] || {};
+    const lam = proof.lambda || {};
+    const sweep = Object.entries(lam).map(([l, place]) => `${mono(nth(place))} at λ ${l}`).join(", ");
+    el("proof-notes").innerHTML = [
+      ["newest first", `${mono(nth(two.newest))} against ${mono(nth(two.shuffled))} shuffled. the date says almost nothing about what you want`],
+      ["the model", `${mono(nth(two.ranker))} against ${mono(nth(two.words))} for shared words. written entries only: ${mono(nth(proof.written.ranker))} against ${mono(nth(proof.written.words))}`],
+      ["λ", `pass on two from a feed and the rest of it lands ${sweep}. a nudge, not a veto`],
+      ["the catch", "same feed stands in for same taste. necessary, not sufficient"],
+    ].map(([key, words]) => `<dt>${key}</dt><dd>${words}</dd>`).join("");
+  }
+
   // ── the visitor's own taste ──────────────────────────────────────────────
 
   let corpus = null;
@@ -207,11 +235,13 @@
       for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = corpus.entries.length;
       try { localStorage.setItem("manicule-count", corpus.entries.length); } catch (_) {}
 
+      renderProof(corpus.proof);
       renderWorked();
       addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) renderWorked(); });
     })
     .catch(() => {
       el("worked").innerHTML = `<dt>entry</dt><dd>couldn't load</dd>`;
       el("lam-cap").textContent = "couldn't load";
+      el("proof-rows").innerHTML = `<tr><td colspan="5">couldn't load</td></tr>`;
     });
 })();

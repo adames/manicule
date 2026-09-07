@@ -614,6 +614,10 @@ samp {
   margin-top: var(--space-4);
 }
 
+.caption+.kv {
+  margin-top: var(--space-4);
+} /* the proof's notes sit under its caption */
+
 .caption {
   margin-top: var(--space-2);
   font-family: var(--font-mono);

@@ -11,10 +11,11 @@ the mean embedding of everything you passed on. Two averages and a
 subtraction. No training. If you have picked nothing yet, there is no taste to
 rank by and the list stays newest-first.
 
-Two subcommands:
+Three subcommands:
 
     manicule.py rank   feeds.opml --picked notes/ [--passed nope/]   # your daily page
     manicule.py corpus feeds.opml -o site/corpus.json                # the static demo's data
+    manicule.py evaluate [site/corpus.json]                          # the proof, printed
 
 Embeddings run locally (fastembed, BAAI/bge-small-en-v1.5, 384 dimensions);
 nothing leaves the machine except the feed fetches themselves.
@@ -281,6 +282,148 @@ def read_notes(folder: Path | None) -> list[str]:
     return notes
 
 
+# ---------------------------------------------------------------- the proof
+
+def evaluate(entries: list[Entry], trials_per_feed: int = 30, seed: int = 7) -> dict | None:
+    """Does picking a few things surface more of what you want?
+
+    The test needs a label the ranker cannot see. The feed an entry came from
+    is one: the embedding never sees it, and entries from one feed share a
+    subject and a voice, the closest stand-in for "more like this" that does
+    not come from the model itself. Pick a few entries from a feed, leave the
+    rest in the pile, and ask where they land, against the orders a reader
+    could otherwise have had.
+
+    Same feed is a stand-in for same taste, not the thing itself: it shows the
+    ranker finds coherent neighbourhoods, which is necessary, not sufficient.
+    """
+    import numpy as np
+
+    rows = [e for e in entries if e.vector]
+    n = len(rows)
+    if n < 20:
+        return None
+    vectors = np.array([e.vector for e in rows])
+    vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
+    feeds = np.array([e.feed for e in rows])
+    kinds = np.array([e.kind for e in rows])
+    newest_first = np.argsort(np.array([e.published for e in rows]))[::-1]
+    rng = np.random.default_rng(seed)
+
+    # A baseline with no model in it: shared uncommon words.
+    words = [set(re.findall(r"[a-z]{4,}", e.text.lower())) for e in rows]
+    in_how_many = {}
+    for bag in words:
+        for word in bag:
+            in_how_many[word] = in_how_many.get(word, 0) + 1
+    weight = {word: 1.0 / (1 + count) for word, count in in_how_many.items()}
+
+    def shared_words(picks, candidates):
+        wanted = set().union(*(words[i] for i in picks))
+        return np.array([sum(weight[w] for w in words[c] & wanted) for c in candidates])
+
+    def direction(ids):
+        mean = vectors[ids].mean(axis=0)
+        return mean / np.linalg.norm(mean)
+
+    def places(order, held_out):
+        place = {entry: p + 1 for p, entry in enumerate(order)}
+        return [place[i] for i in held_out]
+
+    def one_trial(picks, held_out):
+        rest = np.array([i for i in range(n) if i not in picks])
+        scores = vectors[rest] @ direction(picks)
+        return {
+            "ranker": places(rest[np.argsort(-scores)], held_out),
+            "words": places(rest[np.argsort(-shared_words(picks, rest))], held_out),
+            "newest": places([i for i in newest_first if i not in picks], held_out),
+            "shuffled": places(rng.permutation(rest), held_out),
+        }
+
+    def trials(picks_per_trial, only=None):
+        got = {name: [] for name in ("ranker", "words", "newest", "shuffled")}
+        count = 0
+        for feed in sorted(set(feeds)):
+            members = np.where(feeds == feed)[0]
+            if only:
+                members = np.array([i for i in members if kinds[i] in only])
+            if len(members) < picks_per_trial + 2:
+                continue
+            for _ in range(trials_per_feed):
+                picks = rng.choice(members, picks_per_trial, replace=False)
+                held_out = [i for i in members if i not in picks]
+                for name, where in one_trial(picks, held_out).items():
+                    got[name].extend(where)
+                count += 1
+        return count, got
+
+    def median(values):
+        return int(round(float(np.median(values)))) if values else None
+
+    def in_top_ten(values, count):
+        return round(sum(1 for p in values if p <= 10) / count, 2) if count else None
+
+    # Passing on something: where its feed-mates land, two picks from one feed
+    # and two passes from the next, at each λ. This is what the ruler does.
+    def lambda_sweep():
+        big = [f for f in sorted(set(feeds)) if (feeds == f).sum() >= 5]
+        if len(big) < 2:
+            return {}
+        sweep = {}
+        for lam in (0.0, 0.25, 0.5, 1.0):
+            landed = []
+            for i, feed_a in enumerate(big):
+                a = np.where(feeds == feed_a)[0]
+                b = np.where(feeds == big[(i + 1) % len(big)])[0]
+                for _ in range(10):
+                    picks = rng.choice(a, 2, replace=False)
+                    passes = rng.choice(b, 2, replace=False)
+                    rest = np.array([x for x in range(n) if x not in picks])
+                    scores = vectors[rest] @ direction(picks) - lam * (vectors[rest] @ direction(passes))
+                    landed.extend(places(rest[np.argsort(-scores)], [x for x in b if x not in passes]))
+            sweep[str(lam)] = median(landed)
+        return sweep
+
+    by_picks = {}
+    for k in (1, 2, 3, 5):
+        count, got = trials(k)
+        if count:
+            by_picks[str(k)] = {name: median(where) for name, where in got.items()}
+    count, got = trials(2)
+    written_count, written = trials(2, only={"article"})
+    return {
+        "entries": n,
+        "feeds": len(set(feeds)),
+        "trials": count,
+        "median_rank": by_picks,
+        "top_ten": {name: in_top_ten(where, count) for name, where in got.items()},
+        "lambda": lambda_sweep(),
+        "written": {"trials": written_count, **{name: median(where) for name, where in written.items()}},
+    }
+
+
+def print_proof(proof: dict | None) -> None:
+    if not proof:
+        print("too few entries to evaluate", file=sys.stderr)
+        return
+    names = ("ranker", "words", "newest", "shuffled")
+    print(f"{proof['entries']} entries · {proof['feeds']} feeds · {proof['trials']} trials at 2 picks\n")
+    print(f"median rank of the entries you did not pick, out of {proof['entries']}")
+    print(f"{'picks':>6} {'ranker':>8} {'words':>8} {'newest':>8} {'shuffled':>9}")
+    for k, row in proof["median_rank"].items():
+        print(f"{k:>6}" + "".join(f"{row[name]:>9}" for name in names))
+    print("\nof the top ten, how many are from the feed you picked from (2 picks)")
+    for name in names:
+        print(f"  {name:9} {proof['top_ten'][name]:.2f}")
+    print("\npassing on two from another feed: where the rest of that feed lands")
+    for lam, place in proof["lambda"].items():
+        print(f"  λ = {lam:<5} {place:>5}")
+    w = proof["written"]
+    print(f"\nwritten entries only ({w['trials']} trials)")
+    for name in names:
+        print(f"  {name:9} {w[name]:>5}")
+
+
 # ---------------------------------------------------------------- the demo taste
 
 def demo_taste(entries: list[Entry], picks: int = 3) -> dict[str, list[str]] | None:
@@ -333,6 +476,11 @@ def quantize(vector: list[float]) -> tuple[list[int], float]:
     and the cosine error is well below anything the ranking can feel."""
     scale = max(abs(x) for x in vector) or 1.0
     return [max(-127, min(127, round(x / scale * 127))) for x in vector], scale
+
+
+def dequantize(q: list[int], scale: float) -> list[float]:
+    """The reverse, as rank.js reads it."""
+    return [x / 127 * scale for x in q]
 
 
 # ---------------------------------------------------------------- commands
@@ -402,11 +550,24 @@ def cmd_corpus(args: argparse.Namespace) -> int:
         "lambda": LAMBDA,
         "feeds": sorted({entry.feed for entry in entries}),
         "demo": demo_taste(entries),
+        "proof": evaluate(entries),
         "entries": rows,
     }
     Path(args.out).write_text(json.dumps(payload, separators=(",", ":")))
     print(f"wrote {args.out}: {len(entries)} entries from {len(payload['feeds'])} feeds",
           file=sys.stderr)
+    return 0
+
+
+def cmd_evaluate(args: argparse.Namespace) -> int:
+    """Rerun the proof on a corpus.json, without fetching or embedding."""
+    payload = json.loads(Path(args.corpus).read_text())
+    entries = [
+        Entry(row["id"], row["title"], row["link"], row["snippet"], row["feed"],
+              row["published"], row["kind"], dequantize(row["q"], row["s"]) if "q" in row else None)
+        for row in payload["entries"]
+    ]
+    print_proof(evaluate(entries))
     return 0
 
 
@@ -432,6 +593,10 @@ def main(argv: list[str] | None = None) -> int:
     # wider sample.
     demo.add_argument("--per-feed", type=int, default=7)
     demo.set_defaults(fn=cmd_corpus)
+
+    proof = commands.add_parser("evaluate", help="rerun the proof on a corpus.json and print it")
+    proof.add_argument("corpus", nargs="?", default="site/corpus.json")
+    proof.set_defaults(fn=cmd_evaluate)
 
     args = parser.parse_args(argv)
     return args.fn(args)

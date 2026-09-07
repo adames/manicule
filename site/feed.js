@@ -466,6 +466,17 @@
       ].map((fact) => `<span>${fact}</span>`).join(" ");
 
       for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = entries.entries.length;
+
+      // One line of the proof, from the method page: where two picks put the
+      // rest of a feed, against the order the page would otherwise have.
+      const two = entries.proof && entries.proof.median_rank && entries.proof.median_rank["2"];
+      if (two) {
+        const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+        el("proof-ranker").textContent = `${nth(two.ranker)} of ${entries.proof.entries}`;
+        el("proof-newest").textContent = nth(two.newest);
+        el("proof-key").hidden = false;
+        el("proof-line").hidden = false;
+      }
       try { localStorage.setItem("manicule-count", entries.entries.length); } catch (_) {}
 
       drawEverything();
