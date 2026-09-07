@@ -1,4 +1,4 @@
-// how.js: the method page. Fetches rank() from the repo and prints it as
+// method.js: the method page. Fetches rank() from the repo and prints it as
 // a listing with five margin notes, then works one row from the visitor's
 // own marks with the same rank.js the feed uses. Nothing leaves the page
 // but the two fetches.

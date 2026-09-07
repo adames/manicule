@@ -169,7 +169,7 @@ pre,code,kbd,samp{font-family:var(--font-mono);letter-spacing:-.01em;text-transf
 .formula .lbl{margin-top:var(--space-1);padding-top:var(--space-1);border-top:var(--border-w) solid var(--border-strong);font-family:var(--font-ui);font-size:var(--text-2xs);color:var(--muted);letter-spacing:0;text-transform:lowercase;white-space:nowrap}
 .kicker-line{margin-top:var(--space-2);font-size:var(--text-sm);color:var(--text-secondary);text-transform:lowercase}
 .prior{margin-top:var(--space-1);font-size:var(--text-xs);color:var(--muted);max-width:var(--measure);text-wrap:pretty}
-/* the details: hairlines above and below, +/− at right; the how.html link sits beside the summary, not inside it */
+/* the details: hairlines above and below, +/− at right; the method.html link sits beside the summary, not inside it */
 .how-wrap{position:relative}
 .how{border-top:var(--border-w) solid var(--border);border-bottom:var(--border-w) solid var(--border)}
 .how summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);min-height:var(--control-sm);padding:var(--space-2) 0;font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--text);text-transform:lowercase}
@@ -338,7 +338,7 @@ table.dt td.num{font-family:var(--font-mono);letter-spacing:-.01em} /* cells onl
 table.dt tr.now td{color:var(--text);font-weight:var(--weight-semibold)}
 table.dt .lc{text-transform:lowercase}
 table.dt .grow{width:100%}
-/* the code listing (how.html): one grid row per line, real line numbers, a sparse note column that sits beside the line it keys to;
+/* the code listing (method.html): one grid row per line, real line numbers, a sparse note column that sits beside the line it keys to;
    long lines wrap with a hanging indent under the gutter */
 .listing{border:var(--border-w) solid var(--border-strong)}
 .listing .cap{display:flex;justify-content:space-between;gap:var(--space-3);padding:var(--space-2) var(--space-3);background:var(--surface);border-bottom:var(--border-w-strong) solid var(--text);font-family:var(--font-mono);font-size:var(--text-2xs);color:var(--muted);letter-spacing:-.01em}
@@ -354,7 +354,7 @@ table.dt .grow{width:100%}
 .grp.key .note{color:var(--text);font-weight:var(--weight-medium)}
 .grp.key pre{background:var(--fill-1)}
 .grp.key pre .ln{color:var(--text-secondary)} /* the key line's number stays AA on the wash */
-/* the worked row (how.html): the receipt beside its ScoreBar, an 8px meter: solid ink to the score, a dashed hollow to cos(entry, picked) */
+/* the worked row (method.html): the receipt beside its ScoreBar, an 8px meter: solid ink to the score, a dashed hollow to cos(entry, picked) */
 .worked-score{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--space-3) var(--space-4)}
 .worked-score .calc{display:inline-block;padding-top:0}
 .worked-score .sbar{flex:1 1 var(--ruler-w);margin-bottom:var(--space-1)}
