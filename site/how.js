@@ -21,12 +21,13 @@
     const m = location.hostname.match(/^([^.]+)\.github\.io$/i);
     return m ? m[1].toLowerCase() : null;
   }
-  // own raw file on a github host, else a local copy, else upstream
+  // A fork's own raw file when the page is served from <owner>.github.io,
+  // else upstream. site/ never contains manicule.py, so there is no local
+  // copy to try: asking for one only bought a 404 on every custom domain.
   async function fetchSource() {
     const o = owner();
     const tries = [];
     if (o) tries.push({ url: raw(o), from: "main" });
-    tries.push({ url: "./manicule.py", from: "local copy" });
     if (o !== CANON) tries.push({ url: raw(CANON), from: "main" });
     for (const t of tries) {
       try {
