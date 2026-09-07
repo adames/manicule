@@ -1,4 +1,4 @@
-// app.js: the feed. Loads corpus.json, ranks it in the browser with
+// feed.js: the feed. Loads corpus.json, ranks it in the browser with
 // rank.js, and prints every score as a receipt. State lives in the URL
 // hash (#m=…&d=…&l=…) with a localStorage mirror; nothing leaves the page.
 (function () {

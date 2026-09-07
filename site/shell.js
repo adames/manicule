@@ -1,5 +1,5 @@
 // shell.js: what every page shares: the theme, the rail, the hand, the
-// toast, the printed link. Loads before app.js; exposes window.Shell.
+// toast, the printed link. Loads before the page script; exposes window.Shell.
 (function () {
   const root = document.documentElement;
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
@@ -98,7 +98,7 @@
 
   // ---- hash carry-along: marks travel between pages. Every same-site link
   // without a hash of its own gets location.hash appended, now and whenever
-  // the hash changes (app.js calls carry() after it rewrites the hash).
+  // the hash changes (the feed calls carry() after it rewrites the hash).
   function carry() {
     for (const a of $$("a[href]")) {
       const raw = a.dataset.href || a.getAttribute("href");
