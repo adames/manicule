@@ -5,7 +5,7 @@
   const ROWS_PER_PAGE = 20;
   const KIND_LABEL = { article: "web", video: "vid", podcast: "pod" };
 
-  const { hand, toast, esc, signed, plain } = Shell;
+  const { hand, toast, esc, signed } = Shell;
   const el = (id) => document.getElementById(id);
 
   const state = {
@@ -112,15 +112,11 @@
 
   // ── one row ──────────────────────────────────────────────────────────────
 
-  // Two terms, a rule that stands for the equals, and the total. With nothing
-  // passed there is no subtraction, so only the total prints. The hidden word
-  // "score" names the arithmetic for screen readers.
+  // The result only. The arithmetic behind it is worked in full on the method
+  // page; a feed is for reading, and a column of sums is not.
   function receiptHtml(scored) {
     if (scored.score === -Infinity) return `<div class="calc"><span class="notext">no words, sinks</span></div>`;
-    if (!state.passed.size) {
-      return `<div class="calc"><span class="sr-only">score</span> <span class="tot">${signed(scored.score)}</span></div>`;
-    }
-    return `<div class="calc" title="what you picked − λ × what you passed"><span class="sr-only">score</span> <span class="t1">${signed(scored.pos)}</span> <span class="t2">− ${state.lambda.toFixed(2)} × ${plain(scored.neg)}</span> <span class="eq sr-only">=</span> <span class="tot">${signed(scored.score)}</span></div>`;
+    return `<div class="calc" title="how near this is to what you picked, less what you passed"><span class="sr-only">score</span> <span class="tot">${signed(scored.score)}</span></div>`;
   }
 
   // The picked entry this one most resembles, printed only when it changes:

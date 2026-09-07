@@ -182,6 +182,14 @@
       <dt>score</dt><dd><div class="worked-score"><div class="calc">${firstTerm}${subtraction}<span class="tot">${signed(scored.score)}</span></div>${scoreBar(scored)}</div></dd>
       <dt>closest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(entry.vector, nearest.vector))}</span> <span class="muted">· of everything you picked, this is the one it sits nearest. the feed prints it as the near line</span>` : ""}</dd>`;
 
+    // The formula with this entry's own numbers in it, in the same shape the
+    // formula band on the feed used to have.
+    el("worked-sum").innerHTML = taste.passed.length
+      ? `<span class="side"><span>${signed(scored.score)}</span><span class="op">=</span><span class="term"><span>${signed(scored.pos)}</span><span class="lbl">near your picks</span></span></span>` +
+        `<span class="side"><span class="op">−</span><span class="term"><span>${plain(taste.lambda)} · ${plain(scored.neg)}</span><span class="lbl">near your passes, times λ</span></span></span>`
+      : `<span class="side"><span>${signed(scored.score)}</span><span class="op">=</span><span class="term"><span>${signed(scored.pos)}</span><span class="lbl">near your picks</span></span></span>` +
+        `<span class="side"><span class="op">−</span><span class="term"><span>0.00</span><span class="lbl">nothing passed</span></span></span>`;
+
     // An empty link is a nameless tab stop, so it stays hidden until it has words.
     el("worked-link").textContent = `row ${place} on the feed`;
     el("worked-link").href = "./" + linkTo(taste);
@@ -206,77 +214,72 @@
     el("hash").textContent = taste.pretend ? "#m=…&d=…&l=0.25" : linkTo(taste);
   }
 
-  // ── the map ──────────────────────────────────────────────────────────────
-  // 384 numbers to two: the first two principal directions, by power
-  // iteration on the centred vectors. Rough on purpose; the table has the
-  // real numbers.
+  // ── the picture of the formula ───────────────────────────────────────────
+  // Both axes are real numbers the ranker computes: across is how near an
+  // entry sits to your picks, up is how near it sits to your passes. No
+  // squashing, nothing thrown away. The score is one minus λ times the other,
+  // so entries that score the same sit on one straight line, and λ is that
+  // line's slope. Sorting the feed is sweeping that line across the page.
 
-  function principal(rows, n) {
-    const dim = rows[0].length;
-    const mean = new Float64Array(dim);
-    for (const row of rows) for (let j = 0; j < dim; j++) mean[j] += row[j] / rows.length;
-    const centred = rows.map((row) => row.map((x, j) => x - mean[j]));
-    const axes = [];
-    for (let k = 0; k < n; k++) {
-      let v = Float64Array.from({ length: dim }, (_, j) => Math.sin(j * (k + 1) + 1));
-      for (let it = 0; it < 40; it++) {
-        const next = new Float64Array(dim);
-        for (const row of centred) {
-          let dot = 0;
-          for (let j = 0; j < dim; j++) dot += row[j] * v[j];
-          for (let j = 0; j < dim; j++) next[j] += dot * row[j];
-        }
-        for (const axis of axes) {
-          let dot = 0;
-          for (let j = 0; j < dim; j++) dot += next[j] * axis[j];
-          for (let j = 0; j < dim; j++) next[j] -= dot * axis[j];
-        }
-        const norm = Math.hypot(...next) || 1;
-        v = next.map((x) => x / norm);
-      }
-      axes.push(v);
-    }
-    const project = (row) => axes.map((axis) => row.reduce((sum, x, j) => sum + (x - mean[j]) * axis[j], 0));
-    return project;
-  }
+  function renderChart(taste, ranked) {
+    const rows = ranked.filter((row) => row.score !== -Infinity);
+    const W = 560, H = 460, L = 56, R = 18, T = 28, B = 52;
 
-  function renderMap(taste) {
-    const withWords = corpus.entries.filter((entry) => entry.vector);
-    const project = principal(withWords.map((entry) => entry.vector), 2);
-    const points = withWords.map((entry) => ({ entry, xy: project(entry.vector) }));
-    const xs = points.map((p) => p.xy[0]);
-    const ys = points.map((p) => p.xy[1]);
-    const W = 640, H = 400, PAD = 18;
-    const sx = (x) => PAD + ((x - Math.min(...xs)) / (Math.max(...xs) - Math.min(...xs) || 1)) * (W - 2 * PAD);
-    const sy = (y) => H - PAD - ((y - Math.min(...ys)) / (Math.max(...ys) - Math.min(...ys) || 1)) * (H - 2 * PAD);
+    // One scale for both axes, or the line's slope would be a lie. Your own
+    // marks sit at 1.00 against themselves and would flatten everything else,
+    // so the frame is drawn around the entries you have not marked.
+    const marked = new Set([...taste.picked, ...taste.passed]);
+    const plain_ = rows.filter((row) => !marked.has(row.entry.id));
+    const all = (plain_.length ? plain_ : rows).flatMap((row) => [row.pos, row.neg]);
+    const gap = (Math.max(...all) - Math.min(...all)) || 0.1;
+    const lo = Math.min(...all) - gap * 0.08;
+    const hi = Math.max(...all) + gap * 0.08;
+    const sx = (x) => L + ((x - lo) / (hi - lo)) * (W - L - R);
+    const sy = (y) => H - B - ((y - lo) / (hi - lo)) * (H - T - B);
 
     const picked = new Set(taste.picked);
     const passed = new Set(taste.passed);
-    const at = (ids) => {
-      const chosen = points.filter((p) => ids.has(p.entry.id));
-      if (!chosen.length) return null;
-      return [chosen.reduce((s, p) => s + p.xy[0], 0) / chosen.length, chosen.reduce((s, p) => s + p.xy[1], 0) / chosen.length];
-    };
-    const pickedAt = at(picked);
-    const passedAt = at(passed);
-
-    const dots = points.map((p) => {
-      const cls = picked.has(p.entry.id) ? "dot pick" : passed.has(p.entry.id) ? "dot pass" : "dot";
-      const r = picked.has(p.entry.id) || passed.has(p.entry.id) ? 5 : 3;
-      return `<circle class="${cls}" cx="${sx(p.xy[0]).toFixed(1)}" cy="${sy(p.xy[1]).toFixed(1)}" r="${r}"><title>${esc(p.entry.title)} · ${esc(p.entry.feed)}</title></circle>`;
+    const dots = rows.map((row) => {
+      const mark = picked.has(row.entry.id) ? " pick" : passed.has(row.entry.id) ? " pass" : "";
+      return `<circle class="dot${mark}" cx="${sx(row.pos).toFixed(1)}" cy="${sy(row.neg).toFixed(1)}" r="${mark ? 5 : 3}"><title>${esc(row.entry.title)} · ${signed(row.score)}</title></circle>`;
     });
-    const ties = pickedAt
-      ? points.filter((p) => picked.has(p.entry.id)).map((p) =>
-          `<line class="tie" x1="${sx(p.xy[0]).toFixed(1)}" y1="${sy(p.xy[1]).toFixed(1)}" x2="${sx(pickedAt[0]).toFixed(1)}" y2="${sy(pickedAt[1]).toFixed(1)}"/>`)
-      : [];
-    const rings = [
-      pickedAt ? `<circle class="mean" cx="${sx(pickedAt[0]).toFixed(1)}" cy="${sy(pickedAt[1]).toFixed(1)}" r="9"><title>the average of your picks</title></circle>` : "",
-      passedAt ? `<circle class="mean pass" cx="${sx(passedAt[0]).toFixed(1)}" cy="${sy(passedAt[1]).toFixed(1)}" r="9"><title>the average of your passes</title></circle>` : "",
+
+    // Entries that score the same sit on one line: pos = score + λ · neg.
+    const top = plain_[0] || rows[0];
+    const isoAt = (score) =>
+      `M ${sx(score + taste.lambda * lo).toFixed(1)} ${sy(lo).toFixed(1)} L ${sx(score + taste.lambda * hi).toFixed(1)} ${sy(hi).toFixed(1)}`;
+    const lines = [
+      `<path class="iso faint" d="${isoAt(top.score - 0.15)}"/>`,
+      `<path class="iso faint" d="${isoAt(top.score - 0.3)}"/>`,
+      `<path class="iso" d="${isoAt(top.score)}"/>`,
     ];
-    el("map").innerHTML =
-      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${points.length} entries as dots, your picks filled, their average ringed">` +
-      ties.join("") + dots.join("") + rings.join("") +
-      `<text x="${PAD}" y="${H - 6}">${points.length} entries</text></svg>`;
+
+    const ticks = [];
+    for (let i = 0; i <= 2; i++) {
+      const v = lo + ((hi - lo) * i) / 2;
+      ticks.push(`<text class="tick" x="${sx(v).toFixed(1)}" y="${H - B + 16}" text-anchor="middle">${plain(v)}</text>`);
+      ticks.push(`<text class="tick" x="${L - 8}" y="${(sy(v) + 4).toFixed(1)}" text-anchor="end">${plain(v)}</text>`);
+    }
+
+    el("chart").innerHTML =
+      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="every entry plotted by how near it sits to your picks and to your passes; entries that score the same sit on one line">` +
+      `<clipPath id="plot"><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/></clipPath>` +
+      `<line class="axis" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"/>` +
+      `<line class="axis" x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}"/>` +
+      `<g clip-path="url(#plot)">${lines.join("")}${dots.join("")}</g>` +
+      ticks.join("") +
+      `<text class="axlab" x="${W - R}" y="${H - 14}" text-anchor="end">near what you picked →</text>` +
+      `<text class="axlab" x="${L}" y="${T - 10}">↑ near what you passed</text>` +
+      `</svg>`;
+
+    el("chart-cap").innerHTML = taste.passed.length
+      ? `the ember line runs through the top entry you have not marked. everything on it scores the same, ${signed(top.score)}, ` +
+        `and the two dashed lines are scores below it. the lines lean by exactly λ, ${plain(taste.lambda)} right now: ` +
+        `steep means a pass barely moves anything, and at λ 1 they stand at 45 degrees and a pass counts as much as a pick. ` +
+        `sorting your feed is sweeping that line across the page from the right and taking entries as it reaches them`
+      : `you have passed on nothing, so the up axis is nought for every entry and they all sit on the floor of the chart. ` +
+        `the score is just how far right a dot is. pass on something and the entries near it lift off the floor, and the ` +
+        `ember line tilts by λ to take that off their score`;
   }
 
   // ── the numbers behind the map ───────────────────────────────────────────
@@ -316,7 +319,7 @@
 
     renderWorkedRow(taste, scored, place + 1);
     renderLambdaTable(taste, scored.entry);
-    renderMap(taste);
+    renderChart(taste, ranked);
     renderNeighbours(taste, scored);
     renderPicks(taste);
   }

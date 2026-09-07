@@ -1428,7 +1428,7 @@ samp {
   max-width: var(--measure);
 }
 
-/* the map: every entry as a dot, the picks in ember, the two averages as rings */
+/* the chart: every entry as a dot on the formula's two axes; the ember line is one score */
 
 .map {
   display: block;
@@ -1456,27 +1456,31 @@ samp {
   opacity: 1;
 }
 
-.map .mean {
+.map .axis {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.map .iso {
   fill: none;
   stroke: var(--ember);
   stroke-width: 2;
 }
 
-.map .mean.pass {
-  stroke: var(--text);
-  stroke-dasharray: 3 3;
-}
-
-.map .tie {
-  stroke: var(--ember);
+.map .iso.faint {
+  stroke: var(--border-strong);
   stroke-width: 1;
-  opacity: .5;
+  stroke-dasharray: 3 3;
 }
 
 .map text {
   font-family: var(--font-mono);
   font-size: 11px;
   fill: var(--muted);
+}
+
+.map .axlab {
+  fill: var(--text-secondary);
 }
 
 /* DataTable: uppercase micro head on the 2px ink rule, hairline body rows; the last column takes the slack */

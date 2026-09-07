@@ -63,12 +63,12 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <p>that is all the model does. it puts each entry on the map, once, on the machine that builds this page. it never sees you</p>
       </section>
 
-      <!-- the map: every entry, flattened to two numbers -->
-      <section aria-label="the map" id="themap">
-        <h2 class="sect"><span>the map</span><a href="./">your feed</a></h2>
-        <p class="caption">every entry on the feed today, its 384 numbers squashed to two so they fit on a page (the two directions that spread the entries most). filled ember is what you picked, the ember ring is their average, the dashed ring is the average of what you passed. hover a dot</p>
-        <div id="map"></div>
-        <p class="caption">the squash loses a lot, so distances here are rough. the numbers in the table below are the real ones</p>
+      <!-- the chart: both axes are numbers the ranker computes -->
+      <section aria-label="the picture" id="themap">
+        <h2 class="sect"><span>the whole thing, drawn</span><a href="./">your feed</a></h2>
+        <p class="caption">every entry on your feed today. across is how near it sits to what you picked. up is how near it sits to what you passed. both numbers are the two halves of the formula, nothing squashed. the best entries are bottom right: near what you picked, far from what you passed. hover a dot</p>
+        <div id="chart"></div>
+        <p class="caption" id="chart-cap"></p>
         <div class="dt-wrap">
           <table class="dt">
             <thead><tr><th scope="col" class="grow">against the top entry on your feed</th><th scope="col">feed</th><th scope="col" class="num">cos</th></tr></thead>
@@ -116,7 +116,8 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <!-- one row, worked: the visitor's own top unmarked row (cold: a pretend taste, named beside the title) -->
       <section aria-label="one row, worked">
         <h2 class="sect"><span>one row, worked<small id="worked-note" hidden></small></span><a id="worked-link" href="./" hidden></a></h2>
-        <p class="caption">the top entry on your feed that you have not marked, with its arithmetic</p>
+        <p class="caption">the feed prints only the result. here is where it comes from, for the top entry on your feed you have not marked</p>
+        <div class="formula" id="worked-sum" role="img" aria-label="the score of this entry, with the numbers filled in"></div>
         <dl class="kv kv--wide" id="worked"><dt>entry</dt><dd>loading</dd></dl>
         <p class="caption" id="worked-cap">solid is the score. the dashed part is what λ took</p>
       </section>
