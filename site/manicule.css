@@ -1092,7 +1092,8 @@ samp {
 .calc {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--text-secondary);
+  color: var(--muted);
+  opacity: .7;
   letter-spacing: -.01em;
   line-height: var(--leading-tight);
   text-align: right;
@@ -1107,11 +1108,11 @@ samp {
 .calc .tot {
   margin-top: var(--space-1);
   padding-top: var(--space-1);
-  border-top: var(--border-w) solid var(--border-strong);
+  border-top: var(--border-w) solid var(--border);
   font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  color: var(--text);
-}
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+} /* the receipt is a window on the arithmetic, not a thing to read: it sits back from the title */
 
 .calc .tot:first-child,
 .calc>.sr-only:first-child+.tot {

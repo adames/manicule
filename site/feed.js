@@ -401,18 +401,11 @@
         entryById[entry.id] = entry;
       }
 
-      // The last fact is one line of the proof: where two picks put the rest
-      // of a feed, against the order the page would otherwise have.
-      const two = entries.proof && entries.proof.median_rank && entries.proof.median_rank["2"];
-      const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
       el("spec").innerHTML = [
-        `refreshed ${esc(utcStamp(entries.generated))}`,
-        `next ${NEXT_REFRESH_UTC} utc`,
-        `${entries.entries.length} entries`,
-        `${entries.feeds.length} feeds`,
-        "no accounts",
-        two ? `<a href="method.html#proof">two picks from one feed put the rest ${nth(two.ranker)}. newest first: ${nth(two.newest)}</a>` : "",
-      ].filter(Boolean).map((fact) => `<span>${fact}</span>`).join(" ");
+        `<span title="${esc(utcStamp(entries.generated))}">updated ${esc(timeAgo(entries.generated))}</span>`,
+        `<span>next ${NEXT_REFRESH_UTC} utc</span>`,
+        `<span>${entries.feeds.length} feeds</span>`,
+      ].join(" ");
 
       for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = entries.entries.length;
 

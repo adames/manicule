@@ -16,9 +16,9 @@
   const NOTES = [
     { matches: "return None", says: "nothing picked: newest first" },
     { matches: 'float("-inf")', says: "no words: sinks, never dropped" },
-    { matches: "p - lam * n", says: "the whole method", key: true },
-    { matches: "out.sort(", says: "best first" },
-    { matches: "cosine(e.vector, picked_ids[k])", says: "the near line" },
+    { matches: "towards - lam * away", says: "the whole method", key: true },
+    { matches: "scored.sort(", says: "best first" },
+    { matches: "cosine(entry.vector, picked_ids[id])", says: "the near line" },
   ];
 
   // The page is served from <owner>.github.io on a fork, so a fork shows its
@@ -52,7 +52,7 @@
     if (!source) return showNothing();
     const lines = source.text.split("\n");
     const first = lines.findIndex((line) => line.startsWith("def rank("));
-    const last = first < 0 ? -1 : lines.findIndex((line, i) => i > first && line === "    return out");
+    const last = first < 0 ? -1 : lines.findIndex((line, i) => i > first && line === "    return scored");
     if (first < 0 || last < 0) return showNothing();
 
     const spoken = new Set();
@@ -155,7 +155,7 @@
 
   const percent = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
   const dayOf = (iso) => (iso ? iso.slice(0, 10) : "undated");
-  const READS = { 0: "ignored", 0.25: "a nudge, the default", 0.5: "half weight", 1: "full weight" };
+  const READS = { 0: "ignored", 0.25: "a nudge, the default", 0.5: "half a pick", 1: "cancels a pick" };
 
   // Solid ink runs to the score; the dashed hollow runs from there to the
   // first term, so the gap is exactly what λ took away.
@@ -176,11 +176,11 @@
 
     el("worked").innerHTML = `
       <dt>entry</dt><dd><span class="t">${esc(entry.title || entry.link)}</span> <span class="sub mono muted">${esc(entry.feed)} · ${dayOf(entry.published)}</span></dd>
-      <dt>cos(entry, picked)</dt><dd class="mono">${signed(scored.pos)}</dd>
-      <dt>cos(entry, passed)</dt><dd class="mono">${taste.passed.length ? plain(scored.neg) : `0.00 <span class="muted">· nothing passed</span>`}</dd>
-      <dt>λ</dt><dd class="mono">${taste.lambda.toFixed(2)}</dd>
+      <dt>cos(entry, picked)</dt><dd><span class="mono">${signed(scored.pos)}</span> <span class="muted">· how close it sits to the average of your picks</span></dd>
+      <dt>cos(entry, passed)</dt><dd>${taste.passed.length ? `<span class="mono">${plain(scored.neg)}</span> <span class="muted">· how close it sits to the average of your passes</span>` : `<span class="mono">0.00</span> <span class="muted">· nothing passed</span>`}</dd>
+      <dt>λ</dt><dd><span class="mono">${taste.lambda.toFixed(2)}</span> <span class="muted">· how much of that comes off</span></dd>
       <dt>score</dt><dd><div class="worked-score"><div class="calc">${firstTerm}${subtraction}<span class="tot">${signed(scored.score)}</span></div>${scoreBar(scored)}</div></dd>
-      <dt>nearest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(entry.vector, nearest.vector))}</span>` : ""}</dd>`;
+      <dt>closest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(entry.vector, nearest.vector))}</span> <span class="muted">· of everything you picked, this is the one it sits nearest. the feed prints it as the near line</span>` : ""}</dd>`;
 
     // An empty link is a nameless tab stop, so it stays hidden until it has words.
     el("worked-link").textContent = `row ${place} on the feed`;

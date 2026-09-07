@@ -48,41 +48,54 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <!-- the formula, as on the feed, with his kicker under it -->
       <div>
         <div class="formula" role="img" aria-label="score equals cosine of entry and picked, minus lambda times cosine of entry and passed">
-          <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, picked)</span><span class="lbl">what you picked</span></span></span>
-          <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, passed)</span><span class="lbl">what you passed × λ</span></span></span>
+          <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, picked)</span><span class="lbl">picked</span></span></span>
+          <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, passed)</span><span class="lbl">passed</span></span></span>
         </div>
         <p class="kicker-line">two averages and a subtraction</p>
-        <p class="prior">the prior art: <a href="https://tullie.ai/blog/building-a-hackernews-for-you-feed">tullie murrell's hn for-you feed</a>, cosine to the mean of your favorites. this one has a second hand</p>
+        <p class="prior">taste algorithm: <a href="https://tullie.ai/blog/building-a-hackernews-for-you-feed">tullie murrell's hn for-you feed</a>, cosine to the mean of your favorites. this one has a second hand</p>
       </div>
+
+      <!-- the explainer: what the math is doing, in order -->
+      <section class="prose" aria-labelledby="vectors">
+        <h2 class="sect" id="vectors"><span>what a vector is doing here</span></h2>
+        <p>an entry's headline and the first 400 characters of its blurb go through a small language model on the machine that builds this page. out come 384 numbers. that list is the entry's vector</p>
+        <p>the numbers are a position. two entries about the same thing land near each other; two about different things land far apart. a post on the 8087's adder sits next to a post on its microcode and nowhere near a recipe. that is all the model does. it never sees you, and it runs once, at build time</p>
+      </section>
+
+      <section class="prose" aria-labelledby="average">
+        <h2 class="sect" id="average"><span>an average is a taste</span></h2>
+        <p>pick three entries. average their three vectors and you get one point, sitting between them. that point is your taste: not a profile, not a history, a spot in the same space the entries live in</p>
+        <p>cos(entry, picked) is how close an entry sits to that spot. +1 is the same direction, 0 is unrelated, and below 0 is pointed the other way. sort by it and the feed is ranked</p>
+        <p>the catch is that one average flattens a plural taste. pick chips and cheetahs and the spot lands between them, scoring both mildly. so the feed also names the single pick each entry sits closest to. that is the near line: which side of your taste this one is on</p>
+      </section>
+
+      <section class="prose" aria-labelledby="second">
+        <h2 class="sect" id="second"><span>the second hand</span></h2>
+        <p>pass on a few entries and they average into a second point. how close an entry sits to that point, times λ, comes off its score</p>
+        <p>λ is the ruler on the feed. at 0.25 a pass is a nudge: an entry near what you passed loses a quarter of what it would gain by being that near what you picked. at 1 a pass cancels a pick. at 0 passes are ignored. the row below shows the same entry at each setting</p>
+        <p>with nothing picked there is no point to measure from, so the feed stays newest first. that is a state, not an error. and an entry with no words has no vector, so it sinks to the bottom, but nothing is ever dropped</p>
+      </section>
 
       <!-- the proof: today's numbers, recomputed at every build -->
       <section aria-label="does it work" id="proof">
         <h2 class="sect"><span>does it work</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">evaluate()</a></h2>
-        <p class="caption">take one feed. pick a few of its entries, hide the rest in the pile of <span id="proof-n">…</span>, and see where the ranker puts them. it never sees which feed anything came from</p>
+        <p class="caption">the test needs an answer the ranker can't see. the feed an entry came from is one: the vector never carries it, and entries from one feed share a subject and a voice. so: take one feed. pick a few of its entries, hide the rest in the pile of <span id="proof-n">…</span>, and see where the ranker puts them. lower is better; 1st means the rest of that feed came straight to the top</p>
         <div class="dt-wrap">
           <table class="dt">
             <thead><tr><th scope="col" class="lc">picks</th><th scope="col" class="num">the ranker</th><th scope="col" class="num">shared words</th><th scope="col" class="num">newest first</th><th scope="col" class="num">shuffled</th></tr></thead>
             <tbody id="proof-rows"><tr><td colspan="5">loading</td></tr></tbody>
           </table>
         </div>
-        <p class="caption" id="proof-cap">median rank of the rest of that feed</p>
+        <p class="caption" id="proof-cap">where the rest of that feed lands, the median</p>
         <dl class="kv kv--tight" id="proof-notes"></dl>
-      </section>
-
-      <!-- the listing: rank(), fetched live from main -->
-      <section aria-label="the listing">
-        <h2 class="sect"><span>the listing</span><a id="listing-github" href="https://github.com/adames/manicule/blob/main/manicule.py">on github</a></h2>
-        <div class="listing" id="listing">
-          <div class="cap"><span><b>manicule.py</b> · rank()</span><span>loading</span></div>
-        </div>
-        <p class="caption" id="listing-cap"></p>
       </section>
 
       <!-- one row, worked: the visitor's own top unmarked row (cold: a pretend taste, named beside the title) -->
       <section aria-label="one row, worked">
         <h2 class="sect"><span>one row, worked<small id="worked-note" hidden></small></span><a id="worked-link" href="./" hidden></a></h2>
+        <p class="caption">the top entry on your feed that you have not marked, with its arithmetic</p>
         <dl class="kv kv--wide" id="worked"><dt>entry</dt><dd>loading</dd></dl>
-        <p class="caption" id="worked-cap">the dashed part is what λ took</p>
+        <p class="caption" id="worked-cap">solid is the score. the dashed part is what λ took</p>
       </section>
 
       <!-- the same row at other λ -->
@@ -90,21 +103,30 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <h2 class="sect"><span>the same row, other λ</span></h2>
         <div class="dt-wrap">
           <table class="dt">
-            <thead><tr><th scope="col" class="lc">λ</th><th scope="col" class="num">score</th><th scope="col" class="num">rank</th><th scope="col" class="grow">what it does</th></tr></thead>
+            <thead><tr><th scope="col" class="lc">λ</th><th scope="col" class="num">score</th><th scope="col" class="num">rank</th><th scope="col" class="grow">what a pass does</th></tr></thead>
             <tbody id="lam-rows"></tbody>
           </table>
         </div>
         <p class="caption" id="lam-cap"></p>
       </section>
 
-      <!-- where it runs -->
-      <section aria-label="where it runs">
-        <h2 class="sect"><span>where it runs</span></h2>
+      <!-- the listing: rank(), fetched live from main -->
+      <section aria-label="the listing">
+        <h2 class="sect"><span>the listing</span><a id="listing-github" href="https://github.com/adames/manicule/blob/main/manicule.py">on github</a></h2>
+        <p class="caption">the function, as it is on main right now. the notes in the margin point at the lines above</p>
+        <div class="listing" id="listing">
+          <div class="cap"><span><b>manicule.py</b> · rank()</span><span>loading</span></div>
+        </div>
+        <p class="caption" id="listing-cap"></p>
+      </section>
+
+      <!-- where your data lives -->
+      <section aria-label="where your data lives">
+        <h2 class="sect"><span>where your data lives</span></h2>
         <dl class="kv">
-          <dt>browser</dt><dd>rank.js, the same math. corpus.json is <span class="mono" id="dims">270 × 384</span> int8</dd>
-          <dt>cli</dt><dd>manicule.py rank. a markdown page from an opml and a folder of notes</dd>
-          <dt>vectors</dt><dd>fastembed, bge-small, on your machine</dd>
-          <dt>state</dt><dd>the url hash. <span class="mono" id="hash">#m=…</span></dd>
+          <dt>your marks</dt><dd>in the link and in this browser. <span class="mono" id="hash">#m=…</span>. nothing is sent anywhere</dd>
+          <dt>the vectors</dt><dd>made when the page is built, by fastembed's bge-small, on the build machine. they come down in corpus.json, <span class="mono" id="dims">270 × 384</span> int8, and rank.js does the math here</dd>
+          <dt>the cli</dt><dd>manicule.py rank, on your machine. a markdown page from an opml and a folder of notes. the only traffic is the feed fetches</dd>
           <dt>refresh</dt><dd>a github action, daily, <span class="mono">06:17 utc</span></dd>
         </dl>
       </section>

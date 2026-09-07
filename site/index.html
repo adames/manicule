@@ -47,8 +47,8 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 
       <!-- the formula, always visible -->
       <div class="formula" role="img" aria-label="score equals cosine of entry and picked, minus lambda times cosine of entry and passed">
-        <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, picked)</span><span class="lbl">what you picked</span></span></span>
-        <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, passed)</span><span class="lbl">what you passed × λ</span></span></span>
+        <span class="side"><span>score</span><span class="op">=</span><span class="term"><span>cos(entry, picked)</span><span class="lbl">picked</span></span></span>
+        <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, passed)</span><span class="lbl">passed</span></span></span>
       </div>
 
       <!-- the ledger -->
