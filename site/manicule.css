@@ -869,7 +869,7 @@ samp {
 
 .row {
   display: grid;
-  grid-template-columns: 3ch minmax(0,1fr) var(--control-sm);
+  grid-template-columns: 3ch minmax(0,1fr) min-content;
   column-gap: var(--space-4);
   align-items: start;
 }
@@ -1023,14 +1023,14 @@ samp {
 
 .calc {
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-2xs);
   color: var(--muted);
   opacity: .7;
   letter-spacing: -.01em;
   line-height: var(--leading-tight);
   text-align: center;
-  width: var(--control-sm);
-}
+  width: 5ch;
+} /* 5ch is the width of a signed score in this face, so every row's column is the same and the boxes keep one line down the page */
 
 .calc span {
   display: block;
@@ -1050,9 +1050,9 @@ samp {
 .hands {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-1);
-} /* the score sits under the finger that made it */
+} /* the score sits under the finger that made it, on the same centre line */
 
 /* one control, three states. Meaning is form, not colour: empty by default, inverse ink when you point at a row, dashed ink when you pass on one. The hand shows faintly on hover so an empty box still invites a press. */
 
@@ -1737,7 +1737,7 @@ pre .c {
 
 @media (max-width:719.98px) {
   .row {
-    grid-template-columns: 2.5ch minmax(0,1fr) var(--control-sm);
+    grid-template-columns: 2.5ch minmax(0,1fr) min-content;
     column-gap: var(--space-3);
   }
   .page>main>*+* {
