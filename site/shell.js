@@ -61,27 +61,34 @@
   // ---- the marks. A hash reads as {m, d, l}; the mirror is this browser's
   // copy of its own marks (localStorage "manicule"); hashOf prints them back
   // as the feed's hash, ids comma-separated so the link stays readable.
+  // A feed's key in the url: readable, short, and stable while the feed keeps
+  // its name. Sources belong in the link for the same reason marks do: a page
+  // narrowed to the four feeds you care about is the whole point, and it
+  // should survive a reload and a paste into a message.
+  const feedKey = (name) => String(name).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 12);
   function marksIn(hash) {
     const h = new URLSearchParams((hash || "").replace(/^#/, ""));
     return {
       m: (h.get("m") || "").split(",").filter(Boolean),
       d: (h.get("d") || "").split(",").filter(Boolean),
+      s: (h.get("s") || "").split(",").filter(Boolean),
       l: h.get("l"),
     };
   }
   function mirror() {
     try { return JSON.parse(localStorage.getItem("manicule") || "null"); } catch (_) { return null; }
   }
-  function hashOf(m, d, l) {
+  function hashOf(m, d, l, srcKeys) {
     const parts = [];
     if (m.length) parts.push("m=" + m.join(","));
     if (d.length) parts.push("d=" + d.join(","));
+    if (srcKeys && srcKeys.length) parts.push("s=" + srcKeys.join(","));
     if (l != null) parts.push("l=" + l);
     return parts.length ? "#" + parts.join("&") : "";
   }
   // the hash is the marks: empty, or #m=…&d=…&l=…. anything else (#main,
   // #list) is a fragment, never a state.
-  const isMarks = (h) => h === "" || /^#[mdl]=/.test(h);
+  const isMarks = (h) => h === "" || /^#[mdsl]=/.test(h);
   // a typed address carries no hash; a bookmark may carry only a λ. if this
   // browser has marks, the mirror supplies them before anything reads
   // location.hash (a λ in the hash wins over the mirror's), so the printed
@@ -176,5 +183,5 @@
     if (c) toast((await copy(c.dataset.copy)) ? "copied" : "couldn't copy");
   });
 
-  window.Shell = { hand, toast, copy, carry, address, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, isDark, esc };
+  window.Shell = { hand, toast, copy, carry, address, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, isDark, esc, feedKey };
 })();

@@ -34,6 +34,12 @@
       // no marks in the hash: this browser's own, if any
       state.picked = new Set(own.m); state.passed = new Set(own.d); state.borrowed = false;
     }
+    // sources ride the same link: a page narrowed to a few feeds is worth
+    // keeping. Unknown keys are dropped, so a feed that leaves the build
+    // quietly widens the view instead of emptying it.
+    const keys = raw.s.length ? raw.s : (m.length || d.length ? [] : (saved.s || []));
+    const want = new Set(keys);
+    state.sources = new Set(keys.length ? (corpus.feeds || []).filter((f) => want.has(Shell.feedKey(f))) : []);
     // λ is this browser's preference, not a mark: the saved one applies to any
     // link that carries none. λ in the hash wins either way: a bare #l=0.5
     // moves the ruler, it does not clear the marks
@@ -44,11 +50,12 @@
   function writeHash() {
     // λ prints when there are marks, or when it was moved off the default
     const any = state.picked.size || state.passed.size;
-    const s = Shell.hashOf([...state.picked], [...state.passed], any || state.lam !== Manicule.LAMBDA ? state.lam : null);
+    const s = Shell.hashOf([...state.picked], [...state.passed], any || state.lam !== Manicule.LAMBDA ? state.lam : null,
+      [...state.sources].map(Shell.feedKey));
     history.replaceState(null, "", s || location.pathname + location.search);
     // A borrowed link does not overwrite this browser's own marks until the
     // first press adopts it.
-    if (!state.borrowed) try { localStorage.setItem("manicule", JSON.stringify({ m: [...state.picked], d: [...state.passed], l: state.lam })); } catch (_) {}
+    if (!state.borrowed) try { localStorage.setItem("manicule", JSON.stringify({ m: [...state.picked], d: [...state.passed], l: state.lam, s: [...state.sources].map(Shell.feedKey) })); } catch (_) {}
     Shell.carry(); Shell.renderAddrs();
   }
 
@@ -261,7 +268,7 @@
   addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) load(); });
 
   // ---- boot
-  function load() { readHash(); setLam(); render(); }
+  function load() { readHash(); setLam(); renderChips(); render(); }
   const stamp = (iso) => iso.slice(0, 10) + " " + iso.slice(11, 16) + " utc";
   fetch("corpus.json", { cache: "no-cache" }).then((r) => r.json()).then((c) => {
     corpus = c;
@@ -269,7 +276,7 @@
     $("spec").innerHTML = [`refreshed ${esc(stamp(c.generated))}`, `next ${NEXT_REFRESH_UTC} utc`, `${c.entries.length} entries`, `${c.feeds.length} feeds`, "no accounts"].map((s) => `<span>${s}</span>`).join(" ");
     for (const el of document.querySelectorAll("[data-count]")) el.textContent = c.entries.length;
     try { localStorage.setItem("manicule-count", c.entries.length); } catch (_) {}
-    renderChips(); load();
+    load();
     // how it works: open on a cold desktop, closed once there are marks and always on a phone
     const cold = !state.picked.size;
     $("how").open = cold && !matchMedia("(max-width: 719.98px)").matches;
