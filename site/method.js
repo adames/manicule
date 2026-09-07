@@ -214,72 +214,67 @@
     el("hash").textContent = taste.pretend ? "#m=…&d=…&l=0.25" : linkTo(taste);
   }
 
-  // ── the picture of the formula ───────────────────────────────────────────
-  // Both axes are real numbers the ranker computes: across is how near an
-  // entry sits to your picks, up is how near it sits to your passes. No
-  // squashing, nothing thrown away. The score is one minus λ times the other,
-  // so entries that score the same sit on one straight line, and λ is that
-  // line's slope. Sorting the feed is sweeping that line across the page.
+  // ── what picking does ────────────────────────────────────────────────────
+  // The evaluation, drawn, on today's entries. Take a real feed. Pick two of
+  // its entries. Where does the rest of that feed sit before and after? The
+  // ranker never sees which feed anything came from, so this is the test the
+  // numbers in the table below run 1290 times.
 
-  function renderChart(taste, ranked) {
-    const rows = ranked.filter((row) => row.score !== -Infinity);
-    const W = 560, H = 460, L = 56, R = 18, T = 28, B = 52;
+  function renderPicking() {
+    const withWords = corpus.entries.filter((entry) => entry.vector);
+    const byFeed = {};
+    for (const entry of withWords) (byFeed[entry.feed] = byFeed[entry.feed] || []).push(entry);
+    const newestFirst = (list) => [...list].sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
-    // One scale for both axes, or the line's slope would be a lie. Your own
-    // marks sit at 1.00 against themselves and would flatten everything else,
-    // so the frame is drawn around the entries you have not marked.
-    const marked = new Set([...taste.picked, ...taste.passed]);
-    const plain_ = rows.filter((row) => !marked.has(row.entry.id));
-    const all = (plain_.length ? plain_ : rows).flatMap((row) => [row.pos, row.neg]);
-    const gap = (Math.max(...all) - Math.min(...all)) || 0.1;
-    const lo = Math.min(...all) - gap * 0.08;
-    const hi = Math.max(...all) + gap * 0.08;
-    const sx = (x) => L + ((x - lo) / (hi - lo)) * (W - L - R);
-    const sy = (y) => H - B - ((y - lo) / (hi - lo)) * (H - T - B);
-
-    const picked = new Set(taste.picked);
-    const passed = new Set(taste.passed);
-    const dots = rows.map((row) => {
-      const mark = picked.has(row.entry.id) ? " pick" : passed.has(row.entry.id) ? " pass" : "";
-      return `<circle class="dot${mark}" cx="${sx(row.pos).toFixed(1)}" cy="${sy(row.neg).toFixed(1)}" r="${mark ? 5 : 3}"><title>${esc(row.entry.title)} · ${signed(row.score)}</title></circle>`;
-    });
-
-    // Entries that score the same sit on one line: pos = score + λ · neg.
-    const top = plain_[0] || rows[0];
-    const isoAt = (score) =>
-      `M ${sx(score + taste.lambda * lo).toFixed(1)} ${sy(lo).toFixed(1)} L ${sx(score + taste.lambda * hi).toFixed(1)} ${sy(hi).toFixed(1)}`;
-    const lines = [
-      `<path class="iso faint" d="${isoAt(top.score - 0.15)}"/>`,
-      `<path class="iso faint" d="${isoAt(top.score - 0.3)}"/>`,
-      `<path class="iso" d="${isoAt(top.score)}"/>`,
-    ];
-
-    const ticks = [];
-    for (let i = 0; i <= 2; i++) {
-      const v = lo + ((hi - lo) * i) / 2;
-      ticks.push(`<text class="tick" x="${sx(v).toFixed(1)}" y="${H - B + 16}" text-anchor="middle">${plain(v)}</text>`);
-      ticks.push(`<text class="tick" x="${L - 8}" y="${(sy(v) + 4).toFixed(1)}" text-anchor="end">${plain(v)}</text>`);
+    // Every feed with enough entries takes its turn: two of its entries become
+    // the taste, the rest have to find their way back out of the pile.
+    const moves = [];
+    let feeds = 0;
+    for (const name of Object.keys(byFeed).sort()) {
+      const members = newestFirst(byFeed[name]);
+      if (members.length < 4) continue;
+      feeds++;
+      const picks = members.slice(0, 2);
+      const held = members.slice(2);
+      const rest = withWords.filter((entry) => !picks.includes(entry));
+      const ranked = Manicule.rank(rest, picks.map((entry) => entry.vector), [], Manicule.LAMBDA, {});
+      const after = {};
+      ranked.forEach((row, i) => { after[row.entry.id] = (i + 1) / ranked.length; });
+      const before = {};
+      newestFirst(rest).forEach((entry, i) => { before[entry.id] = (i + 1) / rest.length; });
+      for (const entry of held) moves.push([before[entry.id], after[entry.id]]);
     }
+    if (!moves.length) return;
+
+    const W = 640, H = 210, L = 16, R = 16, TOP = 58, BOT = 158;
+    const sx = (frac) => L + frac * (W - L - R);
+    const tick = (frac, y, cls) =>
+      `<line class="${cls}" x1="${sx(frac).toFixed(1)}" y1="${y - 9}" x2="${sx(frac).toFixed(1)}" y2="${y + 9}"/>`;
+    const mid = (xs) => { const sorted = [...xs].sort((a, b) => a - b); return sorted[sorted.length >> 1]; };
+    const wasMid = mid(moves.map((m) => m[0]));
+    const nowMid = mid(moves.map((m) => m[1]));
+    const outOf = withWords.length;
+    const asPlace = (frac) => Math.max(1, Math.round(frac * outOf));
 
     el("chart").innerHTML =
-      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="every entry plotted by how near it sits to your picks and to your passes; entries that score the same sit on one line">` +
-      `<clipPath id="plot"><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/></clipPath>` +
-      `<line class="axis" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"/>` +
-      `<line class="axis" x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}"/>` +
-      `<g clip-path="url(#plot)">${lines.join("")}${dots.join("")}</g>` +
-      ticks.join("") +
-      `<text class="axlab" x="${W - R}" y="${H - 14}" text-anchor="end">near what you picked →</text>` +
-      `<text class="axlab" x="${L}" y="${T - 10}">↑ near what you passed</text>` +
+      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${moves.length} held-out entries, where date order puts them and where two picks put them">` +
+      `<text class="axlab" x="${L}" y="${TOP - 22}">newest first</text>` +
+      `<text class="tick" x="${W - R}" y="${TOP - 22}" text-anchor="end">middle one: ${asPlace(wasMid)} of ${outOf}</text>` +
+      `<line class="rail" x1="${L}" y1="${TOP}" x2="${W - R}" y2="${TOP}"/>` +
+      moves.map((m) => tick(m[0], TOP, "pick-tick")).join("") +
+      tick(wasMid, TOP, "pick-mid") +
+      `<line class="rail" x1="${L}" y1="${BOT}" x2="${W - R}" y2="${BOT}"/>` +
+      moves.map((m) => tick(m[1], BOT, "pick-tick")).join("") +
+      tick(nowMid, BOT, "pick-mid") +
+      `<text class="axlab" x="${L}" y="${BOT + 32}">after two picks</text>` +
+      `<text class="tick" x="${W - R}" y="${BOT + 32}" text-anchor="end">middle one: ${asPlace(nowMid)} of ${outOf}</text>` +
       `</svg>`;
 
-    el("chart-cap").innerHTML = taste.passed.length
-      ? `the ember line runs through the top entry you have not marked. everything on it scores the same, ${signed(top.score)}, ` +
-        `and the two dashed lines are scores below it. the lines lean by exactly λ, ${plain(taste.lambda)} right now: ` +
-        `steep means a pass barely moves anything, and at λ 1 they stand at 45 degrees and a pass counts as much as a pick. ` +
-        `sorting your feed is sweeping that line across the page from the right and taking entries as it reaches them`
-      : `you have passed on nothing, so the up axis is nought for every entry and they all sit on the floor of the chart. ` +
-        `the score is just how far right a dot is. pass on something and the entries near it lift off the floor, and the ` +
-        `ember line tilts by λ to take that off their score`;
+    el("chart-cap").innerHTML =
+      `${feeds} feeds took a turn. two of a feed's entries became the taste; its other entries went back in the pile with ` +
+      `everything else, ${moves.length} of them in all. the top rail is where date order leaves them, spread over the whole feed. ` +
+      `the bottom rail is where two picks put them. the tall tick is the middle one, ${asPlace(wasMid)} then ${asPlace(nowMid)}. ` +
+      `the ranker was never told which feed anything came from; it saw two picks and nothing else`;
   }
 
   // ── the numbers behind the map ───────────────────────────────────────────
@@ -319,7 +314,7 @@
 
     renderWorkedRow(taste, scored, place + 1);
     renderLambdaTable(taste, scored.entry);
-    renderChart(taste, ranked);
+    renderPicking();
     renderNeighbours(taste, scored);
     renderPicks(taste);
   }

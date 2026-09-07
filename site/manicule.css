@@ -1428,7 +1428,7 @@ samp {
   max-width: var(--measure);
 }
 
-/* the chart: every entry as a dot on the formula's two axes; the ember line is one score */
+/* the picking chart: one feed's entries as ticks on two rails, before and after */
 
 .map {
   display: block;
@@ -1438,39 +1438,20 @@ samp {
   border: var(--border-w) solid var(--border);
 }
 
-.map .dot {
-  fill: var(--muted);
-  opacity: .55;
-}
-
-.map .dot.pick {
-  fill: var(--ember);
-  opacity: 1;
-}
-
-.map .dot.pass {
-  fill: none;
-  stroke: var(--text);
-  stroke-width: 1.5;
-  stroke-dasharray: 2 2;
-  opacity: 1;
-}
-
-.map .axis {
+.map .rail {
   stroke: var(--border-strong);
   stroke-width: 1;
 }
 
-.map .iso {
-  fill: none;
+.map .pick-tick {
   stroke: var(--ember);
   stroke-width: 2;
+  opacity: .5;
 }
 
-.map .iso.faint {
-  stroke: var(--border-strong);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
+.map .pick-mid {
+  stroke: var(--text);
+  stroke-width: 2;
 }
 
 .map text {
