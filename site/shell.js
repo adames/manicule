@@ -4,31 +4,27 @@
   const root = document.documentElement;
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
 
-  // ---- the hand: Commonplace's manicule, one path set, three poses.
-  // point = pointing left, at the entry beside it; rest = the classic ☞;
-  // up/down remain for anything that still wants them.
+  // ---- the hand. point = pointing left, at the entry beside it. rest = the
+  // classic ☞. bird = the same fist with the middle digit up, its own drawing
+  // because that is not a rotation of a hand pointing sideways, and with no
+  // thumb, because nobody sticks a thumb out to flip the bird.
   const PATHS =
     '<path d="M7.6 11.5 V6 a1.3 1.3 0 0 1 2.6 0 V11"/>' +
     '<path d="M10.2 11 a1.1 1.1 0 0 1 2.2 0 a1.05 1.05 0 0 1 2.1 0 a1 1 0 0 1 1.7 0.5 V17.8 a2.2 2.2 0 0 1 -2.2 2.2 H9.4 a2 2 0 0 1 -2 -2 V11.5"/>' +
     '<path d="M7.4 13.8 a1.4 1.4 0 0 1 -1.7 -0.5"/>';
-  const POSE = { up: "", down: "translate(0,24) scale(1,-1)", rest: "rotate(90 12 12)", point: "rotate(-90 12 12)" };
-  // The bird: the same fist, drawn at the same size, with the middle digit
-  // raised instead of the index. Its own path set, since a fist with one
-  // finger up in the middle is not a rotation of a fist pointing sideways.
+  const POSE = { rest: "rotate(90 12 12)", point: "rotate(-90 12 12)" };
   const BIRD =
     '<path d="M10.6 12 V7.6 a1.3 1.3 0 0 1 2.6 0 V12"/>' +
     '<path d="M7.4 12 a1.1 1.1 0 0 1 2.2 0"/>' +
     '<path d="M14 12 a1.05 1.05 0 0 1 2.1 0"/>' +
     '<path d="M7.4 12 V17.8 a2.2 2.2 0 0 0 2.2 2.2 H14 a2.1 2.1 0 0 0 2.1 -2.1 V12"/>';
-  // No thumb: nobody sticks a thumb out to flip the bird. The manicule keeps
-  // its thumb, because a hand pointing at something does put it out.
   function hand(pose = "rest", size) {
     const inner = pose === "bird" ? BIRD
       : POSE[pose] ? `<g transform="${POSE[pose]}">${PATHS}</g>` : PATHS;
     const dim = size ? ` width="${size}" height="${size}"` : "";
     return `<svg class="hand-svg" viewBox="0 0 24 24"${dim} fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${inner}</svg>`;
   }
-  // Any element marked data-hand="up|down|rest" gets the drawing at load.
+  // Any element marked data-hand="rest|point|bird" gets the drawing at load.
   for (const el of $$("[data-hand]")) el.innerHTML = hand(el.dataset.hand);
 
   // ---- theme: a stamped choice wins; otherwise the OS decides. ?theme=dark
@@ -183,5 +179,5 @@
     if (c) toast((await copy(c.dataset.copy)) ? "copied" : "couldn't copy");
   });
 
-  window.Shell = { hand, toast, copy, carry, address, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, isDark, esc, feedKey };
+  window.Shell = { hand, toast, carry, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, esc, feedKey };
 })();
