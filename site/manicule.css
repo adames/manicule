@@ -1406,6 +1406,7 @@ samp {
 }
 
 .kv dd .mono {
+  overflow-wrap: anywhere;
   color: var(--text);
 }
 
