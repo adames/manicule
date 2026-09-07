@@ -137,17 +137,19 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <footer class="foot">
       <div class="doors">
         <div class="door">
-          <span class="kicker">share</span>
-          <p>the link carries your marks</p>
+          <span class="kicker">here</span>
+          <p>nothing to install. pick what you like and keep the link</p>
           <span class="addr" data-addr></span>
           <button class="btn" type="button" data-act="share">share</button>
         </div>
         <div class="door">
-          <span class="kicker">fork</span>
+          <span class="kicker">your feeds</span>
+          <p>swap my feeds for yours. needs a github account</p>
           <a class="go addr" href="https://github.com/adames/manicule/fork">&lt;you&gt;.github.io/manicule/</a>
         </div>
         <div class="door">
-          <span class="kicker">cli</span>
+          <span class="kicker">your machine</span>
+          <p>without a website. one python file</p>
 <pre>uv run manicule.py \
   rank feeds.opml \
   --picked ~/notes \

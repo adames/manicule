@@ -398,7 +398,10 @@ def main(argv: list[str] | None = None) -> int:
     c = sub.add_parser("corpus", help="fetch + embed feeds into a static JSON for the demo site")
     c.add_argument("opml")
     c.add_argument("-o", "--out", default="site/corpus.json")
-    c.add_argument("--per-feed", type=int, default=20)
+    # The browser downloads every entry, so the demo keeps fewer per feed than
+    # the CLI does. More feeds at fewer each is the same page weight and a much
+    # wider sample.
+    c.add_argument("--per-feed", type=int, default=7)
     c.set_defaults(fn=cmd_corpus)
 
     args = ap.parse_args(argv)
