@@ -220,20 +220,22 @@
   // ranker never sees which feed anything came from, so this is the test the
   // numbers in the table below run 1290 times.
 
-  function renderPicking() {
+  // One feed at a time, so a reader can watch a single case, or all of them
+  // pooled. The button cycles; the picture is the same test either way.
+  let trialFeeds = null;
+  let showing = "all";
+
+  function trials() {
+    if (trialFeeds) return trialFeeds;
     const withWords = corpus.entries.filter((entry) => entry.vector);
     const byFeed = {};
     for (const entry of withWords) (byFeed[entry.feed] = byFeed[entry.feed] || []).push(entry);
     const newestFirst = (list) => [...list].sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
-    // Every feed with enough entries takes its turn: two of its entries become
-    // the taste, the rest have to find their way back out of the pile.
-    const moves = [];
-    let feeds = 0;
+    trialFeeds = [];
     for (const name of Object.keys(byFeed).sort()) {
       const members = newestFirst(byFeed[name]);
       if (members.length < 4) continue;
-      feeds++;
       const picks = members.slice(0, 2);
       const held = members.slice(2);
       const rest = withWords.filter((entry) => !picks.includes(entry));
@@ -242,40 +244,75 @@
       ranked.forEach((row, i) => { after[row.entry.id] = (i + 1) / ranked.length; });
       const before = {};
       newestFirst(rest).forEach((entry, i) => { before[entry.id] = (i + 1) / rest.length; });
-      for (const entry of held) moves.push([before[entry.id], after[entry.id]]);
+      trialFeeds.push({
+        feed: name,
+        picks: picks.map((entry) => entry.title),
+        moves: held.map((entry) => ({ title: entry.title, was: before[entry.id], now: after[entry.id] })),
+      });
     }
-    if (!moves.length) return;
+    return trialFeeds;
+  }
+
+  function renderPicking() {
+    const runs = trials();
+    if (!runs.length) return;
+    const one = showing === "all" ? null : runs[showing];
+    const moves = one ? one.moves : runs.flatMap((run) => run.moves);
 
     const W = 640, H = 210, L = 16, R = 16, TOP = 58, BOT = 158;
     const sx = (frac) => L + frac * (W - L - R);
-    const tick = (frac, y, cls) =>
-      `<line class="${cls}" x1="${sx(frac).toFixed(1)}" y1="${y - 9}" x2="${sx(frac).toFixed(1)}" y2="${y + 9}"/>`;
-    const mid = (xs) => { const sorted = [...xs].sort((a, b) => a - b); return sorted[sorted.length >> 1]; };
-    const wasMid = mid(moves.map((m) => m[0]));
-    const nowMid = mid(moves.map((m) => m[1]));
-    const outOf = withWords.length;
-    const asPlace = (frac) => Math.max(1, Math.round(frac * outOf));
+    const outOf = corpus.entries.filter((entry) => entry.vector).length;
+    const place = (frac) => Math.max(1, Math.round(frac * outOf));
+    const mid = (xs) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
+    const wasMid = mid(moves.map((m) => m.was));
+    const nowMid = mid(moves.map((m) => m.now));
+
+    const tick = (frac, y, cls, title) =>
+      `<line class="${cls}" x1="${sx(frac).toFixed(1)}" y1="${y - 9}" x2="${sx(frac).toFixed(1)}" y2="${y + 9}">` +
+      (title ? `<title>${esc(title)}</title>` : "") + `</line>`;
+    // With one feed on show there are few enough entries to join up.
+    const ties = one
+      ? moves.map((m) => `<line class="pick-tie" x1="${sx(m.was).toFixed(1)}" y1="${TOP + 9}" x2="${sx(m.now).toFixed(1)}" y2="${BOT - 9}"/>`)
+      : [];
 
     el("chart").innerHTML =
-      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${moves.length} held-out entries, where date order puts them and where two picks put them">` +
+      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${moves.length} held-out entries: where date order puts them, and where two picks put them">` +
       `<text class="axlab" x="${L}" y="${TOP - 22}">newest first</text>` +
-      `<text class="tick" x="${W - R}" y="${TOP - 22}" text-anchor="end">middle one: ${asPlace(wasMid)} of ${outOf}</text>` +
+      `<text class="tick" x="${W - R}" y="${TOP - 22}" text-anchor="end">middle one: ${place(wasMid)} of ${outOf}</text>` +
       `<line class="rail" x1="${L}" y1="${TOP}" x2="${W - R}" y2="${TOP}"/>` +
-      moves.map((m) => tick(m[0], TOP, "pick-tick")).join("") +
-      tick(wasMid, TOP, "pick-mid") +
+      ties.join("") +
+      moves.map((m) => tick(m.was, TOP, "pick-tick", m.title)).join("") + tick(wasMid, TOP, "pick-mid") +
       `<line class="rail" x1="${L}" y1="${BOT}" x2="${W - R}" y2="${BOT}"/>` +
-      moves.map((m) => tick(m[1], BOT, "pick-tick")).join("") +
-      tick(nowMid, BOT, "pick-mid") +
+      moves.map((m) => tick(m.now, BOT, "pick-tick", m.title)).join("") + tick(nowMid, BOT, "pick-mid") +
       `<text class="axlab" x="${L}" y="${BOT + 32}">after two picks</text>` +
-      `<text class="tick" x="${W - R}" y="${BOT + 32}" text-anchor="end">middle one: ${asPlace(nowMid)} of ${outOf}</text>` +
+      `<text class="tick" x="${W - R}" y="${BOT + 32}" text-anchor="end">middle one: ${place(nowMid)} of ${outOf}</text>` +
       `</svg>`;
 
-    el("chart-cap").innerHTML =
-      `${feeds} feeds took a turn. two of a feed's entries became the taste; its other entries went back in the pile with ` +
-      `everything else, ${moves.length} of them in all. the top rail is where date order leaves them, spread over the whole feed. ` +
-      `the bottom rail is where two picks put them. the tall tick is the middle one, ${asPlace(wasMid)} then ${asPlace(nowMid)}. ` +
-      `the ranker was never told which feed anything came from; it saw two picks and nothing else`;
+    el("chart-cap").innerHTML = one
+      ? `<b>${esc(one.feed)}</b> gave up two entries to be the taste: ${one.picks.map((t) => `“${esc(t)}”`).join(" and ")}. ` +
+        `its other ${moves.length} went back in the pile. the lines show where each one moved, ` +
+        `the middle of them from ${place(wasMid)} to ${place(nowMid)} of ${outOf}. hover a tick for its title`
+      : `${runs.length} feeds each gave up two entries to be the taste. their other ${moves.length} entries went back in the pile. ` +
+        `date order leaves them spread over the whole feed; two picks pull them to the front. the tall tick is the middle one, ` +
+        `${place(wasMid)} then ${place(nowMid)} of ${outOf}. the ranker was never told which feed anything came from`;
+
+    // Eight feeds to try, taken evenly across the list so the subjects differ,
+    // plus the pool. Every feed is in the pool either way.
+    const step = Math.max(1, Math.floor(runs.length / 8));
+    const offered = runs.map((run, i) => [i, run]).filter((_, i) => i % step === 0).slice(0, 8);
+    const chip = (value, words, on) =>
+      `<button class="btn quiet" type="button" data-show="${value}"${on ? ' aria-current="true"' : ""}>${words}</button>`;
+    el("chart-pick").innerHTML =
+      chip("all", `all ${runs.length} feeds`, showing === "all") +
+      offered.map(([i, run]) => chip(i, esc(run.feed), showing === i)).join("");
   }
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-show]");
+    if (!button) return;
+    showing = button.dataset.show === "all" ? "all" : Number(button.dataset.show);
+    renderPicking();
+  });
 
   // ── the numbers behind the map ───────────────────────────────────────────
 

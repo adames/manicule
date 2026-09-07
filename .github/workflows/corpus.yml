@@ -31,6 +31,13 @@ jobs:
           git add site/corpus.json
           git diff --cached --quiet || git commit -m "corpus: $(date -u +%F)"
           git push
+      # Stamp every local asset with the commit, so a browser can never mix a
+      # new page with a script it cached an hour ago.
+      - name: stamp the assets
+        run: |
+          v=$(git rev-parse --short HEAD)
+          sed -i -E 's/(href="manicule\.css|src="(rank|shell|feed|method)\.js)"/\1?v='"$v"'"/g' site/*.html
+          grep -o 'v=[0-9a-f]*' site/index.html | head -1
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }
   deploy:

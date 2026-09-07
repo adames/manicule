@@ -1449,6 +1449,12 @@ samp {
   opacity: .5;
 }
 
+.map .pick-tie {
+  stroke: var(--ember);
+  stroke-width: 1;
+  opacity: .3;
+}
+
 .map .pick-mid {
   stroke: var(--text);
   stroke-width: 2;
@@ -1462,6 +1468,24 @@ samp {
 
 .map .axlab {
   fill: var(--text-secondary);
+}
+
+/* the feed chips under the picking chart */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.chips .btn {
+  font-size: var(--text-2xs);
+}
+
+.chips .btn[aria-current] {
+  border-color: var(--ember);
+  color: var(--ember);
 }
 
 /* DataTable: uppercase micro head on the 2px ink rule, hairline body rows; the last column takes the slack */
