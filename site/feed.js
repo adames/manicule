@@ -16,7 +16,7 @@
     order: null,      // ids in the order on screen; null is newest first
     rowsShown: ROWS_PER_PAGE,
   };
-  let entries = null;      // corpus.json, once it lands
+  let entries = null;      // entries.json, once it lands
   let entryById = {};
 
   // ── the link is the state ────────────────────────────────────────────────
@@ -366,7 +366,7 @@
 
   // ── boot ─────────────────────────────────────────────────────────────────
 
-  fetch("corpus.json", { cache: "no-cache" })
+  fetch("entries.json", { cache: "no-cache" })
     .then((response) => response.json())
     .then((loaded) => {
       entries = loaded;

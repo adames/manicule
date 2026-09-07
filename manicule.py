@@ -14,8 +14,8 @@ rank by and the list stays newest-first.
 Three subcommands:
 
     manicule.py rank   feeds.opml --picked notes/ [--passed nope/]   # your daily page
-    manicule.py corpus feeds.opml -o site/corpus.json                # the static demo's data
-    manicule.py evaluate [site/corpus.json]                          # the proof, printed
+    manicule.py entries feeds.opml -o site/entries.json              # the static demo's data
+    manicule.py evaluate [site/entries.json]                          # the proof, printed
 
 Embeddings run locally (fastembed, BAAI/bge-small-en-v1.5, 384 dimensions);
 nothing leaves the machine except the feed fetches themselves.
@@ -524,7 +524,7 @@ def cmd_rank(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_corpus(args: argparse.Namespace) -> int:
+def cmd_entries(args: argparse.Namespace) -> int:
     """The same feeds, embedded once, as the static page's data."""
     feeds = parse_opml(Path(args.opml))
     print(f"fetching {len(feeds)} feeds…", file=sys.stderr)
@@ -560,8 +560,8 @@ def cmd_corpus(args: argparse.Namespace) -> int:
 
 
 def cmd_evaluate(args: argparse.Namespace) -> int:
-    """Rerun the proof on a corpus.json, without fetching or embedding."""
-    payload = json.loads(Path(args.corpus).read_text())
+    """Rerun the proof on an entries.json, without fetching or embedding."""
+    payload = json.loads(Path(args.entries).read_text())
     entries = [
         Entry(row["id"], row["title"], row["link"], row["snippet"], row["feed"],
               row["published"], row["kind"], dequantize(row["q"], row["s"]) if "q" in row else None)
@@ -585,17 +585,17 @@ def main(argv: list[str] | None = None) -> int:
     daily.add_argument("-o", "--out", help="write Markdown here instead of stdout")
     daily.set_defaults(fn=cmd_rank)
 
-    demo = commands.add_parser("corpus", help="fetch + embed feeds into a static JSON for the demo site")
+    demo = commands.add_parser("entries", help="fetch + embed feeds into a static JSON for the demo site")
     demo.add_argument("opml")
-    demo.add_argument("-o", "--out", default="site/corpus.json")
+    demo.add_argument("-o", "--out", default="site/entries.json")
     # The browser downloads every entry, so the demo keeps fewer per feed than
     # the CLI does: more feeds at fewer each is the same page weight and a much
     # wider sample.
     demo.add_argument("--per-feed", type=int, default=7)
-    demo.set_defaults(fn=cmd_corpus)
+    demo.set_defaults(fn=cmd_entries)
 
-    proof = commands.add_parser("evaluate", help="rerun the proof on a corpus.json and print it")
-    proof.add_argument("corpus", nargs="?", default="site/corpus.json")
+    proof = commands.add_parser("evaluate", help="rerun the proof on an entries.json and print it")
+    proof.add_argument("entries", nargs="?", default="site/entries.json")
     proof.set_defaults(fn=cmd_evaluate)
 
     args = parser.parse_args(argv)

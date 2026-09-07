@@ -44,7 +44,7 @@ same feed only stands in for same taste, so read it as necessary, not
 sufficient. it runs at every build and the method page prints today's numbers.
 
 ```bash
-uv run manicule.py evaluate site/corpus.json
+uv run manicule.py evaluate site/entries.json
 ```
 
 ## Your own feeds
@@ -65,8 +65,8 @@ put it on a cron and read `today.md` with coffee.
 
 ## The demo
 
-`site/` is a static page. a GitHub Action rebuilds `site/corpus.json` daily
-(`manicule.py corpus feeds.opml`) from the mixed sample in `feeds.opml`: code,
+`site/` is a static page. a GitHub Action rebuilds `site/entries.json` daily
+(`manicule.py entries feeds.opml`) from the mixed sample in `feeds.opml`: code,
 science, essays, podcasts, sports, food, games. mixed on purpose, so marking
 two things visibly reorders everything.
 
@@ -84,7 +84,7 @@ the hosted page ranks my feeds. for yours:
    `<outline xmlUrl="…">` is a feed). anything with an RSS or Atom feed works:
    blogs, YouTube channels, podcasts.
 3. in the fork's settings, **Pages → Source: GitHub Actions**.
-4. push, or run the `corpus` workflow by hand. your site is at
+4. push, or run the `entries` workflow by hand. your site is at
    `https://<you>.github.io/manicule/`, refreshed daily at 06:17 UTC.
 
 your marks stay in your browser and your links. if you want the ranker without

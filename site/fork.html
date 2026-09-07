@@ -53,8 +53,8 @@ cp ~/path/to/your/feeds.opml feeds.opml
 git commit -am "my feeds" &amp;&amp; git push
 gh api -X POST repos/{owner}/{repo}/pages \
   -f build_type=workflow
-gh workflow run corpus</pre>
-        <p><button class="btn" type="button" data-copy="gh repo fork adames/manicule --clone &amp;&amp; cd manicule&#10;cp ~/path/to/your/feeds.opml feeds.opml&#10;git commit -am &quot;my feeds&quot; &amp;&amp; git push&#10;gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow&#10;gh workflow run corpus">copy</button></p>
+gh workflow run entries</pre>
+        <p><button class="btn" type="button" data-copy="gh repo fork adames/manicule --clone &amp;&amp; cd manicule&#10;cp ~/path/to/your/feeds.opml feeds.opml&#10;git commit -am &quot;my feeds&quot; &amp;&amp; git push&#10;gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow&#10;gh workflow run entries">copy</button></p>
         <p>five lines: fork and clone, swap the feed list, push, turn on pages, build. a few minutes later your page is up</p>
         <div class="specimen">
           <div class="lbl"><span>your site</span><span>refreshed once a day</span></div>
@@ -70,7 +70,7 @@ gh workflow run corpus</pre>
           <li><span>press <a href="https://github.com/adames/manicule/fork">fork</a> and accept. github makes you a copy of this project</span></li>
           <li><span>in your copy, open the file <code>feeds.opml</code>, press the pencil to edit, paste your own file's contents over it, and press commit changes</span></li>
           <li><span>open settings, then pages in the left column. under source, choose github actions</span></li>
-          <li><span>open the actions tab, choose corpus on the left, press run workflow. this builds the page; it takes a few minutes</span></li>
+          <li><span>open the actions tab, choose entries on the left, press run workflow. this builds the page; it takes a few minutes</span></li>
         </ol>
         <p>your page is at <span class="mono">https://&lt;you&gt;.github.io/manicule/</span> with your github name in place of &lt;you&gt;. it refreshes itself every morning</p>
         <p>your marks stay in your browser and your links</p>

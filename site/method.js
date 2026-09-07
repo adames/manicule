@@ -107,7 +107,7 @@
 
   // ── the visitor's own taste ──────────────────────────────────────────────
 
-  let corpus = null;
+  let today = null;
   let entryById = {};
 
   // The link first, then this browser's mirror. With nothing picked there are
@@ -135,7 +135,7 @@
 
     const pretend = !picked.length;
     if (pretend) {
-      const withWords = corpus.entries.filter((entry) => entry.vector);
+      const withWords = today.entries.filter((entry) => entry.vector);
       picked = [withWords[0].id];
       passed = withWords[1] ? [withWords[1].id] : [];
     }
@@ -146,7 +146,7 @@
     const vectors = (ids) => ids.map((id) => entryById[id].vector);
     const pickedVectors = {};
     for (const id of taste.picked) pickedVectors[id] = entryById[id].vector;
-    return Manicule.rank(corpus.entries, vectors(taste.picked), vectors(taste.passed), lambda, pickedVectors);
+    return Manicule.rank(today.entries, vectors(taste.picked), vectors(taste.passed), lambda, pickedVectors);
   }
 
   // Links from here open the feed in the same taste, so the row number they
@@ -227,7 +227,7 @@
 
   function trials() {
     if (trialFeeds) return trialFeeds;
-    const withWords = corpus.entries.filter((entry) => entry.vector);
+    const withWords = today.entries.filter((entry) => entry.vector);
     const byFeed = {};
     for (const entry of withWords) (byFeed[entry.feed] = byFeed[entry.feed] || []).push(entry);
     const newestFirst = (list) => [...list].sort((a, b) => (b.published || "").localeCompare(a.published || ""));
@@ -261,7 +261,7 @@
 
     const W = 640, H = 210, L = 16, R = 16, TOP = 58, BOT = 158;
     const sx = (frac) => L + frac * (W - L - R);
-    const outOf = corpus.entries.filter((entry) => entry.vector).length;
+    const outOf = today.entries.filter((entry) => entry.vector).length;
     const place = (frac) => Math.max(1, Math.round(frac * outOf));
     const mid = (xs) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
     const wasMid = mid(moves.map((m) => m.was));
@@ -279,10 +279,10 @@
       `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${moves.length} held-out entries: where date order puts them, and where two picks put them">` +
       `<text class="axlab" x="${L}" y="${TOP - 22}">newest first</text>` +
       `<text class="tick" x="${W - R}" y="${TOP - 22}" text-anchor="end">middle one: ${place(wasMid)} of ${outOf}</text>` +
-      `<line class="rail" x1="${L}" y1="${TOP}" x2="${W - R}" y2="${TOP}"/>` +
+      `<line class="track" x1="${L}" y1="${TOP}" x2="${W - R}" y2="${TOP}"/>` +
       ties.join("") +
       moves.map((m) => tick(m.was, TOP, "pick-tick", m.title)).join("") + tick(wasMid, TOP, "pick-mid") +
-      `<line class="rail" x1="${L}" y1="${BOT}" x2="${W - R}" y2="${BOT}"/>` +
+      `<line class="track" x1="${L}" y1="${BOT}" x2="${W - R}" y2="${BOT}"/>` +
       moves.map((m) => tick(m.now, BOT, "pick-tick", m.title)).join("") + tick(nowMid, BOT, "pick-mid") +
       `<text class="axlab" x="${L}" y="${BOT + 32}">after two picks</text>` +
       `<text class="tick" x="${W - R}" y="${BOT + 32}" text-anchor="end">middle one: ${place(nowMid)} of ${outOf}</text>` +
@@ -318,7 +318,7 @@
 
   function renderNeighbours(taste, scored) {
     const entry = scored.entry;
-    const others = corpus.entries
+    const others = today.entries
       .filter((other) => other.vector && other.id !== entry.id)
       .map((other) => ({ other, cos: Manicule.cosine(entry.vector, other.vector) }))
       .sort((a, b) => b.cos - a.cos);
@@ -360,20 +360,20 @@
 
   fetchSource().then(renderListing);
 
-  fetch("corpus.json", { cache: "no-cache" })
+  fetch("entries.json", { cache: "no-cache" })
     .then((response) => response.json())
     .then((loaded) => {
-      corpus = loaded;
-      for (const entry of corpus.entries) {
+      today = loaded;
+      for (const entry of today.entries) {
         entry.vector = entry.q ? Manicule.dequantize(entry.q, entry.s) : null;
         delete entry.q;
         entryById[entry.id] = entry;
       }
-      el("dims").textContent = `${corpus.entries.length} × ${corpus.dim}`;
-      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = corpus.entries.length;
-      try { localStorage.setItem("manicule-count", corpus.entries.length); } catch (_) {}
+      el("dims").textContent = `${today.entries.length} × ${today.dim}`;
+      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = today.entries.length;
+      try { localStorage.setItem("manicule-count", today.entries.length); } catch (_) {}
 
-      renderProof(corpus.proof);
+      renderProof(today.proof);
       renderWorked();
       addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) renderWorked(); });
     })

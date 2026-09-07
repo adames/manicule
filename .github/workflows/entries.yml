@@ -1,6 +1,6 @@
-# Refresh the demo corpus daily and publish site/ to GitHub Pages.
-# If a run fails, yesterday's corpus keeps serving — nothing to babysit.
-name: corpus
+# Refresh the demo's entries daily and publish site/ to GitHub Pages.
+# If a run fails, yesterday's file keeps serving — nothing to babysit.
+name: entries
 on:
   schedule:
     - cron: "17 6 * * *"
@@ -12,7 +12,7 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: corpus
+  group: entries
   cancel-in-progress: false
 jobs:
   build:
@@ -23,13 +23,13 @@ jobs:
       - run: uv python install 3.12
       - run: uv sync --group dev
       - run: uv run pytest -q && node --test tests/rank.test.mjs
-      - run: uv run manicule.py corpus feeds.opml -o site/corpus.json
-      - name: commit corpus
+      - run: uv run manicule.py entries feeds.opml -o site/entries.json
+      - name: commit the entries
         run: |
           git config user.name "manicule-bot"
           git config user.email "manicule-bot@users.noreply.github.com"
-          git add site/corpus.json
-          git diff --cached --quiet || git commit -m "corpus: $(date -u +%F)"
+          git add site/entries.json
+          git diff --cached --quiet || git commit -m "entries: $(date -u +%F)"
           git push
       # Stamp every local asset with the commit, so a browser can never mix a
       # new page with a script it cached an hour ago.

@@ -295,7 +295,7 @@ samp {
   left: var(--space-3);
 }
 
-/* 3 · shell. the header is a brand row over a row of page words; no rail. */
+/* 3 · shell. the header is a brand row over a row of page words. */
 
 .theme .g {
   font-family: var(--font-mono);
@@ -1417,7 +1417,7 @@ samp {
   max-width: var(--measure);
 }
 
-/* the picking chart: one feed's entries as ticks on two rails, before and after */
+/* the picking chart: one feed's entries as ticks on two lines, before and after */
 
 .map {
   display: block;
@@ -1427,7 +1427,7 @@ samp {
   border: var(--border-w) solid var(--border);
 }
 
-.map .rail {
+.map .track {
   stroke: var(--border-strong);
   stroke-width: 1;
 }
