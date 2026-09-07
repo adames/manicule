@@ -1107,13 +1107,10 @@ samp {
   background: var(--surface-press);
 }
 
-.row.passed .title a {
-  color: var(--muted);
-}
-
+.row.passed .title a,
 .row.passed .snip {
-  display: none;
-}
+  color: var(--muted);
+} /* a passed row goes quiet; it never loses words, or the row would resize under your finger */
 
 .row.passed .kind {
   background: none;
