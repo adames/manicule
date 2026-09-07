@@ -84,6 +84,27 @@
   }
   // a rebuild with innerHTML would drop keyboard focus; remember which hand
   // or chip had it and give it back after (without scrolling: the row moved)
+  // Nothing moves under your finger. The list re-renders and reorders on every
+  // press, so measure a row before the rebuild and scroll by the difference
+  // after it: the row you touched stays exactly where it was on screen.
+  // Passing on something sinks it off the page, so the rows above it are the
+  // fallback anchors, in order.
+  function keepPlace(anchorId, rebuild) {
+    const rows = [...document.querySelectorAll(".row")];
+    const i = anchorId
+      ? rows.findIndex((r) => r.dataset.id === anchorId)
+      : rows.findIndex((r) => r.getBoundingClientRect().bottom > 0);
+    const before = (i < 0 ? [] : [rows[i], ...rows.slice(0, i).reverse()])
+      .map((r) => [r.dataset.id, r.getBoundingClientRect().top]);
+    rebuild();
+    for (const [id, top] of before) {
+      const el = document.querySelector(`.row[data-id="${CSS.escape(id)}"]`);
+      if (!el) continue;
+      const delta = el.getBoundingClientRect().top - top;
+      if (delta) scrollBy(0, delta);
+      return;
+    }
+  }
   function keepFocus(rebuild) {
     const a = document.activeElement, row = a && a.closest(".row");
     const sel = row ? `.row[data-id="${CSS.escape(row.dataset.id)}"] [data-act="${a.dataset.act}"]`
@@ -194,7 +215,7 @@
     if (state.picked.has(id)) { state.picked.delete(id); state.passed.add(id); }
     else if (state.passed.has(id)) { state.passed.delete(id); }
     else { state.picked.add(id); }
-    adopt(); render();
+    adopt(); keepPlace(id, render);
   });
   $("chips").addEventListener("click", (ev) => {
     const b = ev.target.closest(".chip"); if (!b) return;
@@ -202,7 +223,7 @@
     state.shown = PAGE; renderChips(); render();
   });
   // moving the ruler re-ranks but does not adopt a borrowed link
-  $("lam").addEventListener("input", (ev) => { state.lam = parseFloat(ev.target.value); setLam(); render(); });
+  $("lam").addEventListener("input", (ev) => { state.lam = parseFloat(ev.target.value); setLam(); keepPlace(null, render); });
   $("tab-taste").addEventListener("click", () => {
     if (ranked(state.lam)) { state.tab = "taste"; render(); return; }
     // cold with a mark means the only picked row has no vector: say so, not "mark something"
