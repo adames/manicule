@@ -16,6 +16,7 @@
     lambda: Manicule.LAMBDA,
     order: "taste",   // taste | date, not persisted
     borrowed: false,  // the link carries marks this browser did not make
+    demo: false,      // the marks are the build's starter taste, not yours yet
     rowsShown: ROWS_PER_PAGE,
   };
   let entries = null;      // corpus.json, once it lands
@@ -25,9 +26,23 @@
 
   const sameIds = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
 
+  // The build's starter taste: a few entries chosen to sit far apart, so the
+  // page arrives ranked and a first visit can watch the ranker work without
+  // picking anything. Nothing is written until a press makes the marks yours.
+  function startWithTheDemo() {
+    state.picked = new Set(entries.demo.m || []);
+    state.passed = new Set(entries.demo.d || []);
+    state.order = "taste";
+    state.borrowed = false;
+    state.demo = true;
+    state.rowsShown = ROWS_PER_PAGE;
+  }
+
   function readTheLink() {
     const link = Shell.marksIn(location.hash);
+    const neverHere = Shell.mirror() === null;
     const saved = Shell.mirror() || {};
+    state.demo = false;
     // The daily rebuild drops entries, and their ids go with them. Ignoring
     // dead ids on both sides means your own stale link still reads as yours,
     // and a friend's wholly stale link reads as no marks rather than as theirs.
@@ -39,6 +54,8 @@
       state.picked = new Set(linked.picked);
       state.passed = new Set(linked.passed);
       state.borrowed = !(sameIds(linked.picked, mine.picked) && sameIds(linked.passed, mine.passed));
+    } else if (neverHere && entries.demo) {
+      startWithTheDemo();
     } else {
       state.picked = new Set(mine.picked);
       state.passed = new Set(mine.passed);
@@ -59,6 +76,9 @@
   }
 
   function writeTheLink() {
+    // The starter taste is shown, not kept: the address stays bare and the
+    // mirror stays empty, so the next visit is still a first one until a press.
+    if (state.demo) { Shell.carry(); Shell.renderAddrs(); return; }
     const marked = state.picked.size || state.passed.size;
     const hash = Shell.hashOf(
       [...state.picked],
@@ -219,6 +239,34 @@
     }
   }
 
+  // ── the reorder, seen ────────────────────────────────────────────────────
+
+  // Every row is measured before the rebuild and slid from there to where it
+  // landed, so a press reads as the rest of the list moving around the row
+  // that stayed. Runs outside holdingPlace: the scroll that pins the pressed
+  // row has to land first, or the slide would start from the wrong place.
+  const GLIDE_MS = 150;
+  const stillness = matchMedia("(prefers-reduced-motion: reduce)");
+
+  function gliding(rebuild) {
+    const rows = () => [...document.querySelectorAll(".row")];
+    const before = new Map(rows().map((row) => [row.dataset.id, row.getBoundingClientRect().top]));
+
+    rebuild();
+
+    if (!before.size || stillness.matches) return;
+    for (const row of rows()) {
+      const was = before.get(row.dataset.id);
+      if (was === undefined) {
+        row.animate([{ opacity: 0 }, { opacity: 1 }], { duration: GLIDE_MS, easing: "ease" });
+        continue;
+      }
+      const slid = was - row.getBoundingClientRect().top;
+      if (Math.abs(slid) < 1) continue;
+      row.animate([{ transform: `translateY(${slid}px)` }, { transform: "none" }], { duration: GLIDE_MS, easing: "ease-out" });
+    }
+  }
+
   // Rebuilding with innerHTML drops keyboard focus. Remember which control had
   // it and give it back, without scrolling: the row it belongs to has moved.
   function holdingFocus(rebuild) {
@@ -271,9 +319,10 @@
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
     ledger.classList.toggle("nodis", !state.passed.size);
-    ledger.classList.toggle("borrowed", state.borrowed);
+    ledger.classList.toggle("borrowed", state.borrowed || state.demo);
     drawStatus(cold);
     el("banner").hidden = !state.borrowed;
+    el("starter").hidden = !state.demo;
 
     holdingFocus(() => {
       lastNearest = null;
@@ -318,9 +367,10 @@
     state.lambda = Manicule.LAMBDA;
     state.order = "taste";
     state.borrowed = false;
+    state.demo = false;
     state.rowsShown = ROWS_PER_PAGE;
     setRuler();
-    draw();
+    gliding(draw);
     // The button that was pressed may be gone: the banner hides, and the
     // toolbar's actions fold away once there is nothing to share.
     const focused = document.activeElement;
@@ -338,7 +388,8 @@
     else if (state.passed.has(id)) { state.passed.delete(id); }
     else { state.picked.add(id); }
     state.borrowed = false; // the first press makes a borrowed link yours
-    holdingPlace(id, draw);
+    state.demo = false;     // and a starter taste too
+    gliding(() => holdingPlace(id, draw));
   });
 
   el("chips").addEventListener("click", (event) => {
@@ -348,7 +399,7 @@
     state.sources.has(feed) ? state.sources.delete(feed) : state.sources.add(feed);
     state.rowsShown = ROWS_PER_PAGE;
     drawSources();
-    draw();
+    gliding(draw);
   });
 
   // Moving the ruler re-ranks, but it is not a mark, so it does not adopt a
@@ -356,16 +407,16 @@
   el("lam").addEventListener("input", (event) => {
     state.lambda = parseFloat(event.target.value);
     setRuler();
-    holdingPlace(null, draw);
+    gliding(() => holdingPlace(null, draw));
   });
 
   el("tab-taste").addEventListener("click", () => {
-    if (rankBy(state.lambda)) { state.order = "taste"; draw(); return; }
+    if (rankBy(state.lambda)) { state.order = "taste"; gliding(draw); return; }
     // Cold with something picked means the only picked entry has no words.
     toast(state.picked.size ? "no words, sinks" : "mark something first");
   });
   el("tab-date").addEventListener("click", () => {
-    if (rankBy(state.lambda)) { state.order = "date"; draw(); }
+    if (rankBy(state.lambda)) { state.order = "date"; gliding(draw); }
   });
 
   el("morebtn").addEventListener("click", () => {
@@ -384,15 +435,9 @@
   document.addEventListener("click", (event) => {
     if (event.target.closest('[data-act="forget"]')) { forget(); toast("forgotten"); }
     else if (event.target.closest('[data-act="fresh"]')) forget();
-    // Three entries chosen at build time to sit far apart, so a first visit
-    // can watch the ranker mix feeds without picking anything.
     else if (event.target.closest('[data-act="demo"]') && entries && entries.demo) {
-      state.picked = new Set(entries.demo.m || []);
-      state.passed = new Set(entries.demo.d || []);
-      state.order = "taste";
-      state.borrowed = false;
-      state.rowsShown = ROWS_PER_PAGE;
-      draw();
+      startWithTheDemo();
+      gliding(draw);
       el("list").focus({ preventScroll: true });
     }
   });

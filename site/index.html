@@ -123,6 +123,10 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <span><b>these marks came with the link</b> · point at one and it's yours</span>
           <span class="acts"><button class="btn" type="button" data-act="fresh">start fresh</button></span>
         </div>
+        <div class="banner" id="starter" role="status" hidden>
+          <span><b>a starter taste, not yours yet</b> · point at one and it's yours</span>
+          <span class="acts"><button class="btn" type="button" data-act="fresh">start fresh</button></span>
+        </div>
 
         <span id="newtab" hidden>opens in a new tab</span>
         <ol class="list" id="list" tabindex="-1" role="list"></ol><!-- role=list: WebKit drops list semantics from a list-style:none list -->
