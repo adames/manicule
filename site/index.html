@@ -73,33 +73,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(entry, passed)</span><span class="lbl">what you passed × λ</span></span></span>
       </div>
 
-      <!-- how it works: the details, folded once anything is picked -->
-      <div class="how-wrap">
-      <details class="how" id="how">
-        <summary>how it works</summary>
-        <div class="how-body">
-          <p>every entry turns into a vector and your browser averages the vectors you picked into one picked vector, or one you passed into one passed vector. then we score it</p>
-          <dl class="kv kv--tight">
-            <dt>entry</dt><dd>title + blurb, one vector, <span class="mono">384</span> dims</dd>
-            <dt>picked</dt><dd>the mean of what you picked</dd>
-            <dt>passed</dt><dd>the mean of what you passed on</dd>
-            <dt>λ</dt><dd><span class="mono">0.25</span>, low</dd>
-            <dt>nothing picked</dt><dd>newest first</dd>
-            <dt>no words</dt><dd>sinks to the bottom, never dropped</dd>
-            <dt id="proof-key" hidden>does it work</dt><dd id="proof-line" hidden>two picks put the rest of a feed <span class="mono" id="proof-ranker"></span>. newest first: <span class="mono" id="proof-newest"></span>. <a href="method.html#proof">the numbers</a></dd>
-          </dl>
-        </div>
-      </details>
-      </div>
-
       <!-- the ledger -->
       <section class="ledger" id="ledger" aria-label="entries">
         <div class="toolbar">
-          <div class="tabs" role="group" aria-label="order">
-            <button class="tab" id="tab-taste" type="button" aria-pressed="false" aria-disabled="true" title="mark something first">taste</button>
-            <button class="tab" id="tab-date" type="button" aria-pressed="true">date</button>
-          </div>
-          <span class="vr" aria-hidden="true"></span>
           <div class="ruler-wrap">
             <label for="lam">λ · how much a pass counts</label>
             <div class="ruler-row">
@@ -108,11 +84,6 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
             </div>
             <div class="ruler-ends" aria-hidden="true"><span>nudge</span><span>veto</span></div>
           </div>
-          <span class="vr" aria-hidden="true"></span>
-          <details class="sources" id="sources">
-            <summary><span>sources</span><span class="n" id="srccount"></span></summary>
-            <div class="chips" id="chips" role="group" aria-label="filter by source"></div>
-          </details>
           <div class="tb-acts">
             <button class="btn" type="button" data-act="share">share</button>
             <button class="btn danger" type="button" data-act="forget"><span aria-hidden="true">!</span> forget</button>
@@ -149,16 +120,6 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <span class="kicker">your feeds</span>
           <p>swap my feeds for yours. needs a github account</p>
           <a class="go addr" href="https://github.com/adames/manicule/fork">&lt;you&gt;.github.io/manicule/</a>
-        </div>
-        <div class="door">
-          <span class="kicker">your machine</span>
-          <p>without a website. one python file</p>
-<pre>uv run manicule.py \
-  rank feeds.opml \
-  --picked ~/notes \
-  -o today.md</pre>
-          <button class="btn" type="button" data-copy="uv run manicule.py rank feeds.opml --picked ~/notes -o today.md">copy</button>
-          <p>put it on a cron and read today.md with coffee</p>
         </div>
       </div>
       <div class="colophon-line">

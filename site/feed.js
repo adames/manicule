@@ -12,9 +12,7 @@
   const state = {
     picked: new Set(),
     passed: new Set(),
-    sources: new Set(),
     lambda: Manicule.LAMBDA,
-    order: "taste",   // taste | date, not persisted
     borrowed: false,  // the link carries marks this browser did not make
     demo: false,      // the marks are the build's starter taste, not yours yet
     rowsShown: ROWS_PER_PAGE,
@@ -32,7 +30,6 @@
   function startWithTheDemo() {
     state.picked = new Set(entries.demo.m || []);
     state.passed = new Set(entries.demo.d || []);
-    state.order = "taste";
     state.borrowed = false;
     state.demo = true;
     state.rowsShown = ROWS_PER_PAGE;
@@ -62,11 +59,6 @@
       state.borrowed = false;
     }
 
-    // A feed that leaves the build quietly widens the view instead of emptying it.
-    const wanted = link.s.length ? link.s : (linked.picked.length || linked.passed.length ? [] : saved.s || []);
-    const keys = new Set(wanted);
-    state.sources = new Set(wanted.length ? entries.feeds.filter((feed) => keys.has(Shell.feedKey(feed))) : []);
-
     // λ is a preference, not a mark: the saved one applies to any link that
     // carries none, and a bare #l=0.5 moves the ruler without clearing marks.
     const fromLink = Shell.lam(link.l);
@@ -84,7 +76,6 @@
       [...state.picked],
       [...state.passed],
       marked || state.lambda !== Manicule.LAMBDA ? state.lambda : null,
-      [...state.sources].map(Shell.feedKey),
     );
     history.replaceState(null, "", hash || location.pathname + location.search);
     // A borrowed link does not overwrite this browser's own marks until the
@@ -98,7 +89,6 @@
     try {
       localStorage.setItem("manicule", JSON.stringify({
         m: [...state.picked], d: [...state.passed], l: state.lambda,
-        s: [...state.sources].map(Shell.feedKey),
       }));
     } catch (_) {}
   }
@@ -274,9 +264,7 @@
     const row = focused && focused.closest(".row");
     const selector = row
       ? `.row[data-id="${CSS.escape(row.dataset.id)}"] [data-act="${focused.dataset.act}"]`
-      : focused && focused.classList.contains("chip")
-        ? `.chip[data-src="${CSS.escape(focused.dataset.src)}"]`
-        : null;
+      : null;
 
     rebuild();
 
@@ -297,12 +285,6 @@
     el("status").innerHTML = cold
       ? `<b>newest first</b>${entries.demo ? ` <button class="btn quiet" data-act="demo" type="button">try a taste</button>` : ""}`
       : `<b>ranked</b> <span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n">λ ${state.lambda.toFixed(2)}</span>`;
-    // taste stays focusable while cold (aria-disabled, not disabled) so that
-    // pressing it can say why it is not available.
-    el("tab-taste").setAttribute("aria-disabled", cold);
-    el("tab-taste").title = cold ? "mark something first" : "";
-    el("tab-taste").setAttribute("aria-pressed", !cold && state.order === "taste");
-    el("tab-date").setAttribute("aria-pressed", cold || state.order === "date");
   }
 
   function draw() {
@@ -310,11 +292,7 @@
     const cold = ranked === null;
     const sank = cold ? {} : placesLost(ranked);
 
-    let rows = cold ? entries.entries.map((entry) => ({ entry })) : ranked;
-    if (!cold && state.order === "date") {
-      rows = [...ranked].sort((a, b) => (b.entry.published || "").localeCompare(a.entry.published || ""));
-    }
-    const visible = rows.filter((row) => !state.sources.size || state.sources.has(row.entry.feed));
+    const visible = cold ? entries.entries.map((entry) => ({ entry })) : ranked;
 
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
@@ -339,23 +317,9 @@
     writeTheLink();
   }
 
-  function drawSources() {
-    const counts = {};
-    for (const entry of entries.entries) counts[entry.feed] = (counts[entry.feed] || 0) + 1;
-    holdingFocus(() => {
-      el("chips").innerHTML = entries.feeds
-        .map((feed) => `<button class="chip" type="button" data-src="${esc(feed)}" aria-pressed="${state.sources.has(feed)}">${esc(feed)}<span class="n">${counts[feed] || 0}</span></button>`)
-        .join("");
-    });
-    el("srccount").textContent = state.sources.size
-      ? `${state.sources.size} of ${entries.feeds.length}`
-      : `all ${entries.feeds.length}`;
-  }
-
   function drawEverything() {
     readTheLink();
     setRuler();
-    drawSources();
     draw();
   }
 
@@ -365,7 +329,6 @@
     state.picked.clear();
     state.passed.clear();
     state.lambda = Manicule.LAMBDA;
-    state.order = "taste";
     state.borrowed = false;
     state.demo = false;
     state.rowsShown = ROWS_PER_PAGE;
@@ -392,31 +355,12 @@
     gliding(() => holdingPlace(id, draw));
   });
 
-  el("chips").addEventListener("click", (event) => {
-    const chip = event.target.closest(".chip");
-    if (!chip) return;
-    const feed = chip.dataset.src;
-    state.sources.has(feed) ? state.sources.delete(feed) : state.sources.add(feed);
-    state.rowsShown = ROWS_PER_PAGE;
-    drawSources();
-    gliding(draw);
-  });
-
   // Moving the ruler re-ranks, but it is not a mark, so it does not adopt a
   // borrowed link.
   el("lam").addEventListener("input", (event) => {
     state.lambda = parseFloat(event.target.value);
     setRuler();
     gliding(() => holdingPlace(null, draw));
-  });
-
-  el("tab-taste").addEventListener("click", () => {
-    if (rankBy(state.lambda)) { state.order = "taste"; gliding(draw); return; }
-    // Cold with something picked means the only picked entry has no words.
-    toast(state.picked.size ? "no words, sinks" : "mark something first");
-  });
-  el("tab-date").addEventListener("click", () => {
-    if (rankBy(state.lambda)) { state.order = "date"; gliding(draw); }
   });
 
   el("morebtn").addEventListener("click", () => {
@@ -457,32 +401,24 @@
         entryById[entry.id] = entry;
       }
 
+      // The last fact is one line of the proof: where two picks put the rest
+      // of a feed, against the order the page would otherwise have.
+      const two = entries.proof && entries.proof.median_rank && entries.proof.median_rank["2"];
+      const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
       el("spec").innerHTML = [
         `refreshed ${esc(utcStamp(entries.generated))}`,
         `next ${NEXT_REFRESH_UTC} utc`,
         `${entries.entries.length} entries`,
         `${entries.feeds.length} feeds`,
         "no accounts",
-      ].map((fact) => `<span>${fact}</span>`).join(" ");
+        two ? `<a href="method.html#proof">two picks: ${nth(two.ranker)}, newest first: ${nth(two.newest)}</a>` : "",
+      ].filter(Boolean).map((fact) => `<span>${fact}</span>`).join(" ");
 
       for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = entries.entries.length;
 
-      // One line of the proof, from the method page: where two picks put the
-      // rest of a feed, against the order the page would otherwise have.
-      const two = entries.proof && entries.proof.median_rank && entries.proof.median_rank["2"];
-      if (two) {
-        const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
-        el("proof-ranker").textContent = `${nth(two.ranker)} of ${entries.proof.entries}`;
-        el("proof-newest").textContent = nth(two.newest);
-        el("proof-key").hidden = false;
-        el("proof-line").hidden = false;
-      }
       try { localStorage.setItem("manicule-count", entries.entries.length); } catch (_) {}
 
       drawEverything();
-      // how it works: open on a cold desktop, closed once there are marks,
-      // and always closed on a phone, where it would fill the screen.
-      el("how").open = !state.picked.size && !matchMedia("(max-width: 719.98px)").matches;
     })
     .catch(() => {
       // There is nothing behind the controls, so only the status line stays.

@@ -636,7 +636,7 @@ samp {
 
 .doors {
   display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
+  grid-template-columns: repeat(2,minmax(0,1fr));
   background: var(--raised);
   border: var(--border-w) solid var(--border);
 }
@@ -844,70 +844,7 @@ samp {
 
 /* the details: hairlines above and below, +/− at right; the method.html link sits beside the summary, not inside it */
 
-.how-wrap {
-  position: relative;
-}
-
-.how {
-  border-top: var(--border-w) solid var(--border);
-  border-bottom: var(--border-w) solid var(--border);
-}
-
-.how summary {
-  list-style: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-height: var(--control-sm);
-  padding: var(--space-2) 0;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--text);
-  text-transform: lowercase;
-}
-
-.how summary::-webkit-details-marker {
-  display: none;
-}
-
-.how summary::after {
-  content: "+";
-  content: "+" / "";
-  font-family: var(--font-mono);
-  font-size: var(--text-md);
-  color: var(--muted);
-  width: 1ch;
-  text-align: center;
-}
-
-.how[open] summary::after {
-  content: "−";
-  content: "−" / "";
-}
-
-.how summary:hover::after {
-  color: var(--text);
-}
-
-.how-body {
-  display: grid;
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  gap: var(--space-3) var(--space-6);
-  padding: var(--space-2) 0 var(--space-4);
-}
-
-.how-body p {
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--text-secondary);
-  max-width: var(--measure);
-  text-wrap: pretty;
-  text-transform: lowercase;
-}
-
-/* 5 · toolbar: the tabs (Commonplace filter tab, pressed = inverse ink), the λ ruler, sources, the status */
+/* 5 · toolbar: the λ ruler and the status */
 
 .toolbar {
   display: flex;
@@ -917,59 +854,6 @@ samp {
   padding-bottom: var(--space-3);
   border-bottom: var(--border-w-strong) solid var(--text);
   text-transform: lowercase;
-}
-
-.tabs {
-  display: flex;
-  gap: var(--space-1);
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  height: var(--control-sm);
-  padding: 0 var(--space-3);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  text-transform: lowercase;
-  color: var(--text-secondary);
-  background: var(--raised);
-  border: var(--border-w) solid var(--border-strong);
-  border-radius: var(--radius);
-  transition: background var(--transition-fast),color var(--transition-fast),border-color var(--transition-fast);
-}
-
-.tab:hover {
-  color: var(--text);
-  background: var(--surface-press);
-}
-
-.tab[aria-pressed="true"] {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
-}
-
-.tab:disabled,
-.tab[aria-disabled="true"] {
-  color: var(--muted);
-  background: none;
-  border-color: var(--border);
-  cursor: default;
-}
-
-.tab:disabled:hover,
-.tab[aria-disabled="true"]:hover {
-  color: var(--muted);
-  background: none;
-}
-
-.vr {
-  width: var(--border-w);
-  height: var(--control-sm);
-  background: var(--border);
-  flex: none;
 }
 
 /* the ruler: a real range input drawn as a 2px ink track with 9 ticks (hard-stop stripes, not a tonal gradient) and a square ink thumb */
@@ -1094,99 +978,7 @@ samp {
   padding-right: calc(4ch + var(--space-2));
 }
 
-/* sources: a details whose chips (Commonplace chip: mono, outline, pressed = inverse ink) open beneath the whole toolbar */
 
-.sources {
-  display: contents;
-}
-
-.sources summary {
-  list-style: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  height: var(--control-sm);
-  font-size: var(--text-xs);
-  color: var(--muted);
-  transition: color var(--transition-fast);
-}
-
-.sources summary::-webkit-details-marker {
-  display: none;
-}
-
-.sources summary:hover {
-  color: var(--text);
-}
-
-.sources summary .n {
-  font-family: var(--font-mono);
-  color: var(--text);
-  letter-spacing: -.01em;
-}
-
-.sources summary::after {
-  content: "+";
-  content: "+" / "";
-  font-family: var(--font-mono);
-  color: var(--muted);
-}
-
-.sources[open] summary::after {
-  content: "−";
-  content: "−" / "";
-}
-
-.sources::details-content {
-  flex-basis: 100%;
-  order: 20;
-}
-
-.chips {
-  flex-basis: 100%;
-  order: 20;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
-  padding-top: var(--space-1);
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  height: var(--control-sm);
-  padding: 0 var(--space-2);
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  letter-spacing: -.01em;
-  color: var(--text-secondary);
-  border: var(--border-w) solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  text-transform: none;
-  transition: background var(--transition-fast),color var(--transition-fast);
-}
-
-.chip .n {
-  color: var(--muted);
-}
-
-.chip:hover {
-  background: var(--fill-1);
-  color: var(--text);
-}
-
-.chip[aria-pressed="true"] {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
-}
-
-.chip[aria-pressed="true"] .n {
-  color: inherit;
-  opacity: .7;
-}
 
 .status {
   margin-left: auto;
@@ -2092,15 +1884,9 @@ pre .c {
   .spec {
     font-size: var(--text-2xs);
   }
-  .vr {
-    display: none;
-  }
   .ruler-wrap {
     width: auto;
     flex: 1 1 var(--ruler-w);
-  }
-  .how-body {
-    grid-template-columns: 1fr;
   }
   .formula {
     padding: var(--space-3);
