@@ -372,10 +372,12 @@
     const wasShowing = state.rowsShown;
     state.rowsShown += ROWS_PER_PAGE;
     draw();
-    // The last page hides the button out from under the focus.
+    // The last press hides the button out from under the focus, so move it to
+    // the first row that just arrived.
     if (el("more").hidden) {
-      const row = el("list").children[wasShowing];
-      if (row) row.querySelector(".hand").focus();
+      const firstNew = el("list").children[wasShowing];
+      const control = firstNew && firstNew.querySelector(".mk");
+      if (control) control.focus();
     }
   });
 
