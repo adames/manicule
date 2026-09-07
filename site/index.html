@@ -60,7 +60,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
               <span class="ruler"><input type="range" id="lam" min="0" max="1" step="0.05" value="0.25" aria-valuetext="λ 0.25"></span>
               <output id="lamv" for="lam" aria-live="off">0.25</output><!-- not live: the slider's valuetext and the status already say the number -->
             </div>
-            <div class="ruler-ends" aria-hidden="true"><span>nudge</span><span>veto</span></div>
+            <div class="ruler-ends" aria-hidden="true"><span>a little</span><span>as much as a pick</span></div>
           </div>
           <div class="tb-acts">
             <button class="btn" type="button" data-act="share">share</button>
@@ -71,10 +71,6 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 
         <div class="banner" id="banner" role="status" hidden>
           <span><b>these marks came with the link</b> · press the box by anything you'd read and they're yours</span>
-          <span class="acts"><button class="btn" type="button" data-act="fresh">start fresh</button></span>
-        </div>
-        <div class="banner" id="starter" role="status" hidden>
-          <span><b>a starter taste, not yours yet</b> · press the box by anything you'd read. once picks, twice passes</span>
           <span class="acts"><button class="btn" type="button" data-act="fresh">start fresh</button></span>
         </div>
 

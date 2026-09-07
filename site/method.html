@@ -58,21 +58,22 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <!-- the explainer: what the math is doing, in order -->
       <section class="prose" aria-labelledby="vectors">
         <h2 class="sect" id="vectors"><span>what a vector is doing here</span></h2>
-        <p>an entry's headline and the first 400 characters of its blurb go through a small language model on the machine that builds this page. out come 384 numbers. that list is the entry's vector</p>
-        <p>the numbers are a position. two entries about the same thing land near each other; two about different things land far apart. a post on the 8087's adder sits next to a post on its microcode and nowhere near a recipe. that is all the model does. it never sees you, and it runs once, at build time</p>
+        <p>every city on a map has two numbers, its latitude and longitude. with those you can tell that london is closer to paris than to new york without knowing anything else about the three. a vector does the same job for meaning</p>
+        <p>a small language model reads an entry's headline and the first 400 characters of its blurb and hands back 384 numbers instead of two: a spot on a map of what things are about. entries about the same thing get spots near each other. a post about a chip's adder lands next to a post about the same chip's microcode, and far from a recipe</p>
+        <p>that is all the model does. it puts each entry on the map, once, on the machine that builds this page. it never sees you</p>
       </section>
 
       <section class="prose" aria-labelledby="average">
         <h2 class="sect" id="average"><span>an average is a taste</span></h2>
         <p>pick three entries. average their three vectors and you get one point, sitting between them. that point is your taste: not a profile, not a history, a spot in the same space the entries live in</p>
         <p>cos(entry, picked) is how close an entry sits to that spot. +1 is the same direction, 0 is unrelated, and below 0 is pointed the other way. sort by it and the feed is ranked</p>
-        <p>the catch is that one average flattens a plural taste. pick chips and cheetahs and the spot lands between them, scoring both mildly. so the feed also names the single pick each entry sits closest to. that is the near line: which side of your taste this one is on</p>
+        <p>the catch is that one average flattens a taste with two sides. pick a recipe and a chip teardown and the average lands halfway between them, a spot that is not very close to either. so the feed also names the one pick each entry sits closest to. that is the near line: it says which of your picks this entry is like</p>
       </section>
 
       <section class="prose" aria-labelledby="second">
         <h2 class="sect" id="second"><span>the second hand</span></h2>
         <p>pass on a few entries and they average into a second point. how close an entry sits to that point, times λ, comes off its score</p>
-        <p>λ is the ruler on the feed. at 0.25 a pass is a nudge: an entry near what you passed loses a quarter of what it would gain by being that near what you picked. at 1 a pass cancels a pick. at 0 passes are ignored. the row below shows the same entry at each setting</p>
+        <p>λ is the ruler on the feed. at 0.25, the default, a pass counts a little: an entry near what you passed loses a quarter of what it would gain by being that near what you picked. at 1 a pass counts as much as a pick. at 0 passes are ignored. the table below shows the same entry at each setting</p>
         <p>with nothing picked there is no point to measure from, so the feed stays newest first. that is a state, not an error. and an entry with no words has no vector, so it sinks to the bottom, but nothing is ever dropped</p>
       </section>
 
@@ -127,7 +128,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <dt>your marks</dt><dd>in the link and in this browser. <span class="mono" id="hash">#m=…</span>. nothing is sent anywhere</dd>
           <dt>the vectors</dt><dd>made when the page is built, by fastembed's bge-small, on the build machine. they come down in corpus.json, <span class="mono" id="dims">270 × 384</span> int8, and rank.js does the math here</dd>
           <dt>the cli</dt><dd>manicule.py rank, on your machine. a markdown page from an opml and a folder of notes. the only traffic is the feed fetches</dd>
-          <dt>refresh</dt><dd>a github action, daily, <span class="mono">06:17 utc</span></dd>
+          <dt>refresh</dt><dd>once a day, by a github action. the page is rebuilt from the feeds, nothing of yours goes into it</dd>
         </dl>
       </section>
     </main>

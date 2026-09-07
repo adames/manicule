@@ -70,8 +70,7 @@ put it on a cron and read `today.md` with coffee.
 science, essays, podcasts, sports, food, games. mixed on purpose, so marking
 two things visibly reorders everything.
 
-a first visit lands with a starter taste already applied, three picks and one
-pass chosen at build time to sit far apart. press anything and it's yours.
+a first visit lands newest first. press anything and it reorders.
 
 vectors ship int8; the browser does the math in `site/rank.js`, same math as
 the Python. marks live in the URL, so a link is a taste.

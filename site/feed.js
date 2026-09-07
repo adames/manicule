@@ -3,7 +3,6 @@
 // link is the state, and localStorage only remembers it for a bare visit.
 (function () {
   const ROWS_PER_PAGE = 20;
-  const NEXT_REFRESH_UTC = "06:17"; // the Action's cron: "17 6 * * *"
   const KIND_LABEL = { article: "web", video: "vid", podcast: "pod" };
 
   const { hand, toast, esc, signed, plain } = Shell;
@@ -14,7 +13,6 @@
     passed: new Set(),
     lambda: Manicule.LAMBDA,
     borrowed: false,  // the link carries marks this browser did not make
-    demo: false,      // the marks are the build's starter taste, not yours yet
     rowsShown: ROWS_PER_PAGE,
   };
   let entries = null;      // corpus.json, once it lands
@@ -24,22 +22,9 @@
 
   const sameIds = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
 
-  // The build's starter taste: a few entries chosen to sit far apart, so the
-  // page arrives ranked and a first visit can watch the ranker work without
-  // picking anything. Nothing is written until a press makes the marks yours.
-  function startWithTheDemo() {
-    state.picked = new Set(entries.demo.m || []);
-    state.passed = new Set(entries.demo.d || []);
-    state.borrowed = false;
-    state.demo = true;
-    state.rowsShown = ROWS_PER_PAGE;
-  }
-
   function readTheLink() {
     const link = Shell.marksIn(location.hash);
-    const neverHere = Shell.mirror() === null;
     const saved = Shell.mirror() || {};
-    state.demo = false;
     // The daily rebuild drops entries, and their ids go with them. Ignoring
     // dead ids on both sides means your own stale link still reads as yours,
     // and a friend's wholly stale link reads as no marks rather than as theirs.
@@ -51,8 +36,6 @@
       state.picked = new Set(linked.picked);
       state.passed = new Set(linked.passed);
       state.borrowed = !(sameIds(linked.picked, mine.picked) && sameIds(linked.passed, mine.passed));
-    } else if (neverHere && entries.demo) {
-      startWithTheDemo();
     } else {
       state.picked = new Set(mine.picked);
       state.passed = new Set(mine.passed);
@@ -68,9 +51,6 @@
   }
 
   function writeTheLink() {
-    // The starter taste is shown, not kept: the address stays bare and the
-    // mirror stays empty, so the next visit is still a first one until a press.
-    if (state.demo) { Shell.carry(); Shell.renderAddrs(); return; }
     const marked = state.picked.size || state.passed.size;
     const hash = Shell.hashOf(
       [...state.picked],
@@ -283,7 +263,7 @@
   function drawStatus(cold) {
     // The spaces between the spans are for screen readers; the dots are CSS.
     el("status").innerHTML = cold
-      ? `<b>newest first</b>${entries.demo ? ` <button class="btn quiet" data-act="demo" type="button">try the starter taste</button>` : ""}`
+      ? `<b>newest first</b> <span class="n">pick something and it reorders</span>`
       : `<b>ranked</b> <span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n">λ ${state.lambda.toFixed(2)}</span>`;
   }
 
@@ -297,10 +277,9 @@
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
     ledger.classList.toggle("nodis", !state.passed.size);
-    ledger.classList.toggle("borrowed", state.borrowed || state.demo);
+    ledger.classList.toggle("borrowed", state.borrowed);
     drawStatus(cold);
     el("banner").hidden = !state.borrowed;
-    el("starter").hidden = !state.demo;
 
     holdingFocus(() => {
       lastNearest = null;
@@ -330,7 +309,6 @@
     state.passed.clear();
     state.lambda = Manicule.LAMBDA;
     state.borrowed = false;
-    state.demo = false;
     state.rowsShown = ROWS_PER_PAGE;
     setRuler();
     gliding(draw);
@@ -351,7 +329,6 @@
     else if (state.passed.has(id)) { state.passed.delete(id); }
     else { state.picked.add(id); }
     state.borrowed = false; // the first press makes a borrowed link yours
-    state.demo = false;     // and a starter taste too
     gliding(() => holdingPlace(id, draw));
   });
 
@@ -379,11 +356,6 @@
   document.addEventListener("click", (event) => {
     if (event.target.closest('[data-act="forget"]')) { forget(); toast("forgotten"); }
     else if (event.target.closest('[data-act="fresh"]')) forget();
-    else if (event.target.closest('[data-act="demo"]') && entries && entries.demo) {
-      startWithTheDemo();
-      gliding(draw);
-      el("list").focus({ preventScroll: true });
-    }
   });
 
   // A plain fragment (#list, from the skip link) is not a state.
@@ -403,7 +375,7 @@
 
       el("spec").innerHTML = [
         `<span title="${esc(utcStamp(entries.generated))}">updated ${esc(timeAgo(entries.generated))}</span>`,
-        `<span>next ${NEXT_REFRESH_UTC} utc</span>`,
+        `<span>once a day</span>`,
         `<span>${entries.feeds.length} feeds</span>`,
       ].join(" ");
 

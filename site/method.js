@@ -100,7 +100,7 @@
     el("proof-notes").innerHTML = [
       ["newest first", `${mono(nth(two.newest))}, against ${mono(nth(two.shuffled))} shuffled. date order is a shuffle`],
       ["the vectors", `${mono(nth(two.ranker))}, against ${mono(nth(two.words))} from shared words alone. blog posts only, no video or podcast blurbs: ${mono(nth(proof.written.ranker))} against ${mono(nth(proof.written.words))}`],
-      ["λ", `pass on two from a feed and the rest of it sinks: ${sweep}. a nudge, not a veto`],
+      ["λ", `pass on two from a feed and the rest of it sinks: ${sweep}. the default counts a little`],
       ["the catch", "same feed only stands in for same taste, so read it as necessary, not sufficient"],
     ].map(([key, words]) => `<dt>${key}</dt><dd>${words}</dd>`).join("");
   }
@@ -155,7 +155,7 @@
 
   const percent = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
   const dayOf = (iso) => (iso ? iso.slice(0, 10) : "undated");
-  const READS = { 0: "ignored", 0.25: "a nudge, the default", 0.5: "half a pick", 1: "cancels a pick" };
+  const READS = { 0: "ignored", 0.25: "a little, the default", 0.5: "half a pick", 1: "as much as a pick" };
 
   // Solid ink runs to the score; the dashed hollow runs from there to the
   // first term, so the gap is exactly what λ took away.
