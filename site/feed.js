@@ -153,7 +153,7 @@
     if (!state.passed.size) {
       return `<div class="calc"><span class="sr-only">score</span> <span class="tot">${signed(scored.score)}</span></div>`;
     }
-    return `<div class="calc"><span class="sr-only">score</span> <span class="t1">${signed(scored.pos)}</span> <span class="t2">− ${state.lambda.toFixed(2)} × ${plain(scored.neg)}</span> <span class="eq sr-only">=</span> <span class="tot">${signed(scored.score)}</span></div>`;
+    return `<div class="calc" title="what you picked − λ × what you passed"><span class="sr-only">score</span> <span class="t1">${signed(scored.pos)}</span> <span class="t2">− ${state.lambda.toFixed(2)} × ${plain(scored.neg)}</span> <span class="eq sr-only">=</span> <span class="tot">${signed(scored.score)}</span></div>`;
   }
 
   // The picked entry this one most resembles, printed only when it changes:
@@ -164,13 +164,13 @@
     if (isPicked) { lastNearest = null; return `<p class="near">picked</p>`; }
     if (isPassed) {
       lastNearest = null;
-      const words = placesSank > 0 ? `sank ${placesSank}, still here` : "still here";
+      const words = placesSank > 0 ? `passed · sank ${placesSank} rows, still here` : "passed · still here";
       return `<p class="near"><span>${words}</span></p>`;
     }
     const nearest = scored.nearest && entryById[scored.nearest];
     if (!nearest || scored.nearest === lastNearest) return "";
     lastNearest = scored.nearest;
-    return `<p class="near">${hand("rest")}<span>near</span><span class="t" title="${esc(nearest.title)}">“${esc(shorten(nearest.title, 48))}”</span></p>`;
+    return `<p class="near">${hand("rest")}<span>near your pick</span><span class="t" title="${esc(nearest.title)}">“${esc(shorten(nearest.title, 48))}”</span></p>`;
   }
 
   // One control, three states. A press advances it, and its name says what the
@@ -178,8 +178,8 @@
   // tells them apart.
   function controlHtml(entry, isPicked, isPassed) {
     const shape = isPicked ? "point" : isPassed ? "pass" : "";
-    const says = isPicked ? "picked, press to pass" : isPassed ? "passed, press to clear" : "pick this";
-    const now = isPicked ? "picked" : isPassed ? "passed" : "pick this";
+    const says = isPicked ? "picked, press again to pass" : isPassed ? "passed, press again to clear" : "pick this";
+    const now = isPicked ? "picked · press again to pass" : isPassed ? "passed · press again to clear" : "pick this";
     const drawing = isPassed ? hand("bird") : hand("point");
     return `<button class="mk ${shape}" type="button" data-act="cycle" aria-label="${says}" title="${now}" aria-describedby="t-${esc(entry.id)}">${drawing}</button>`;
   }
@@ -283,7 +283,7 @@
   function drawStatus(cold) {
     // The spaces between the spans are for screen readers; the dots are CSS.
     el("status").innerHTML = cold
-      ? `<b>newest first</b>${entries.demo ? ` <button class="btn quiet" data-act="demo" type="button">try a taste</button>` : ""}`
+      ? `<b>newest first</b>${entries.demo ? ` <button class="btn quiet" data-act="demo" type="button">try the starter taste</button>` : ""}`
       : `<b>ranked</b> <span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n">λ ${state.lambda.toFixed(2)}</span>`;
   }
 
@@ -411,7 +411,7 @@
         `${entries.entries.length} entries`,
         `${entries.feeds.length} feeds`,
         "no accounts",
-        two ? `<a href="method.html#proof">two picks: ${nth(two.ranker)}, newest first: ${nth(two.newest)}</a>` : "",
+        two ? `<a href="method.html#proof">two picks from one feed put the rest ${nth(two.ranker)}. newest first: ${nth(two.newest)}</a>` : "",
       ].filter(Boolean).map((fact) => `<span>${fact}</span>`).join(" ");
 
       for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = entries.entries.length;

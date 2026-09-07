@@ -92,16 +92,16 @@
     el("proof-rows").innerHTML = Object.entries(proof.median_rank).map(([picks, row]) =>
       `<tr><td class="mono">${picks}</td><td class="num">${row.ranker}</td><td class="num">${row.words}</td><td class="num">${row.newest}</td><td class="num">${row.shuffled}</td></tr>`).join("");
     el("proof-cap").textContent =
-      `median rank of the rest of that feed, out of ${proof.entries} · ${proof.trials} trials at 2 picks · recomputed each morning`;
+      `where the rest of that feed lands, the median, out of ${proof.entries} · ${proof.trials} trials at 2 picks · recomputed each morning`;
 
     const two = proof.median_rank["2"] || {};
     const lam = proof.lambda || {};
-    const sweep = Object.entries(lam).map(([l, place]) => `${mono(nth(place))} at λ ${l}`).join(", ");
+    const sweep = Object.entries(lam).map(([l, place]) => `${mono(nth(place))} at λ ${String(parseFloat(l))}`).join(", ");
     el("proof-notes").innerHTML = [
-      ["newest first", `${mono(nth(two.newest))} against ${mono(nth(two.shuffled))} shuffled. the date says almost nothing about what you want`],
-      ["the model", `${mono(nth(two.ranker))} against ${mono(nth(two.words))} for shared words. written entries only: ${mono(nth(proof.written.ranker))} against ${mono(nth(proof.written.words))}`],
-      ["λ", `pass on two from a feed and the rest of it lands ${sweep}. a nudge, not a veto`],
-      ["the catch", "same feed stands in for same taste. necessary, not sufficient"],
+      ["newest first", `${mono(nth(two.newest))}, against ${mono(nth(two.shuffled))} shuffled. date order is a shuffle`],
+      ["the vectors", `${mono(nth(two.ranker))}, against ${mono(nth(two.words))} from shared words alone. blog posts only, no video or podcast blurbs: ${mono(nth(proof.written.ranker))} against ${mono(nth(proof.written.words))}`],
+      ["λ", `pass on two from a feed and the rest of it sinks: ${sweep}. a nudge, not a veto`],
+      ["the catch", "same feed only stands in for same taste, so read it as necessary, not sufficient"],
     ].map(([key, words]) => `<dt>${key}</dt><dd>${words}</dd>`).join("");
   }
 
@@ -180,7 +180,7 @@
       <dt>cos(entry, passed)</dt><dd class="mono">${taste.passed.length ? plain(scored.neg) : `0.00 <span class="muted">· nothing passed</span>`}</dd>
       <dt>λ</dt><dd class="mono">${taste.lambda.toFixed(2)}</dd>
       <dt>score</dt><dd><div class="worked-score"><div class="calc">${firstTerm}${subtraction}<span class="tot">${signed(scored.score)}</span></div>${scoreBar(scored)}</div></dd>
-      <dt>nearest</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(entry.vector, nearest.vector))}</span>` : ""}</dd>`;
+      <dt>nearest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(entry.vector, nearest.vector))}</span>` : ""}</dd>`;
 
     // An empty link is a nameless tab stop, so it stays hidden until it has words.
     el("worked-link").textContent = `row ${place} on the feed`;

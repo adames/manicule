@@ -79,7 +79,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <!-- the proof: today's numbers, recomputed at every build -->
       <section aria-label="does it work" id="proof">
         <h2 class="sect"><span>does it work</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">evaluate()</a></h2>
-        <p class="caption">pick a few entries from one feed, leave the rest in the pile of <span id="proof-n">…</span>, and see where they land. the feed is a label the ranker never sees</p>
+        <p class="caption">take one feed. pick a few of its entries, hide the rest in the pile of <span id="proof-n">…</span>, and see where the ranker puts them. it never sees which feed anything came from</p>
         <div class="dt-wrap">
           <table class="dt">
             <thead><tr><th scope="col" class="lc">picks</th><th scope="col" class="num">the ranker</th><th scope="col" class="num">shared words</th><th scope="col" class="num">newest first</th><th scope="col" class="num">shuffled</th></tr></thead>
