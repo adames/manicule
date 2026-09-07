@@ -202,7 +202,12 @@
     if (button) toast((await copy(button.dataset.copy)) ? "copied" : "couldn't copy");
   });
 
+  // Numbers on this site are always signed and always two places, so the
+  // receipts line up in a column.
+  const signed = (x) => (x < 0 ? "−" : "+") + Math.abs(x).toFixed(2);
+  const plain = (x) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
+
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  window.Shell = { hand, toast, carry, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, esc, feedKey };
+  window.Shell = { hand, toast, carry, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, esc, feedKey, signed, plain };
 })();

@@ -1,156 +1,217 @@
-// method.js: the method page. Fetches rank() from the repo and prints it as
-// a listing with five margin notes, then works one row from the visitor's
-// own marks with the same rank.js the feed uses. Nothing leaves the page
-// but the two fetches.
+// method.js — the method page. Fetches rank() from the repo and prints it as
+// a listing with margin notes, then works one row from the visitor's own
+// marks using the same rank.js the feed uses.
 (function () {
-  const $ = (id) => document.getElementById(id);
-  const { hand, esc } = Shell;
-  const CANON = "adames"; // the upstream repo; forks derive their own owner from the host
-  const raw = (owner) => `https://raw.githubusercontent.com/${owner}/manicule/main/manicule.py`;
+  const el = (id) => document.getElementById(id);
+  const { hand, esc, signed, plain } = Shell;
 
-  // ---- the listing. Notes are keyed by a substring of the code line so
-  // they survive edits; each fires once, on the first line that matches.
+  const UPSTREAM = "adames"; // a fork derives its own owner from the host
+  const sourceUrl = (owner) => `https://raw.githubusercontent.com/${owner}/manicule/main/manicule.py`;
+
+  // ── the listing ──────────────────────────────────────────────────────────
+  // Each note is keyed by a substring of the line it belongs to, so it finds
+  // its line again after the file is edited. Each fires once, on the first
+  // line that matches.
+
   const NOTES = [
-    ["return None", "nothing picked: newest first"],
-    ['float("-inf")', "no words: sinks, never dropped"],
-    ["p - lam * n", "the whole method", true],
-    ["out.sort(", "best first"],
-    ["cosine(e.vector, picked_ids[k])", "the near line"],
+    { matches: "return None", says: "nothing picked: newest first" },
+    { matches: 'float("-inf")', says: "no words: sinks, never dropped" },
+    { matches: "p - lam * n", says: "the whole method", key: true },
+    { matches: "out.sort(", says: "best first" },
+    { matches: "cosine(e.vector, picked_ids[k])", says: "the near line" },
   ];
-  function owner() {
-    const m = location.hostname.match(/^([^.]+)\.github\.io$/i);
-    return m ? m[1].toLowerCase() : null;
+
+  // The page is served from <owner>.github.io on a fork, so a fork shows its
+  // own file. Anywhere else, including this site's own domain, shows upstream.
+  function ownerFromHost() {
+    const match = location.hostname.match(/^([^.]+)\.github\.io$/i);
+    return match ? match[1].toLowerCase() : null;
   }
-  // A fork's own raw file when the page is served from <owner>.github.io,
-  // else upstream. site/ never contains manicule.py, so there is no local
-  // copy to try: asking for one only bought a 404 on every custom domain.
+
   async function fetchSource() {
-    const o = owner();
-    const tries = [];
-    if (o) tries.push({ url: raw(o), from: "main" });
-    if (o !== CANON) tries.push({ url: raw(CANON), from: "main" });
-    for (const t of tries) {
+    const owner = ownerFromHost();
+    const owners = owner && owner !== UPSTREAM ? [owner, UPSTREAM] : [UPSTREAM];
+    for (const who of owners) {
       try {
-        const r = await fetch(t.url, { cache: "no-cache" });
-        if (!r.ok) continue;
-        const text = await r.text();
-        if (text.includes("def rank(")) return { ...t, text, owner: t.url.startsWith("http") ? (o && t.url === raw(o) ? o : CANON) : null };
+        const response = await fetch(sourceUrl(who), { cache: "no-cache" });
+        if (!response.ok) continue;
+        const text = await response.text();
+        if (text.includes("def rank(")) return { text, owner: who };
       } catch (_) {}
     }
     return null;
   }
-  function renderListing(src) {
-    const box = $("listing"), cap = $("listing-cap");
-    if (!src) {
-      box.innerHTML = `<div class="cap"><span><b>manicule.py</b> · rank()</span></div><div class="grp"><pre>couldn't load</pre></div>`;
-      cap.textContent = "";
-      return;
-    }
-    const lines = src.text.split("\n");
-    const start = lines.findIndex((l) => l.startsWith("def rank("));
-    let end = start < 0 ? -1 : lines.findIndex((l, i) => i > start && l === "    return out");
-    if (start < 0 || end < 0) return renderListing(null);
-    const used = new Set();
-    const rows = [];
-    for (let i = start; i <= end; i++) {
-      const line = lines[i];
-      let note = null;
-      for (const n of NOTES) if (!used.has(n) && line.includes(n[0])) { used.add(n); note = n; break; }
-      let code = esc(line);
-      if (note && note[2]) code = code.replace(esc(note[0]), `<span class="hi">${esc(note[0])}</span>`);
-      rows.push(`<div class="grp${note && note[2] ? " key" : ""}"><pre><span class="ln">${i + 1}</span>${code}</pre>${note ? `<p class="note">${note[2] ? hand("rest") : ""}<span>${esc(note[1])}</span></p>` : ""}</div>`);
-    }
-    box.innerHTML = `<div class="cap"><span><b>manicule.py</b> · rank()</span><span>${end - start + 1} lines</span></div>` + rows.join("");
-    cap.textContent = `lines ${start + 1}–${end + 1} · ${src.from === "main" ? "fetched from main" : src.from}`;
-    if (src.owner) $("listing-github").href = `https://github.com/${src.owner}/manicule/blob/main/manicule.py#L${start + 1}-L${end + 1}`;
+
+  function showNothing() {
+    el("listing").innerHTML =
+      `<div class="cap"><span><b>manicule.py</b> · rank()</span></div><div class="grp"><pre>couldn't load</pre></div>`;
+    el("listing-cap").textContent = "";
   }
 
-  // ---- the visitor's taste: the hash first, else this browser's mirror.
-  // Cold (nothing picked with text) uses a pretend taste so the arithmetic
-  // still has numbers: the newest row picked, the next newest passed.
-  let corpus = null, byId = {};
-  function taste() {
-    const h = Shell.marksIn(location.hash);
-    let m = h.m, d = h.d, lam = Shell.lam(h.l);
-    // no marks in the hash (a bare λ counts as none): this browser's own, the hash's λ first
-    if (!m.length && !d.length) {
+  function renderListing(source) {
+    if (!source) return showNothing();
+    const lines = source.text.split("\n");
+    const first = lines.findIndex((line) => line.startsWith("def rank("));
+    const last = first < 0 ? -1 : lines.findIndex((line, i) => i > first && line === "    return out");
+    if (first < 0 || last < 0) return showNothing();
+
+    const spoken = new Set();
+    const rows = [];
+    for (let i = first; i <= last; i++) {
+      const line = lines[i];
+      const note = NOTES.find((n) => !spoken.has(n) && line.includes(n.matches));
+      if (note) spoken.add(note);
+
+      let code = esc(line);
+      if (note && note.key) code = code.replace(esc(note.matches), `<span class="hi">${esc(note.matches)}</span>`);
+      const margin = note
+        ? `<p class="note">${note.key ? hand("rest") : ""}<span>${esc(note.says)}</span></p>`
+        : "";
+      rows.push(`<div class="grp${note && note.key ? " key" : ""}"><pre><span class="ln">${i + 1}</span>${code}</pre>${margin}</div>`);
+    }
+
+    el("listing").innerHTML =
+      `<div class="cap"><span><b>manicule.py</b> · rank()</span><span>${last - first + 1} lines</span></div>` + rows.join("");
+    el("listing-cap").textContent = `lines ${first + 1}–${last + 1} · fetched from main`;
+    el("listing-github").href =
+      `https://github.com/${source.owner}/manicule/blob/main/manicule.py#L${first + 1}-L${last + 1}`;
+  }
+
+  // ── the visitor's own taste ──────────────────────────────────────────────
+
+  let corpus = null;
+  let entryById = {};
+
+  // The link first, then this browser's mirror. With nothing picked there are
+  // no numbers to show, so a pretend taste stands in: the newest entry picked,
+  // the next newest passed.
+  function tasteNow() {
+    const link = Shell.marksIn(location.hash);
+    let picked = link.m;
+    let passed = link.d;
+    let lambda = Shell.lam(link.l);
+
+    if (!picked.length && !passed.length) {
       const saved = Shell.mirror();
-      if (saved) { m = saved.m || []; d = saved.d || []; if (isNaN(lam)) lam = Shell.lam(saved.l); }
+      if (saved) {
+        picked = saved.m || [];
+        passed = saved.d || [];
+        if (isNaN(lambda)) lambda = Shell.lam(saved.l);
+      }
     }
-    if (isNaN(lam)) lam = Manicule.LAMBDA;
-    const has = (id) => byId[id] && byId[id].vector;
-    m = m.filter(has); d = d.filter(has);
-    const pretend = !m.length;
+    if (isNaN(lambda)) lambda = Manicule.LAMBDA;
+
+    const hasWords = (id) => entryById[id] && entryById[id].vector;
+    picked = picked.filter(hasWords);
+    passed = passed.filter(hasWords);
+
+    const pretend = !picked.length;
     if (pretend) {
-      const text = corpus.entries.filter((e) => e.vector);
-      m = [text[0].id]; d = text[1] ? [text[1].id] : [];
+      const withWords = corpus.entries.filter((entry) => entry.vector);
+      picked = [withWords[0].id];
+      passed = withWords[1] ? [withWords[1].id] : [];
     }
-    return { m, d, lam, pretend };
+    return { picked, passed, lambda, pretend };
   }
-  // the taste as a feed hash, so links from here open the feed in this state
-  const hashOf = (t) => Shell.hashOf(t.m, t.d, t.lam);
-  function rankAt(t, lam) {
-    const vec = (ids) => ids.map((i) => byId[i].vector);
-    const pickedById = {}; for (const i of t.m) pickedById[i] = byId[i].vector;
-    return Manicule.rank(corpus.entries, vec(t.m), vec(t.d), lam, pickedById);
+
+  function rankAt(taste, lambda) {
+    const vectors = (ids) => ids.map((id) => entryById[id].vector);
+    const pickedVectors = {};
+    for (const id of taste.picked) pickedVectors[id] = entryById[id].vector;
+    return Manicule.rank(corpus.entries, vectors(taste.picked), vectors(taste.passed), lambda, pickedVectors);
   }
-  const fmt = (x) => (x < 0 ? "−" : "+") + Math.abs(x).toFixed(2);
-  const num = (x) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
-  const pct = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
-  const dateOf = (iso) => iso ? iso.slice(0, 10) : "undated";
+
+  // Links from here open the feed in the same taste, so the row number they
+  // quote is true even when the taste is pretend.
+  const linkTo = (taste) => Shell.hashOf(taste.picked, taste.passed, taste.lambda);
+
+  const percent = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
+  const dayOf = (iso) => (iso ? iso.slice(0, 10) : "undated");
   const READS = { 0: "ignored", 0.25: "a nudge, the default", 0.5: "half weight", 1: "full weight" };
 
-  function renderWorked() {
-    const t = taste();
-    const rows = rankAt(t, t.lam);
-    // the top row with text the visitor has not picked
-    const at = rows.findIndex((r) => r.score !== -Infinity && !t.m.includes(r.entry.id) && !t.d.includes(r.entry.id));
-    const r = rows[at], e = r.entry;
-    const t2 = t.d.length ? ` <span class="t2">− ${t.lam.toFixed(2)} × ${num(r.neg)}</span> <span class="eq sr-only">=</span> ` : " ";
-    const lo = Math.min(r.pos, r.score), hi = Math.max(r.pos, r.score);
-    const bar = `<span class="sbar" role="img" aria-label="score ${fmt(r.score)} of ${fmt(r.pos)} picked, the rest is what λ took"><i class="fill" style="width:${pct(r.score)}"></i><i class="hollow" style="left:${pct(lo)};width:${pct(hi - lo)}"></i></span>`;
-    const near = r.nearest && byId[r.nearest];
-    $("worked").innerHTML = `
-      <dt>entry</dt><dd><span class="t">${esc(e.title || e.link)}</span> <span class="sub mono muted">${esc(e.feed)} · ${dateOf(e.published)}</span></dd>
-      <dt>cos(entry, picked)</dt><dd class="mono">${fmt(r.pos)}</dd>
-      <dt>cos(entry, passed)</dt><dd class="mono">${t.d.length ? num(r.neg) : `0.00 <span class="muted">· nothing passed</span>`}</dd>
-      <dt>λ</dt><dd class="mono">${t.lam.toFixed(2)}</dd>
-      <dt>score</dt><dd><div class="worked-score"><div class="calc">${t.d.length ? `<span class="t1">${fmt(r.pos)}</span>` : ""}${t2}<span class="tot">${fmt(r.score)}</span></div>${bar}</div></dd>
-      <dt>nearest</dt><dd>${near ? `${hand("rest")}<span class="t">${esc(near.title)}</span> <span class="mono muted">${fmt(Manicule.cosine(e.vector, near.vector))}</span>` : ""}</dd>`;
-    // the link opens the feed in the same taste, so its row number is true even when the taste is pretend
-    $("worked-link").textContent = `row ${at + 1} on the feed`;
-    $("worked-link").href = "./" + hashOf(t);
-    $("worked-link").hidden = false; // an empty link is a nameless tab stop, so it stays hidden until it has words
-    $("worked-note").hidden = !t.pretend;
-    // the pretend rows are picked newest-first; "row 2" would collide with the ranked row number in the link
-    $("worked-note").textContent = t.pretend ? "pretend taste · newest picked, next newest passed" : "";
-
-    // the same row at other λ, the visitor's own λ among them
-    const lams = [...new Set([0, 0.25, 0.5, 1, t.lam])].sort((a, b) => a - b);
-    $("lam-rows").innerHTML = lams.map((l) => {
-      const rs = rankAt(t, l);
-      const i = rs.findIndex((x) => x.entry.id === e.id);
-      const now = l === t.lam;
-      // the visitor's row is bold on screen; a hidden "your λ" says so when the preset phrase is showing
-      const reads = READS[l] ? READS[l] + (now ? '<span class="sr-only"> · your λ</span>' : "") : "your λ";
-      return `<tr${now ? ' class="now"' : ""}><td class="mono">${num(l)}</td><td class="num">${fmt(rs[i].score)}</td><td class="num">${i + 1}</td><td class="lc">${reads}</td></tr>`;
-    }).join("");
-    $("lam-cap").textContent = t.pretend ? "on the pretend taste, live" : "on your marks, live";
-    $("hash").textContent = t.pretend ? "#m=…&d=…&l=0.25" : hashOf(t);
+  // Solid ink runs to the score; the dashed hollow runs from there to the
+  // first term, so the gap is exactly what λ took away.
+  function scoreBar(scored) {
+    const low = Math.min(scored.pos, scored.score);
+    const high = Math.max(scored.pos, scored.score);
+    const reads = `score ${signed(scored.score)} of ${signed(scored.pos)} picked, the rest is what λ took`;
+    return `<span class="sbar" role="img" aria-label="${reads}"><i class="fill" style="width:${percent(scored.score)}"></i><i class="hollow" style="left:${percent(low)};width:${percent(high - low)}"></i></span>`;
   }
 
-  // ---- boot
+  function renderWorkedRow(taste, scored, place) {
+    const entry = scored.entry;
+    const nearest = scored.nearest && entryById[scored.nearest];
+    const subtraction = taste.passed.length
+      ? ` <span class="t2">− ${taste.lambda.toFixed(2)} × ${plain(scored.neg)}</span> <span class="eq sr-only">=</span> `
+      : " ";
+    const firstTerm = taste.passed.length ? `<span class="t1">${signed(scored.pos)}</span>` : "";
+
+    el("worked").innerHTML = `
+      <dt>entry</dt><dd><span class="t">${esc(entry.title || entry.link)}</span> <span class="sub mono muted">${esc(entry.feed)} · ${dayOf(entry.published)}</span></dd>
+      <dt>cos(entry, picked)</dt><dd class="mono">${signed(scored.pos)}</dd>
+      <dt>cos(entry, passed)</dt><dd class="mono">${taste.passed.length ? plain(scored.neg) : `0.00 <span class="muted">· nothing passed</span>`}</dd>
+      <dt>λ</dt><dd class="mono">${taste.lambda.toFixed(2)}</dd>
+      <dt>score</dt><dd><div class="worked-score"><div class="calc">${firstTerm}${subtraction}<span class="tot">${signed(scored.score)}</span></div>${scoreBar(scored)}</div></dd>
+      <dt>nearest</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(entry.vector, nearest.vector))}</span>` : ""}</dd>`;
+
+    // An empty link is a nameless tab stop, so it stays hidden until it has words.
+    el("worked-link").textContent = `row ${place} on the feed`;
+    el("worked-link").href = "./" + linkTo(taste);
+    el("worked-link").hidden = false;
+    el("worked-note").hidden = !taste.pretend;
+    el("worked-note").textContent = taste.pretend ? "pretend taste · newest picked, next newest passed" : "";
+  }
+
+  function renderLambdaTable(taste, entry) {
+    const settings = [...new Set([0, 0.25, 0.5, 1, taste.lambda])].sort((a, b) => a - b);
+    el("lam-rows").innerHTML = settings.map((lambda) => {
+      const ranked = rankAt(taste, lambda);
+      const place = ranked.findIndex((row) => row.entry.id === entry.id);
+      const theirs = lambda === taste.lambda;
+      // Their row is bold on screen; a hidden phrase says so out loud.
+      const reads = READS[lambda]
+        ? READS[lambda] + (theirs ? '<span class="sr-only"> · your λ</span>' : "")
+        : "your λ";
+      return `<tr${theirs ? ' class="now"' : ""}><td class="mono">${plain(lambda)}</td><td class="num">${signed(ranked[place].score)}</td><td class="num">${place + 1}</td><td class="lc">${reads}</td></tr>`;
+    }).join("");
+    el("lam-cap").textContent = taste.pretend ? "on the pretend taste, live" : "on your marks, live";
+    el("hash").textContent = taste.pretend ? "#m=…&d=…&l=0.25" : linkTo(taste);
+  }
+
+  function renderWorked() {
+    const taste = tasteNow();
+    const ranked = rankAt(taste, taste.lambda);
+    // The top entry with words that the visitor has neither picked nor passed.
+    const place = ranked.findIndex((row) =>
+      row.score !== -Infinity && !taste.picked.includes(row.entry.id) && !taste.passed.includes(row.entry.id));
+    const scored = ranked[place];
+
+    renderWorkedRow(taste, scored, place + 1);
+    renderLambdaTable(taste, scored.entry);
+  }
+
+  // ── boot ─────────────────────────────────────────────────────────────────
+
   fetchSource().then(renderListing);
-  fetch("corpus.json", { cache: "no-cache" }).then((r) => r.json()).then((c) => {
-    corpus = c;
-    for (const e of c.entries) { e.vector = e.q ? Manicule.dequantize(e.q, e.s) : null; delete e.q; byId[e.id] = e; }
-    $("dims").textContent = `${c.entries.length} × ${c.dim}`;
-    for (const el of document.querySelectorAll("[data-count]")) el.textContent = c.entries.length;
-    try { localStorage.setItem("manicule-count", c.entries.length); } catch (_) {}
-    renderWorked();
-    addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) renderWorked(); }); // a fragment is not a state
-  }).catch(() => {
-    $("worked").innerHTML = `<dt>entry</dt><dd>couldn't load</dd>`;
-    $("lam-cap").textContent = "couldn't load";
-  });
+
+  fetch("corpus.json", { cache: "no-cache" })
+    .then((response) => response.json())
+    .then((loaded) => {
+      corpus = loaded;
+      for (const entry of corpus.entries) {
+        entry.vector = entry.q ? Manicule.dequantize(entry.q, entry.s) : null;
+        delete entry.q;
+        entryById[entry.id] = entry;
+      }
+      el("dims").textContent = `${corpus.entries.length} × ${corpus.dim}`;
+      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = corpus.entries.length;
+      try { localStorage.setItem("manicule-count", corpus.entries.length); } catch (_) {}
+
+      renderWorked();
+      addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) renderWorked(); });
+    })
+    .catch(() => {
+      el("worked").innerHTML = `<dt>entry</dt><dd>couldn't load</dd>`;
+      el("lam-cap").textContent = "couldn't load";
+    });
 })();

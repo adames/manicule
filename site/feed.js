@@ -6,7 +6,7 @@
   const NEXT_REFRESH_UTC = "06:17"; // the Action's cron: "17 6 * * *"
   const KIND_LABEL = { article: "web", video: "vid", podcast: "pod" };
 
-  const { hand, toast, esc } = Shell;
+  const { hand, toast, esc, signed, plain } = Shell;
   const el = (id) => document.getElementById(id);
 
   const state = {
@@ -111,8 +111,6 @@
 
   // ── words and numbers ────────────────────────────────────────────────────
 
-  const signed = (x) => (x < 0 ? "−" : "+") + Math.abs(x).toFixed(2);
-  const plain = (x) => (x < 0 ? "−" : "") + Math.abs(x).toFixed(2);
   const shorten = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
   const utcStamp = (iso) => iso.slice(0, 10) + " " + iso.slice(11, 16) + " utc";
 
