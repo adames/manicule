@@ -170,7 +170,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
-  display: flex;
+  display: block;
   transition: background-color var(--transition),color var(--transition);
 }
 
@@ -296,89 +296,7 @@ samp {
   left: var(--space-3);
 }
 
-/* 3 · shell. the rail is Commonplace's table of contents: 176px, words grouped by air, the active page gets a 2px ember left edge */
-
-.rail {
-  width: var(--sidebar-width);
-  flex: none;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border-right: var(--border-w) solid var(--border);
-  text-transform: lowercase;
-}
-
-.rail .mark {
-  display: flex;
-  justify-content: center;
-  padding: var(--space-3);
-  color: var(--ember);
-}
-
-.rail .mk svg {
-  width: var(--hand-lg);
-  height: var(--hand-lg);
-}
-
-.rail nav {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-2) 0;
-}
-
-.rail nav a,
-.rail nav button {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  min-height: var(--control-sm);
-  padding: var(--space-2) var(--space-3);
-  border-left: var(--border-w-strong) solid transparent;
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  text-align: left;
-  text-decoration: none;
-  text-transform: lowercase;
-  transition: background var(--transition-fast),color var(--transition-fast);
-}
-
-.rail nav a:hover,
-.rail nav button:hover {
-  background: var(--surface-press);
-  color: var(--text);
-  text-decoration: none;
-}
-
-.rail nav a.active {
-  border-left-color: var(--ember);
-  color: var(--ember);
-}
-
-.rail nav a:focus-visible,
-.rail nav button:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--ember);
-} /* full-bleed at the viewport edge: the ring goes inside, as on the words row */
-
-.rail nav .n {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: var(--text-2xs);
-  color: var(--muted);
-  letter-spacing: -.01em;
-}
-
-.rail nav a:hover .n {
-  color: var(--text-secondary);
-} /* the count stays AA on the press wash */
-
-.rail nav .gap {
-  height: var(--space-5);
-}
+/* 3 · shell. the header is a brand row over a row of page words; no rail. */
 
 .theme .g {
   font-family: var(--font-mono);
@@ -408,7 +326,7 @@ samp {
   }
 }
 
-/* the column to the right of the rail; the app header carries a hairline (the inset shadow is a hairline, not a shadow) and the 2px ink rule */
+/* the page column under the header */
 
 .main {
   flex: 1;
@@ -417,49 +335,9 @@ samp {
   flex-direction: column;
 }
 
-.apphead {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-height: calc(var(--control-sm) + var(--space-3) * 2);
-  padding: var(--space-3) var(--space-5);
-  background: var(--surface);
-  box-shadow: inset 0 calc(-1 * var(--border-w)) 0 var(--border);
-  border-bottom: var(--border-w-strong) solid var(--text);
-  text-transform: lowercase;
-}
-
-.apphead .pagename {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  letter-spacing: .04em;
-  color: var(--text);
-}
-
-.apphead .wordmark {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%,-50%);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
-  letter-spacing: -.01em;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.apphead .acts {
-  display: flex;
-  gap: var(--space-2);
-  margin-left: auto;
-}
-
-/* mobile top bar: brand row under a 2px ink rule, then the scrolling words (an inset focus ring survives the scroll clip) */
+/* the header: brand row under a 2px ink rule, then the page words (an inset focus ring survives the scroll clip) */
 
 .topbar {
-  display: none;
   background: var(--surface);
   text-transform: lowercase;
 }
@@ -470,6 +348,18 @@ samp {
   justify-content: space-between;
   padding: var(--space-2) var(--space-4);
   border-bottom: var(--border-w-strong) solid var(--text);
+}
+
+/* the rules run to the edge; the words in them line up with the page column */
+
+.topbar .brand,
+.topbar .words {
+  --gutter: max(var(--space-4), (100% - var(--page-max)) / 2 + var(--space-5));
+  padding-inline: var(--gutter);
+}
+
+.topbar .words {
+  padding-inline: calc(var(--gutter) - var(--space-3));
 }
 
 .topbar .brand a {
@@ -505,7 +395,6 @@ samp {
   display: flex;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: 0 var(--space-2);
   border-bottom: var(--border-w) solid var(--border);
 }
 
@@ -526,6 +415,14 @@ samp {
   font-weight: var(--weight-medium);
 }
 
+.topbar .words .n {
+  margin-left: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--muted);
+  letter-spacing: -.01em;
+}
+
 .topbar .words a.active {
   color: var(--ember);
   border-bottom-color: var(--ember);
@@ -533,7 +430,8 @@ samp {
 
 .topbar .words a:focus-visible {
   box-shadow: inset 0 0 0 2px var(--ember);
-} /* the page column, prose, section titles over the 2px ink rule */
+}
+ /* the page column, prose, section titles over the 2px ink rule */
 
 .page {
   width: 100%;
@@ -981,6 +879,7 @@ samp {
 
 
 .status {
+  order: 2;
   margin-left: auto;
   font-size: var(--text-xs);
   color: var(--muted);
@@ -1005,9 +904,17 @@ samp {
 } /* a real space precedes each span (for screen readers); the left margin makes up the difference */
 
 .tb-acts {
-  display: none;
+  order: 3;
+  display: flex;
   gap: var(--space-2);
-} /* 6 · the ledger: column heads on the 2px rule, then the rows (rank · entry · receipt · hands) */
+} /* the acts sit at the far right of the toolbar, where the header's used to be */
+
+.ledger.cold .tb-acts,
+.ledger.borrowed .tb-acts {
+  display: none;
+} /* share and forget wait until there is something to share: a stranger's first move is a hand, not forget */
+
+/* 6 · the ledger: column heads on the 2px rule, then the rows (rank · entry · receipt · hands) */
 
 .list {
   list-style: none;
@@ -1836,28 +1743,9 @@ pre .c {
   display: none!important;
 }
 
-/* 9 · folds. < 900px: the rail folds into the top bar; share and forget join the toolbar (when there is something to share) */
+/* 9 · folds. < 900px: the page column loses its outer air */
 
 @media (max-width:899.98px) {
-  body {
-    display: block;
-  }
-  .rail,
-  .apphead {
-    display: none;
-  }
-  .topbar {
-    display: block;
-  }
-  .tb-acts {
-    display: flex;
-  }
-  .ledger.cold .tb-acts {
-    display: none;
-  }
-  .ledger.borrowed .tb-acts {
-    display: none;
-  } /* a stranger's first move is a hand, not forget; the acts return on adoption */
   .page {
     padding: var(--space-4);
   }

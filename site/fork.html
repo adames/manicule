@@ -21,39 +21,21 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 <body>
 <a class="skip" href="#main">skip to the page</a>
 
-<!-- the rail: Commonplace's table of contents -->
-<aside class="rail" aria-label="site">
-  <a class="mark" href="./" aria-label="manicule, home" data-hand="rest"></a>
-  <nav aria-label="pages">
-    <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
-    <a href="method.html" data-page="method">method</a>
-    <a href="fork.html" data-page="fork">fork</a>
-    <span class="gap"></span>
-    <a href="https://adames.cc">adames.cc</a>
-    <span class="gap"></span>
-    <button class="theme" type="button"><span class="g"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></span><span class="moon">dark</span><span class="sun">light</span></button>
-  </nav>
-</aside>
 
 <div class="main">
-  <!-- mobile only: brand row, then the words -->
+  <!-- the header: brand row, then the page words -->
   <header class="topbar">
     <div class="brand">
       <a href="./"><span data-hand="rest"></span><span>manicule</span></a>
       <button class="theme" type="button"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></button>
     </div>
     <nav class="words" aria-label="pages">
-      <a href="./" data-page="feed">feed</a>
+      <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
       <a href="method.html" data-page="method">method</a>
       <a href="fork.html" data-page="fork">fork</a>
     </nav>
   </header>
 
-  <!-- app header: page word · wordmark · no actions on this page -->
-  <header class="apphead">
-    <span class="pagename">fork</span>
-    <span class="wordmark">manicule</span>
-  </header>
 
   <div class="page">
     <main id="main" tabindex="-1">

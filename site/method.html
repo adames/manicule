@@ -21,49 +21,28 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 <body>
 <a class="skip" href="#main">skip to the page</a>
 
-<!-- the rail: Commonplace's table of contents -->
-<aside class="rail" aria-label="site">
-  <a class="mark" href="./" aria-label="manicule, home" data-hand="rest"></a>
-  <nav aria-label="pages">
-    <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
-    <a href="method.html" data-page="method">method</a>
-    <a href="fork.html" data-page="fork">fork</a>
-    <span class="gap"></span>
-    <a href="https://adames.cc">adames.cc</a>
-    <span class="gap"></span>
-    <button class="theme" type="button"><span class="g"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></span><span class="moon">dark</span><span class="sun">light</span></button>
-  </nav>
-</aside>
 
 <div class="main">
-  <!-- mobile only: brand row, then the words -->
+  <!-- the header: brand row, then the page words -->
   <header class="topbar">
     <div class="brand">
       <a href="./"><span data-hand="rest"></span><span>manicule</span></a>
       <button class="theme" type="button"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></button>
     </div>
     <nav class="words" aria-label="pages">
-      <a href="./" data-page="feed">feed</a>
+      <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
       <a href="method.html" data-page="method">method</a>
       <a href="fork.html" data-page="fork">fork</a>
     </nav>
   </header>
 
-  <!-- app header: page word · wordmark · page actions, on the 2px ink rule -->
-  <header class="apphead">
-    <span class="pagename">method</span>
-    <span class="wordmark">manicule</span>
-    <div class="acts">
-      <a class="btn" href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a>
-    </div>
-  </header>
 
   <div class="page">
     <main id="main" tabindex="-1">
       <section class="mast" aria-label="the method">
         <h1>how it works</h1>
         <p class="reading">every entry turns into a vector and your browser averages the vectors you picked into one picked vector, or one you passed into one passed vector. then we score it</p>
-        <p class="spec"><span>manicule.py</span><span>rank()</span><span>same math in rank.js</span></p>
+        <p class="spec"><span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></span><span>rank()</span><span>same math in rank.js</span></p>
       </section>
 
       <!-- the formula, as on the feed, with his kicker under it -->

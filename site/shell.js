@@ -156,7 +156,7 @@
     target.focus({ preventScroll: true });
   });
 
-  // ── the entry count in the rail ──────────────────────────────────────────
+  // ── the entry count on the feed tab ─────────────────────────────────────
   // The feed writes it after loading; the other pages show the last one seen.
 
   try {
