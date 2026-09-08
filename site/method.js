@@ -18,7 +18,7 @@
     { matches: 'float("-inf")', says: "no words: sinks, never dropped" },
     { matches: "towards - lam * away", says: "the whole method", key: true },
     { matches: "scored.sort(", says: "best first" },
-    { matches: "cosine(entry.vector, picked_ids[id])", says: "the near line" },
+    { matches: "cosine(post.vector, picked_ids[id])", says: "the near line" },
   ];
 
   // The page is served from <owner>.github.io on a fork, so a fork shows its
@@ -85,14 +85,14 @@
 
   function renderProof(proof) {
     if (!proof) {
-      el("proof-rows").innerHTML = `<tr><td colspan="5">too few entries to say</td></tr>`;
+      el("proof-rows").innerHTML = `<tr><td colspan="5">too few posts to say</td></tr>`;
       return;
     }
-    el("proof-n").textContent = proof.entries;
+    el("proof-n").textContent = proof.posts;
     el("proof-rows").innerHTML = Object.entries(proof.median_rank).map(([picks, row]) =>
       `<tr><td class="mono">${picks}</td><td class="num">${row.ranker}</td><td class="num">${row.words}</td><td class="num">${row.newest}</td><td class="num">${row.shuffled}</td></tr>`).join("");
     el("proof-cap").textContent =
-      `where the rest of that feed lands, the median, out of ${proof.entries} · ${proof.trials} trials at 2 picks · recomputed each morning`;
+      `where the rest of that feed lands, the median, out of ${proof.posts} · ${proof.trials} trials at 2 picks · recomputed each morning`;
 
     const two = proof.median_rank["2"] || {};
     const lam = proof.lambda || {};
@@ -108,10 +108,10 @@
   // ── the visitor's own taste ──────────────────────────────────────────────
 
   let today = null;
-  let entryById = {};
+  let postById = {};
 
   // The link first, then this browser's mirror. With nothing picked there are
-  // no numbers to show, so a pretend taste stands in: the newest entry picked,
+  // no numbers to show, so a pretend taste stands in: the newest post picked,
   // the next newest passed.
   function tasteNow() {
     const link = Shell.tasteIn(location.hash);
@@ -129,13 +129,13 @@
     }
     if (isNaN(lambda)) lambda = Manicule.LAMBDA;
 
-    const hasWords = (id) => entryById[id] && entryById[id].vector;
+    const hasWords = (id) => postById[id] && postById[id].vector;
     picked = picked.filter(hasWords);
     passed = passed.filter(hasWords);
 
     const pretend = !picked.length;
     if (pretend) {
-      const withWords = today.entries.filter((entry) => entry.vector);
+      const withWords = today.posts.filter((post) => post.vector);
       picked = [withWords[0].id];
       passed = withWords[1] ? [withWords[1].id] : [];
     }
@@ -143,10 +143,10 @@
   }
 
   function rankAt(taste, lambda) {
-    const vectors = (ids) => ids.map((id) => entryById[id].vector);
+    const vectors = (ids) => ids.map((id) => postById[id].vector);
     const pickedVectors = {};
-    for (const id of taste.picked) pickedVectors[id] = entryById[id].vector;
-    return Manicule.rank(today.entries, vectors(taste.picked), vectors(taste.passed), lambda, pickedVectors);
+    for (const id of taste.picked) pickedVectors[id] = postById[id].vector;
+    return Manicule.rank(today.posts, vectors(taste.picked), vectors(taste.passed), lambda, pickedVectors);
   }
 
   // Links from here open the feed in the same taste, so the row number they
@@ -167,22 +167,22 @@
   }
 
   function renderWorkedRow(taste, scored, place) {
-    const entry = scored.entry;
-    const nearest = scored.nearest && entryById[scored.nearest];
+    const post = scored.post;
+    const nearest = scored.nearest && postById[scored.nearest];
     const subtraction = taste.passed.length
       ? ` <span class="t2">− ${taste.lambda.toFixed(2)} × ${plain(scored.neg)}</span> <span class="eq sr-only">=</span> `
       : " ";
     const firstTerm = taste.passed.length ? `<span class="t1">${signed(scored.pos)}</span>` : "";
 
     el("worked").innerHTML = `
-      <dt>entry</dt><dd><span class="t">${esc(entry.title || entry.link)}</span> <span class="sub mono muted">${esc(entry.feed)} · ${dayOf(entry.published)}</span></dd>
-      <dt>cos(entry, picked)</dt><dd><span class="mono">${signed(scored.pos)}</span> <span class="muted">· how close it sits to the average of your picks</span></dd>
-      <dt>cos(entry, passed)</dt><dd>${taste.passed.length ? `<span class="mono">${plain(scored.neg)}</span> <span class="muted">· how close it sits to the average of your passes</span>` : `<span class="mono">0.00</span> <span class="muted">· nothing passed</span>`}</dd>
+      <dt>post</dt><dd><span class="t">${esc(post.title || post.link)}</span> <span class="sub mono muted">${esc(post.feed)} · ${dayOf(post.published)}</span></dd>
+      <dt>cos(post, picked)</dt><dd><span class="mono">${signed(scored.pos)}</span> <span class="muted">· how close it sits to the average of your picks</span></dd>
+      <dt>cos(post, passed)</dt><dd>${taste.passed.length ? `<span class="mono">${plain(scored.neg)}</span> <span class="muted">· how close it sits to the average of your passes</span>` : `<span class="mono">0.00</span> <span class="muted">· nothing passed</span>`}</dd>
       <dt>λ</dt><dd><span class="mono">${taste.lambda.toFixed(2)}</span> <span class="muted">· how much of that comes off</span></dd>
       <dt>score</dt><dd><div class="worked-score"><div class="calc">${firstTerm}${subtraction}<span class="tot">${signed(scored.score)}</span></div>${scoreBar(scored)}</div></dd>
-      <dt>closest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(entry.vector, nearest.vector))}</span> <span class="muted">· of everything you picked, this is the one it sits nearest. the feed prints it as the near line</span>` : ""}</dd>`;
+      <dt>closest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(post.vector, nearest.vector))}</span> <span class="muted">· of everything you picked, this is the one it sits nearest. the feed prints it as the near line</span>` : ""}</dd>`;
 
-    // The formula with this entry's own numbers in it, in the same shape the
+    // The formula with this post's own numbers in it, in the same shape the
     // formula band on the feed used to have.
     el("worked-sum").innerHTML = taste.passed.length
       ? `<span class="side"><span>${signed(scored.score)}</span><span class="op">=</span><span class="term"><span>${signed(scored.pos)}</span><span class="lbl">near your picks</span></span></span>` +
@@ -198,11 +198,11 @@
     el("worked-note").textContent = taste.pretend ? "pretend taste · newest picked, next newest passed" : "";
   }
 
-  function renderLambdaTable(taste, entry) {
+  function renderLambdaTable(taste, post) {
     const settings = [...new Set([0, 0.25, 0.5, 1, taste.lambda])].sort((a, b) => a - b);
     el("lam-rows").innerHTML = settings.map((lambda) => {
       const ranked = rankAt(taste, lambda);
-      const place = ranked.findIndex((row) => row.entry.id === entry.id);
+      const place = ranked.findIndex((row) => row.post.id === post.id);
       const theirs = lambda === taste.lambda;
       // Their row is bold on screen; a hidden phrase says so out loud.
       const reads = READS[lambda]
@@ -215,8 +215,8 @@
   }
 
   // ── what picking does ────────────────────────────────────────────────────
-  // The evaluation, drawn, on today's entries. Take a real feed. Pick two of
-  // its entries. Where does the rest of that feed sit before and after? The
+  // The evaluation, drawn, on today's posts. Take a real feed. Pick two of
+  // its posts. Where does the rest of that feed sit before and after? The
   // ranker never sees which feed anything came from, so this is the test the
   // numbers in the table below run 1290 times.
 
@@ -227,9 +227,9 @@
 
   function trials() {
     if (trialFeeds) return trialFeeds;
-    const withWords = today.entries.filter((entry) => entry.vector);
+    const withWords = today.posts.filter((post) => post.vector);
     const byFeed = {};
-    for (const entry of withWords) (byFeed[entry.feed] = byFeed[entry.feed] || []).push(entry);
+    for (const post of withWords) (byFeed[post.feed] = byFeed[post.feed] || []).push(post);
     const newestFirst = (list) => [...list].sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
     trialFeeds = [];
@@ -238,16 +238,16 @@
       if (members.length < 4) continue;
       const picks = members.slice(0, 2);
       const held = members.slice(2);
-      const rest = withWords.filter((entry) => !picks.includes(entry));
-      const ranked = Manicule.rank(rest, picks.map((entry) => entry.vector), [], Manicule.LAMBDA, {});
+      const rest = withWords.filter((post) => !picks.includes(post));
+      const ranked = Manicule.rank(rest, picks.map((post) => post.vector), [], Manicule.LAMBDA, {});
       const after = {};
-      ranked.forEach((row, i) => { after[row.entry.id] = (i + 1) / ranked.length; });
+      ranked.forEach((row, i) => { after[row.post.id] = (i + 1) / ranked.length; });
       const before = {};
-      newestFirst(rest).forEach((entry, i) => { before[entry.id] = (i + 1) / rest.length; });
+      newestFirst(rest).forEach((post, i) => { before[post.id] = (i + 1) / rest.length; });
       trialFeeds.push({
         feed: name,
-        picks: picks.map((entry) => entry.title),
-        moves: held.map((entry) => ({ title: entry.title, was: before[entry.id], now: after[entry.id] })),
+        picks: picks.map((post) => post.title),
+        moves: held.map((post) => ({ title: post.title, was: before[post.id], now: after[post.id] })),
       });
     }
     return trialFeeds;
@@ -261,7 +261,7 @@
 
     const W = 640, H = 210, L = 16, R = 16, TOP = 58, BOT = 158;
     const sx = (frac) => L + frac * (W - L - R);
-    const outOf = today.entries.filter((entry) => entry.vector).length;
+    const outOf = today.posts.filter((post) => post.vector).length;
     const place = (frac) => Math.max(1, Math.round(frac * outOf));
     const mid = (xs) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
     const wasMid = mid(moves.map((m) => m.was));
@@ -270,13 +270,13 @@
     const tick = (frac, y, cls, title) =>
       `<line class="${cls}" x1="${sx(frac).toFixed(1)}" y1="${y - 9}" x2="${sx(frac).toFixed(1)}" y2="${y + 9}">` +
       (title ? `<title>${esc(title)}</title>` : "") + `</line>`;
-    // With one feed on show there are few enough entries to join up.
+    // With one feed on show there are few enough posts to join up.
     const ties = one
       ? moves.map((m) => `<line class="pick-tie" x1="${sx(m.was).toFixed(1)}" y1="${TOP + 9}" x2="${sx(m.now).toFixed(1)}" y2="${BOT - 9}"/>`)
       : [];
 
     el("chart").innerHTML =
-      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${moves.length} held-out entries: where date order puts them, and where two picks put them">` +
+      `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${moves.length} held-out posts: where date order puts them, and where two picks put them">` +
       `<text class="axlab" x="${L}" y="${TOP - 22}">newest first</text>` +
       `<text class="tick" x="${W - R}" y="${TOP - 22}" text-anchor="end">middle one: ${place(wasMid)} of ${outOf}</text>` +
       `<line class="track" x1="${L}" y1="${TOP}" x2="${W - R}" y2="${TOP}"/>` +
@@ -289,10 +289,10 @@
       `</svg>`;
 
     el("chart-cap").innerHTML = one
-      ? `<b>${esc(one.feed)}</b> gave up two entries to be the taste: ${one.picks.map((t) => `“${esc(t)}”`).join(" and ")}. ` +
+      ? `<b>${esc(one.feed)}</b> gave up two posts to be the taste: ${one.picks.map((t) => `“${esc(t)}”`).join(" and ")}. ` +
         `its other ${moves.length} went back in the pile. the lines show where each one moved, ` +
         `the middle of them from ${place(wasMid)} to ${place(nowMid)} of ${outOf}. hover a tick for its title`
-      : `${runs.length} feeds each gave up two entries to be the taste. their other ${moves.length} entries went back in the pile. ` +
+      : `${runs.length} feeds each gave up two posts to be the taste. their other ${moves.length} posts went back in the pile. ` +
         `date order leaves them spread over the whole feed; two picks pull them to the front. the tall tick is the middle one, ` +
         `${place(wasMid)} then ${place(nowMid)} of ${outOf}. the ranker was never told which feed anything came from`;
 
@@ -317,23 +317,23 @@
   // ── the numbers behind the map ───────────────────────────────────────────
 
   function renderNeighbours(taste, scored) {
-    const entry = scored.entry;
-    const others = today.entries
-      .filter((other) => other.vector && other.id !== entry.id)
-      .map((other) => ({ other, cos: Manicule.cosine(entry.vector, other.vector) }))
+    const post = scored.post;
+    const others = today.posts
+      .filter((other) => other.vector && other.id !== post.id)
+      .map((other) => ({ other, cos: Manicule.cosine(post.vector, other.vector) }))
       .sort((a, b) => b.cos - a.cos);
     const rows = [...others.slice(0, 3), ...others.slice(-3)];
     const row = ({ other, cos }) =>
       `<tr><td><span class="t">${esc(other.title)}</span></td><td class="lc">${esc(other.feed)}</td><td class="num">${signed(cos)}</td></tr>`;
     el("neighbours").innerHTML = rows.map(row).join("");
     el("neighbours-cap").textContent =
-      `“${entry.title}” against the three nearest and the three farthest. +1 would be the same words; near 0 is nothing in common`;
+      `“${post.title}” against the three nearest and the three farthest. +1 would be the same words; near 0 is nothing in common`;
   }
 
   function renderPicks(taste) {
-    const average = Manicule.meanVector(taste.picked.map((id) => entryById[id].vector));
+    const average = Manicule.meanVector(taste.picked.map((id) => postById[id].vector));
     el("picks").innerHTML = taste.picked.map((id) => {
-      const pick = entryById[id];
+      const pick = postById[id];
       return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.feed)}</td><td class="num">${signed(Manicule.cosine(pick.vector, average))}</td></tr>`;
     }).join("");
     el("picks-cap").textContent = taste.pretend
@@ -344,13 +344,13 @@
   function renderWorked() {
     const taste = tasteNow();
     const ranked = rankAt(taste, taste.lambda);
-    // The top entry with words that the visitor has neither picked nor passed.
+    // The top post with words that the visitor has neither picked nor passed.
     const place = ranked.findIndex((row) =>
-      row.score !== -Infinity && !taste.picked.includes(row.entry.id) && !taste.passed.includes(row.entry.id));
+      row.score !== -Infinity && !taste.picked.includes(row.post.id) && !taste.passed.includes(row.post.id));
     const scored = ranked[place];
 
     renderWorkedRow(taste, scored, place + 1);
-    renderLambdaTable(taste, scored.entry);
+    renderLambdaTable(taste, scored.post);
     renderPicking();
     renderNeighbours(taste, scored);
     renderPicks(taste);
@@ -360,25 +360,25 @@
 
   fetchSource().then(renderListing);
 
-  fetch("entries.json", { cache: "no-cache" })
+  fetch("posts.json", { cache: "no-cache" })
     .then((response) => response.json())
     .then((loaded) => {
       today = loaded;
-      for (const entry of today.entries) {
-        entry.vector = entry.q ? Manicule.dequantize(entry.q, entry.s) : null;
-        delete entry.q;
-        entryById[entry.id] = entry;
+      for (const post of today.posts) {
+        post.vector = post.q ? Manicule.dequantize(post.q, post.s) : null;
+        delete post.q;
+        postById[post.id] = post;
       }
-      el("dims").textContent = `${today.entries.length} × ${today.dim}`;
-      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = today.entries.length;
-      try { localStorage.setItem("manicule-count", today.entries.length); } catch (_) {}
+      el("dims").textContent = `${today.posts.length} × ${today.dim}`;
+      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = today.posts.length;
+      try { localStorage.setItem("manicule-count", today.posts.length); } catch (_) {}
 
       renderProof(today.proof);
       renderWorked();
       addEventListener("hashchange", () => { if (Shell.isTaste(location.hash)) renderWorked(); });
     })
     .catch(() => {
-      el("worked").innerHTML = `<dt>entry</dt><dd>couldn't load</dd>`;
+      el("worked").innerHTML = `<dt>post</dt><dd>couldn't load</dd>`;
       el("lam-cap").textContent = "couldn't load";
       el("proof-rows").innerHTML = `<tr><td colspan="5">couldn't load</td></tr>`;
     });

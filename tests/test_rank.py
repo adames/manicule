@@ -3,39 +3,39 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from manicule import Entry, cosine, mean_vector, quantize, rank, snippet  # noqa: E402
+from manicule import Post, cosine, mean_vector, quantize, rank, snippet  # noqa: E402
 
 FIX = json.loads((Path(__file__).parent / "fixture.json").read_text())
 
 
-def _entries():
-    return [Entry(id=e["id"], title=e["id"], link="", snippet="", feed="", published="", kind="article", vector=e["vector"]) for e in FIX["entries"]]
+def _posts():
+    return [Post(id=e["id"], title=e["id"], link="", snippet="", feed="", published="", kind="article", vector=e["vector"]) for e in FIX["posts"]]
 
 
 def test_fixture_order_and_scores():
-    entries = _entries()
-    by_id = {e.id: e.vector for e in entries}
+    posts = _posts()
+    by_id = {e.id: e.vector for e in posts}
     picked = [by_id[i] for i in FIX["picked"]]
     passed = [by_id[i] for i in FIX["passed"]]
-    ranked = rank(entries, picked, passed, lam=FIX["lambda"], picked_ids={i: by_id[i] for i in FIX["picked"]})
-    assert [s.entry.id for s in ranked] == FIX["expected_order"]
+    ranked = rank(posts, picked, passed, lam=FIX["lambda"], picked_ids={i: by_id[i] for i in FIX["picked"]})
+    assert [s.post.id for s in ranked] == FIX["expected_order"]
     for s in ranked:
-        if s.entry.id in FIX["expected_scores"]:
-            assert abs(s.score - FIX["expected_scores"][s.entry.id]) < 1e-3, s.entry.id
+        if s.post.id in FIX["expected_scores"]:
+            assert abs(s.score - FIX["expected_scores"][s.post.id]) < 1e-3, s.post.id
     assert ranked[-1].score == float("-inf")  # no text: sinks, never dropped
     for s in ranked:
-        if s.entry.id in FIX["expected_nearest"]:
-            assert s.nearest == FIX["expected_nearest"][s.entry.id]
+        if s.post.id in FIX["expected_nearest"]:
+            assert s.nearest == FIX["expected_nearest"][s.post.id]
 
 
 def test_cold_start_returns_none():
-    assert rank(_entries(), [], [[0, 1, 0, 0]]) is None
+    assert rank(_posts(), [], [[0, 1, 0, 0]]) is None
 
 
 def test_no_dismissed_means_no_penalty():
-    entries = _entries()
-    ranked = rank(entries, [[1, 0, 0, 0]], [])
-    e4 = next(s for s in ranked if s.entry.id == "e4")
+    posts = _posts()
+    ranked = rank(posts, [[1, 0, 0, 0]], [])
+    e4 = next(s for s in ranked if s.post.id == "e4")
     assert e4.neg == 0.0 and abs(e4.score - e4.pos) < 1e-9
 
 

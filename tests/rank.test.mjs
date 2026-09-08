@@ -7,21 +7,21 @@ const M = require("../site/rank.js");
 const FIX = JSON.parse(readFileSync(new URL("./fixture.json", import.meta.url)));
 
 test("fixture order and scores match Python", () => {
-  const byId = Object.fromEntries(FIX.entries.map((e) => [e.id, e.vector]));
+  const byId = Object.fromEntries(FIX.posts.map((e) => [e.id, e.vector]));
   const picked = FIX.picked.map((i) => byId[i]);
   const passed = FIX.passed.map((i) => byId[i]);
   const pickedById = Object.fromEntries(FIX.picked.map((i) => [i, byId[i]]));
-  const ranked = M.rank(FIX.entries, picked, passed, FIX.lambda, pickedById);
-  assert.deepEqual(ranked.map((s) => s.entry.id), FIX.expected_order);
+  const ranked = M.rank(FIX.posts, picked, passed, FIX.lambda, pickedById);
+  assert.deepEqual(ranked.map((s) => s.post.id), FIX.expected_order);
   for (const s of ranked) {
-    if (s.entry.id in FIX.expected_scores) assert.ok(Math.abs(s.score - FIX.expected_scores[s.entry.id]) < 1e-3, s.entry.id);
-    if (s.entry.id in FIX.expected_nearest) assert.equal(s.nearest, FIX.expected_nearest[s.entry.id]);
+    if (s.post.id in FIX.expected_scores) assert.ok(Math.abs(s.score - FIX.expected_scores[s.post.id]) < 1e-3, s.post.id);
+    if (s.post.id in FIX.expected_nearest) assert.equal(s.nearest, FIX.expected_nearest[s.post.id]);
   }
   assert.equal(ranked.at(-1).score, -Infinity);
 });
 
 test("cold start returns null", () => {
-  assert.equal(M.rank(FIX.entries, [], [[0, 1, 0, 0]]), null);
+  assert.equal(M.rank(FIX.posts, [], [[0, 1, 0, 0]]), null);
 });
 
 test("dequantize round-trips cosine", () => {

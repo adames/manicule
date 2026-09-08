@@ -4,7 +4,7 @@ Rank what's new by what you've picked. No database, no server, no account.
 
 The whole method:
 
-    score(entry) = cos(entry, picked) - LAMBDA * cos(entry, passed)
+    score(post) = cos(post, picked) - LAMBDA * cos(post, passed)
 
 where `picked` is the mean embedding of everything you picked and `passed` is
 the mean embedding of everything you passed on. Two averages and a
@@ -14,8 +14,8 @@ rank by and the list stays newest-first.
 Three subcommands:
 
     manicule.py rank   feeds.opml --picked notes/ [--passed nope/]   # your daily page
-    manicule.py entries feeds.opml -o site/entries.json              # the static demo's data
-    manicule.py evaluate [site/entries.json]                          # the proof, printed
+    manicule.py posts feeds.opml -o site/posts.json              # the static demo's data
+    manicule.py evaluate [site/posts.json]                          # the proof, printed
 
 Embeddings run locally (fastembed, BAAI/bge-small-en-v1.5, 384 dimensions);
 nothing leaves the machine except the feed fetches themselves.
@@ -36,7 +36,7 @@ from xml.etree import ElementTree
 
 import feedparser
 
-LAMBDA = 0.25          # how hard a resemblance to passed things pushes an entry down
+LAMBDA = 0.25          # how hard a resemblance to passed things pushes a post down
 SNIPPET_CHARS = 400    # embed the headline plus a short blurb, never the whole post
 NOTE_CHARS = 2000      # a note is embedded from its first ~2000 characters
 MODEL = "BAAI/bge-small-en-v1.5"
@@ -67,7 +67,7 @@ def mean_vector(vectors: list[list[float]]) -> list[float] | None:
 
 
 @dataclass
-class Entry:
+class Post:
     id: str
     title: str
     link: str
@@ -85,24 +85,24 @@ class Entry:
 
 @dataclass
 class Scored:
-    entry: Entry
-    score: float            # -inf when the entry has no words to compare
-    pos: float              # cos(entry, picked)
-    neg: float              # cos(entry, passed), 0 when nothing is passed
-    nearest: str | None     # id of the picked entry it most resembles
+    post: Post
+    score: float            # -inf when the post has no words to compare
+    pos: float              # cos(post, picked)
+    neg: float              # cos(post, passed), 0 when nothing is passed
+    nearest: str | None     # id of the picked post it most resembles
 
 
 def rank(
-    entries: list[Entry],
+    posts: list[Post],
     picked: list[list[float]],
     passed: list[list[float]],
     lam: float = LAMBDA,
     picked_ids: dict[str, list[float]] | None = None,
 ) -> list[Scored] | None:
-    """Order `entries` best-first by taste.
+    """Order `posts` best-first by taste.
 
     Returns None on a cold start, so the caller keeps its own order, which is
-    recency. An entry with no vector sinks to the bottom but is never dropped.
+    recency. A post with no vector sinks to the bottom but is never dropped.
     """
     picked_mean = mean_vector(picked)
     if picked_mean is None:
@@ -110,16 +110,16 @@ def rank(
     passed_mean = mean_vector(passed)
 
     scored: list[Scored] = []
-    for entry in entries:
-        if entry.vector is None:
-            scored.append(Scored(entry, float("-inf"), 0.0, 0.0, None))
+    for post in posts:
+        if post.vector is None:
+            scored.append(Scored(post, float("-inf"), 0.0, 0.0, None))
             continue
-        towards = cosine(entry.vector, picked_mean)
-        away = cosine(entry.vector, passed_mean) if passed_mean is not None else 0.0
+        towards = cosine(post.vector, picked_mean)
+        away = cosine(post.vector, passed_mean) if passed_mean is not None else 0.0
         nearest = None
         if picked_ids:
-            nearest = max(picked_ids, key=lambda id: cosine(entry.vector, picked_ids[id]))
-        scored.append(Scored(entry, towards - lam * away, towards, away, nearest))
+            nearest = max(picked_ids, key=lambda id: cosine(post.vector, picked_ids[id]))
+        scored.append(Scored(post, towards - lam * away, towards, away, nearest))
 
     scored.sort(key=lambda s: s.score, reverse=True)
     return scored
@@ -141,12 +141,12 @@ def embed(texts: list[str]) -> list[list[float]]:
     return [vector.tolist() for vector in _model.embed(texts)]
 
 
-def embed_entries(entries: list[Entry]) -> None:
-    """Give every entry that has words a vector, in one batch."""
-    with_words = [entry for entry in entries if entry.text]
-    vectors = embed([entry.text for entry in with_words])
-    for entry, vector in zip(with_words, vectors, strict=True):
-        entry.vector = vector
+def embed_posts(posts: list[Post]) -> None:
+    """Give every post that has words a vector, in one batch."""
+    with_words = [post for post in posts if post.text]
+    vectors = embed([post.text for post in with_words])
+    for post, vector in zip(with_words, vectors, strict=True):
+        post.vector = vector
 
 
 # ---------------------------------------------------------------- feeds
@@ -170,12 +170,12 @@ ANY_TAG = re.compile(r"<[^>]+>")
 WHITESPACE = re.compile(r"\s+")
 
 # Hacker News summaries are nothing but this scaffolding. Stripping it leaves
-# the entry to embed from its headline instead of from urls and vote counts.
+# the post to embed from its headline instead of from urls and vote counts.
 HN_SCAFFOLDING = re.compile(
     r"(?:Article URL|Comments URL):\s*\S+|(?:Points|#\s*Comments):\s*\d+", re.I
 )
 
-# Two tails that say nothing about the entry: WordPress's "The post X first
+# Two tails that say nothing about the post: WordPress's "The post X first
 # appeared on Y", and YouTube's closing run of hashtags and further reading.
 FEED_TAILS = re.compile(
     r"\bThe post .+? first appeared on .+?(?:\.|$)"
@@ -228,30 +228,30 @@ def raw_summary(item) -> str:
     return content[0].get("value", "") if content else ""
 
 
-def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Entry]:
-    entries: list[Entry] = []
+def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Post]:
+    posts: list[Post] = []
     seen: set[str] = set()
 
     for title, url in feeds:
         parsed = feedparser.parse(url)
-        if parsed.bozo and not parsed.entries:
+        if parsed.bozo and not parsed.posts:
             why = getattr(parsed, "bozo_exception", "unreadable")
             print(f"  skip {title}: {why}", file=sys.stderr)
             continue
 
         feed_title = (parsed.feed.get("title") or title).strip()
-        for item in parsed.entries[:per_feed]:
+        for item in parsed.posts[:per_feed]:
             link = (item.get("link") or "").strip()
             if not link:
                 continue
-            # The guid identifies an entry; the link sometimes does not. Radiolab
+            # The guid identifies a post; the link sometimes does not. Radiolab
             # gives every episode the same link, its homepage, so hashing the
             # link collapsed fourteen episodes into one id.
             uid = (item.get("id") or item.get("guid") or link).strip() or link
             if uid in seen:
                 continue
             seen.add(uid)
-            entries.append(Entry(
+            posts.append(Post(
                 id=hashlib.sha1(uid.encode()).hexdigest()[:8],
                 title=snippet(item.get("title"), 200),
                 link=link,
@@ -260,11 +260,11 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Entry]:
                 published=published_at(item),
                 kind=kind_of(link, item),
             ))
-        print(f"  {feed_title}: {min(len(parsed.entries), per_feed)}", file=sys.stderr)
+        print(f"  {feed_title}: {min(len(parsed.posts), per_feed)}", file=sys.stderr)
 
-    # Newest first is the cold-start order; undated entries sink.
-    entries.sort(key=lambda entry: entry.published, reverse=True)
-    return entries
+    # Newest first is the cold-start order; undated posts sink.
+    posts.sort(key=lambda post: post.published, reverse=True)
+    return posts
 
 
 # ---------------------------------------------------------------- taste from files
@@ -284,13 +284,13 @@ def read_notes(folder: Path | None) -> list[str]:
 
 # ---------------------------------------------------------------- the proof
 
-def evaluate(entries: list[Entry], trials_per_feed: int = 30, seed: int = 7) -> dict | None:
+def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7) -> dict | None:
     """Does picking a few things surface more of what you want?
 
-    The test needs a label the ranker cannot see. The feed an entry came from
-    is one: the embedding never sees it, and entries from one feed share a
+    The test needs a label the ranker cannot see. The feed a post came from
+    is one: the embedding never sees it, and posts from one feed share a
     subject and a voice, the closest stand-in for "more like this" that does
-    not come from the model itself. Pick a few entries from a feed, leave the
+    not come from the model itself. Pick a few posts from a feed, leave the
     rest in the pile, and ask where they land, against the orders a reader
     could otherwise have had.
 
@@ -299,7 +299,7 @@ def evaluate(entries: list[Entry], trials_per_feed: int = 30, seed: int = 7) -> 
     """
     import numpy as np
 
-    rows = [e for e in entries if e.vector]
+    rows = [e for e in posts if e.vector]
     n = len(rows)
     if n < 20:
         return None
@@ -327,7 +327,7 @@ def evaluate(entries: list[Entry], trials_per_feed: int = 30, seed: int = 7) -> 
         return mean / np.linalg.norm(mean)
 
     def places(order, held_out):
-        place = {entry: p + 1 for p, entry in enumerate(order)}
+        place = {post: p + 1 for p, post in enumerate(order)}
         return [place[i] for i in held_out]
 
     def one_trial(picks, held_out):
@@ -392,7 +392,7 @@ def evaluate(entries: list[Entry], trials_per_feed: int = 30, seed: int = 7) -> 
     count, got = trials(2)
     written_count, written = trials(2, only={"article"})
     return {
-        "entries": n,
+        "posts": n,
         "feeds": len(set(feeds)),
         "trials": count,
         "median_rank": by_picks,
@@ -404,11 +404,11 @@ def evaluate(entries: list[Entry], trials_per_feed: int = 30, seed: int = 7) -> 
 
 def print_proof(proof: dict | None) -> None:
     if not proof:
-        print("too few entries to evaluate", file=sys.stderr)
+        print("too few posts to evaluate", file=sys.stderr)
         return
     names = ("ranker", "words", "newest", "shuffled")
-    print(f"{proof['entries']} entries · {proof['feeds']} feeds · {proof['trials']} trials at 2 picks\n")
-    print(f"median rank of the entries you did not pick, out of {proof['entries']}")
+    print(f"{proof['posts']} posts · {proof['feeds']} feeds · {proof['trials']} trials at 2 picks\n")
+    print(f"median rank of the posts you did not pick, out of {proof['posts']}")
     print(f"{'picks':>6} {'ranker':>8} {'words':>8} {'newest':>8} {'shuffled':>9}")
     for k, row in proof["median_rank"].items():
         print(f"{k:>6}" + "".join(f"{row[name]:>9}" for name in names))
@@ -419,38 +419,38 @@ def print_proof(proof: dict | None) -> None:
     for lam, place in proof["lambda"].items():
         print(f"  λ = {lam:<5} {place:>5}")
     w = proof["written"]
-    print(f"\nwritten entries only ({w['trials']} trials)")
+    print(f"\nwritten posts only ({w['trials']} trials)")
     for name in names:
         print(f"  {name:9} {w[name]:>5}")
 
 
 # ---------------------------------------------------------------- the demo taste
 
-def demo_taste(entries: list[Entry], picks: int = 3) -> dict[str, list[str]] | None:
+def demo_taste(posts: list[Post], picks: int = 3) -> dict[str, list[str]] | None:
     """A deliberately plural taste, chosen fresh at every build.
 
     One average collapses a plural taste, so three things that sit far apart
     make the honest showcase: the list they produce mixes feeds instead of
     burrowing into one.
 
-    Each feed nominates its most typical entry, then the nominees furthest
+    Each feed nominates its most typical post, then the nominees furthest
     apart win. Typical-within-feed matters. Picking whatever was least like
     everything else kept reaching for the most unusual item of the day, and the
     most unusual item is often the one you would rather not meet on a
     stranger's front page.
     """
-    pool = [e for e in entries if e.vector and e.snippet and e.feed not in DEMO_SKIP]
+    pool = [e for e in posts if e.vector and e.snippet and e.feed not in DEMO_SKIP]
     if len(pool) < picks + 1:
         return None
 
-    by_feed: dict[str, list[Entry]] = {}
-    for entry in pool:
-        by_feed.setdefault(entry.feed, []).append(entry)
+    by_feed: dict[str, list[Post]] = {}
+    for post in pool:
+        by_feed.setdefault(post.feed, []).append(post)
 
     nominees = []
-    for feed_entries in by_feed.values():
-        middle = mean_vector([e.vector for e in feed_entries])
-        nominees.append(max(feed_entries, key=lambda e: cosine(e.vector, middle)))
+    for feed_posts in by_feed.values():
+        middle = mean_vector([e.vector for e in feed_posts])
+        nominees.append(max(feed_posts, key=lambda e: cosine(e.vector, middle)))
     if len(nominees) < picks:
         return None
 
@@ -488,32 +488,32 @@ def dequantize(q: list[int], scale: float) -> list[float]:
 def cmd_rank(args: argparse.Namespace) -> int:
     """Your own feeds, ranked by your own notes, as a page of Markdown."""
     print("fetching…", file=sys.stderr)
-    entries = fetch(parse_opml(Path(args.opml)), per_feed=args.per_feed)
+    posts = fetch(parse_opml(Path(args.opml)), per_feed=args.per_feed)
     picked_notes = read_notes(Path(args.picked) if args.picked else None)
     passed_notes = read_notes(Path(args.passed) if args.passed else None)
 
-    print(f"embedding {len(entries)} entries, {len(picked_notes)} picked, "
+    print(f"embedding {len(posts)} posts, {len(picked_notes)} picked, "
           f"{len(passed_notes)} passed…", file=sys.stderr)
-    embed_entries(entries)
-    ranked = rank(entries, embed(picked_notes), embed(passed_notes), lam=args.lam)
+    embed_posts(posts)
+    ranked = rank(posts, embed(picked_notes), embed(passed_notes), lam=args.lam)
 
     if ranked is None:
         heading = "# newest first — nothing picked yet, so there is no taste to rank by\n"
-        rows = [(entry, None) for entry in entries[:args.limit]]
+        rows = [(post, None) for post in posts[:args.limit]]
     else:
         heading = (f"# ranked by taste — {len(picked_notes)} picked, "
                    f"{len(passed_notes)} passed, λ={args.lam}\n")
-        rows = [(s.entry, s) for s in ranked[:args.limit]]
+        rows = [(s.post, s) for s in ranked[:args.limit]]
 
     lines = [heading]
-    for entry, scored in rows:
-        badge = {"video": "VID", "podcast": "POD"}.get(entry.kind, "WEB")
-        line = f"- [{badge}] [{entry.title or entry.link}]({entry.link}) — {entry.feed}"
+    for post, scored in rows:
+        badge = {"video": "VID", "podcast": "POD"}.get(post.kind, "WEB")
+        line = f"- [{badge}] [{post.title or post.link}]({post.link}) — {post.feed}"
         if scored is not None and scored.score != float("-inf"):
             line += f"  `{scored.score:+.3f} = {scored.pos:+.3f} − {args.lam}×{scored.neg:.3f}`"
         lines.append(line)
-        if entry.snippet:
-            lines.append(f"  {entry.snippet[:160]}")
+        if post.snippet:
+            lines.append(f"  {post.snippet[:160]}")
 
     page = "\n".join(lines) + "\n"
     if args.out:
@@ -524,23 +524,23 @@ def cmd_rank(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_entries(args: argparse.Namespace) -> int:
+def cmd_posts(args: argparse.Namespace) -> int:
     """The same feeds, embedded once, as the static page's data."""
     feeds = parse_opml(Path(args.opml))
     print(f"fetching {len(feeds)} feeds…", file=sys.stderr)
-    entries = fetch(feeds, per_feed=args.per_feed)
-    print(f"embedding {len(entries)} entries…", file=sys.stderr)
-    embed_entries(entries)
+    posts = fetch(feeds, per_feed=args.per_feed)
+    print(f"embedding {len(posts)} posts…", file=sys.stderr)
+    embed_posts(posts)
 
     rows = []
-    for entry in entries:
+    for post in posts:
         row = {
-            "id": entry.id, "title": entry.title, "link": entry.link,
-            "snippet": entry.snippet, "feed": entry.feed,
-            "published": entry.published, "kind": entry.kind,
+            "id": post.id, "title": post.title, "link": post.link,
+            "snippet": post.snippet, "feed": post.feed,
+            "published": post.published, "kind": post.kind,
         }
-        if entry.vector is not None:
-            row["q"], row["s"] = quantize(entry.vector)
+        if post.vector is not None:
+            row["q"], row["s"] = quantize(post.vector)
         rows.append(row)
 
     payload = {
@@ -548,26 +548,26 @@ def cmd_entries(args: argparse.Namespace) -> int:
         "model": MODEL,
         "dim": DIM,
         "lambda": LAMBDA,
-        "feeds": sorted({entry.feed for entry in entries}),
-        "demo": demo_taste(entries),
-        "proof": evaluate(entries),
-        "entries": rows,
+        "feeds": sorted({post.feed for post in posts}),
+        "demo": demo_taste(posts),
+        "proof": evaluate(posts),
+        "posts": rows,
     }
     Path(args.out).write_text(json.dumps(payload, separators=(",", ":")))
-    print(f"wrote {args.out}: {len(entries)} entries from {len(payload['feeds'])} feeds",
+    print(f"wrote {args.out}: {len(posts)} posts from {len(payload['feeds'])} feeds",
           file=sys.stderr)
     return 0
 
 
 def cmd_evaluate(args: argparse.Namespace) -> int:
-    """Rerun the proof on an entries.json, without fetching or embedding."""
-    payload = json.loads(Path(args.entries).read_text())
-    entries = [
-        Entry(row["id"], row["title"], row["link"], row["snippet"], row["feed"],
+    """Rerun the proof on a posts.json, without fetching or embedding."""
+    payload = json.loads(Path(args.posts).read_text())
+    posts = [
+        Post(row["id"], row["title"], row["link"], row["snippet"], row["feed"],
               row["published"], row["kind"], dequantize(row["q"], row["s"]) if "q" in row else None)
-        for row in payload["entries"]
+        for row in payload["posts"]
     ]
-    print_proof(evaluate(entries))
+    print_proof(evaluate(posts))
     return 0
 
 
@@ -585,17 +585,17 @@ def main(argv: list[str] | None = None) -> int:
     daily.add_argument("-o", "--out", help="write Markdown here instead of stdout")
     daily.set_defaults(fn=cmd_rank)
 
-    demo = commands.add_parser("entries", help="fetch + embed feeds into a static JSON for the demo site")
+    demo = commands.add_parser("posts", help="fetch + embed feeds into a static JSON for the demo site")
     demo.add_argument("opml")
-    demo.add_argument("-o", "--out", default="site/entries.json")
-    # The browser downloads every entry, so the demo keeps fewer per feed than
+    demo.add_argument("-o", "--out", default="site/posts.json")
+    # The browser downloads every post, so the demo keeps fewer per feed than
     # the CLI does: more feeds at fewer each is the same page weight and a much
     # wider sample.
     demo.add_argument("--per-feed", type=int, default=7)
-    demo.set_defaults(fn=cmd_entries)
+    demo.set_defaults(fn=cmd_posts)
 
-    proof = commands.add_parser("evaluate", help="rerun the proof on an entries.json and print it")
-    proof.add_argument("entries", nargs="?", default="site/entries.json")
+    proof = commands.add_parser("evaluate", help="rerun the proof on a posts.json and print it")
+    proof.add_argument("posts", nargs="?", default="site/posts.json")
     proof.set_defaults(fn=cmd_evaluate)
 
     args = parser.parse_args(argv)

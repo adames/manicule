@@ -19,7 +19,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 </script>
 </head>
 <body>
-<a class="skip" href="#list">skip to the entries</a>
+<a class="skip" href="#list">skip to the posts</a>
 
 
 <div class="main">
@@ -52,7 +52,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       </section>
 
       <!-- the ledger -->
-      <section class="ledger" id="ledger" aria-label="entries">
+      <section class="ledger" id="ledger" aria-label="posts">
         <div class="toolbar">
           <div class="ruler-wrap">
             <label for="lam">λ · how much a pass counts</label>
@@ -73,7 +73,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <span id="newtab" hidden>opens in a new tab</span>
         <ol class="list" id="list" tabindex="-1" role="list"></ol><!-- role=list: WebKit drops list semantics from a list-style:none list -->
         <div class="more" id="more" hidden><button class="btn quiet" id="morebtn" type="button">show more</button></div>
-        <div class="empty-state" id="empty" hidden>no entries</div>
+        <div class="empty-state" id="empty" hidden>no posts</div>
       </section>
     </main>
 

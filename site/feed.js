@@ -1,4 +1,4 @@
-// feed.js — the feed page: load the entries, rank them by what you picked,
+// feed.js — the feed page: load the posts, rank them by what you picked,
 // and print every score with its arithmetic. Nothing is stored anywhere: the
 // link is the state, and localStorage only remembers it for a bare visit.
 (function () {
@@ -16,8 +16,8 @@
     order: null,      // ids in the order on screen; null is newest first
     rowsShown: ROWS_PER_PAGE,
   };
-  let entries = null;      // entries.json, once it lands
-  let entryById = {};
+  let posts = null;      // posts.json, once it lands
+  let postById = {};
 
   // ── the link is the state ────────────────────────────────────────────────
 
@@ -26,10 +26,10 @@
   function readTheLink() {
     const link = Shell.tasteIn(location.hash);
     const saved = Shell.mirror() || {};
-    // The daily rebuild drops entries, and their ids go with them. Ignoring
+    // The daily rebuild drops posts, and their ids go with them. Ignoring
     // dead ids on both sides means your own stale link still reads as yours,
     // and a friend's wholly stale link reads as empty rather than as theirs.
-    const live = (ids) => (ids || []).filter((id) => entryById[id]);
+    const live = (ids) => (ids || []).filter((id) => postById[id]);
     const mine = { picked: live(saved.m), passed: live(saved.d) };
     const linked = { picked: live(link.m), passed: live(link.d) };
 
@@ -76,14 +76,14 @@
 
   // ── ranking ──────────────────────────────────────────────────────────────
 
-  const vectorsOf = (ids) => [...ids].map((id) => entryById[id] && entryById[id].vector).filter(Boolean);
+  const vectorsOf = (ids) => [...ids].map((id) => postById[id] && postById[id].vector).filter(Boolean);
 
   function rankBy(lambda) {
     const pickedVectors = {};
     for (const id of state.picked) {
-      if (entryById[id] && entryById[id].vector) pickedVectors[id] = entryById[id].vector;
+      if (postById[id] && postById[id].vector) pickedVectors[id] = postById[id].vector;
     }
-    return Manicule.rank(entries.entries, vectorsOf(state.picked), vectorsOf(state.passed), lambda, pickedVectors);
+    return Manicule.rank(posts.posts, vectorsOf(state.picked), vectorsOf(state.passed), lambda, pickedVectors);
   }
 
   // ── words and numbers ────────────────────────────────────────────────────
@@ -98,7 +98,7 @@
     if (!iso) return "undated";
     const then = Date.parse(iso);
     if (isNaN(then)) return iso.slice(0, 10);
-    // Some feeds stamp an entry a few hours ahead of now, which would read
+    // Some feeds stamp a post a few hours ahead of now, which would read
     // "in 5 hours". Nothing in a feed is from the reader's future.
     const seconds = Math.min(0, Math.round((then - Date.now()) / 1000));
     for (const [unit, size] of AGO) {
@@ -108,7 +108,7 @@
   }
 
   // A feed whose summary is only punctuation has no blurb worth printing.
-  const blurbOf = (entry) => ((entry.snippet || "").replace(/[.…\s]/g, "") ? entry.snippet : "");
+  const blurbOf = (post) => ((post.snippet || "").replace(/[.…\s]/g, "") ? post.snippet : "");
 
   // ── one row ──────────────────────────────────────────────────────────────
 
@@ -119,7 +119,7 @@
     return `<div class="calc" title="how near this is to what you picked, less what you passed"><span class="sr-only">score</span> <span class="tot">${signed(scored.score)}</span></div>`;
   }
 
-  // The picked entry this one most resembles, printed only when it changes:
+  // The picked post this one most resembles, printed only when it changes:
   // a run of rows that all sit near the same thing says it once. The line is
   // always in the row, with words or without, and it never mentions the state:
   // pressing a control must not move the words under anyone's eye.
@@ -127,7 +127,7 @@
   const NO_NEAR = `<p class="near"></p>`;
   function nearHtml(scored, isPicked, isPassed) {
     if (scored.score === -Infinity || isPicked || isPassed) return NO_NEAR;
-    const nearest = scored.nearest && entryById[scored.nearest];
+    const nearest = scored.nearest && postById[scored.nearest];
     if (!nearest || scored.nearest === lastNearest) return NO_NEAR;
     lastNearest = scored.nearest;
     return `<p class="near">${hand("rest")}<span>near your pick</span><span class="t" title="${esc(nearest.title)}">“${esc(shorten(nearest.title, 48))}”</span></p>`;
@@ -136,30 +136,30 @@
   // One control, three states. A press advances it, and its name says what the
   // next press will do. Described by its row's title, so a page of them still
   // tells them apart.
-  function controlHtml(entry, isPicked, isPassed) {
+  function controlHtml(post, isPicked, isPassed) {
     const shape = isPicked ? "point" : isPassed ? "pass" : "";
     const says = isPicked ? "picked, press again to pass" : isPassed ? "passed, press again to clear" : "pick this";
     const now = isPicked ? "picked · press again to pass" : isPassed ? "passed · press again to clear" : "pick this";
     const drawing = isPassed ? hand("bird") : hand("point");
-    return `<button class="mk ${shape}" type="button" data-act="cycle" aria-label="${says}" title="${now}" aria-describedby="t-${esc(entry.id)}">${drawing}</button>`;
+    return `<button class="mk ${shape}" type="button" data-act="cycle" aria-label="${says}" title="${now}" aria-describedby="t-${esc(post.id)}">${drawing}</button>`;
   }
 
   function rowHtml(scored, place, cold) {
-    const entry = scored.entry;
-    const isPicked = state.picked.has(entry.id);
-    const isPassed = state.passed.has(entry.id);
-    const blurb = blurbOf(entry);
-    const published = entry.published || "";
-    return `<li class="row${isPicked ? " picked" : ""}${isPassed ? " passed" : ""}" data-id="${esc(entry.id)}">
+    const post = scored.post;
+    const isPicked = state.picked.has(post.id);
+    const isPassed = state.passed.has(post.id);
+    const blurb = blurbOf(post);
+    const published = post.published || "";
+    return `<li class="row${isPicked ? " picked" : ""}${isPassed ? " passed" : ""}" data-id="${esc(post.id)}">
           <span class="n" aria-hidden="true">${place}</span>
           <div class="body">
-            <div class="meta"><span class="kind">${KIND_LABEL[entry.kind] || "web"}</span><span class="feed" title="${esc(entry.feed)}">${esc(entry.feed)}</span><time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
-            <h2 class="title" id="t-${esc(entry.id)}"><a href="${esc(entry.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(entry.title || entry.link)}</a></h2>
+            <div class="meta"><span class="kind">${KIND_LABEL[post.kind] || "web"}</span><span class="feed" title="${esc(post.feed)}">${esc(post.feed)}</span><time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
+            <h2 class="title" id="t-${esc(post.id)}"><a href="${esc(post.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(post.title || post.link)}</a></h2>
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
             ${cold ? "" : nearHtml(scored, isPicked, isPassed)}
           </div>
           <div class="hands">
-            ${controlHtml(entry, isPicked, isPassed)}
+            ${controlHtml(post, isPicked, isPassed)}
             ${cold ? "" : receiptHtml(scored)}
           </div>
         </li>`;
@@ -260,11 +260,11 @@
 
     // Scores follow your taste; the order follows state.order.
     const scoredById = {};
-    for (const row of ranked || []) scoredById[row.entry.id] = row;
+    for (const row of ranked || []) scoredById[row.post.id] = row;
     const inOrder = state.order
-      ? state.order.map((id) => entryById[id]).filter(Boolean)
-      : entries.entries;
-    const visible = inOrder.map((entry) => scoredById[entry.id] || { entry });
+      ? state.order.map((id) => postById[id]).filter(Boolean)
+      : posts.posts;
+    const visible = inOrder.map((post) => scoredById[post.id] || { post });
 
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
@@ -289,7 +289,7 @@
 
   function orderByTaste() {
     const ranked = rankBy(state.lambda);
-    state.order = ranked ? ranked.map((row) => row.entry.id) : null;
+    state.order = ranked ? ranked.map((row) => row.post.id) : null;
   }
 
   // A taste that arrives with the page (a link, or this browser's own) lands
@@ -356,7 +356,7 @@
   document.addEventListener("click", (event) => {
     if (event.target.closest('[data-act="forget"]')) { forget(); toast("forgotten"); }
     else if (event.target.closest('[data-act="fresh"]')) forget();
-    else if (event.target.closest('[data-act="order"]') && entries) {
+    else if (event.target.closest('[data-act="order"]') && posts) {
       orderByTaste();
       state.rowsShown = ROWS_PER_PAGE;
       gliding(() => holdingPlace(null, draw));
@@ -369,25 +369,25 @@
 
   // ── boot ─────────────────────────────────────────────────────────────────
 
-  fetch("entries.json", { cache: "no-cache" })
+  fetch("posts.json", { cache: "no-cache" })
     .then((response) => response.json())
     .then((loaded) => {
-      entries = loaded;
-      for (const entry of entries.entries) {
-        entry.vector = entry.q ? Manicule.dequantize(entry.q, entry.s) : null;
-        delete entry.q;
-        entryById[entry.id] = entry;
+      posts = loaded;
+      for (const post of posts.posts) {
+        post.vector = post.q ? Manicule.dequantize(post.q, post.s) : null;
+        delete post.q;
+        postById[post.id] = post;
       }
 
       el("spec").innerHTML = [
-        `<span title="${esc(utcStamp(entries.generated))}">updated ${esc(timeAgo(entries.generated))}</span>`,
+        `<span title="${esc(utcStamp(posts.generated))}">updated ${esc(timeAgo(posts.generated))}</span>`,
         `<span>updates once a day</span>`,
-        `<span>${entries.feeds.length} feeds</span>`,
+        `<span>${posts.feeds.length} feeds</span>`,
       ].join(" ");
 
-      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = entries.entries.length;
+      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = posts.posts.length;
 
-      try { localStorage.setItem("manicule-count", entries.entries.length); } catch (_) {}
+      try { localStorage.setItem("manicule-count", posts.posts.length); } catch (_) {}
 
       drawEverything();
     })

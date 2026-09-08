@@ -143,7 +143,7 @@
 
   // Same-page links scroll and focus by hand. Letting the browser do it would
   // put a fragment in the address bar, replacing the taste and pushing a
-  // history entry on every press.
+  // history step on every press.
   document.addEventListener("click", (event) => {
     const link = event.target.closest('a[href^="#"]');
     if (!link || event.defaultPrevented || event.button !== 0) return;
@@ -156,7 +156,7 @@
     target.focus({ preventScroll: true });
   });
 
-  // ── the entry count on the feed tab ─────────────────────────────────────
+  // ── the post count on the feed tab ─────────────────────────────────────
   // The feed writes it after loading; the other pages show the last one seen.
 
   try {

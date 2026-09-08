@@ -24,15 +24,15 @@
   // int8 + one scale per vector, as written by manicule.py's quantize().
   function dequantize(q, s) { const v = new Array(q.length); for (let i = 0; i < q.length; i++) v[i] = q[i] / 127 * s; return v; }
 
-  // entries: [{id, vector|null, ...}]; picked/passed: arrays of vectors;
+  // posts: [{id, vector|null, ...}]; picked/passed: arrays of vectors;
   // pickedById: {id: vector} for the "nearest picked" explanation.
   // Returns null on cold start (nothing picked) — caller keeps recency order.
-  function rank(entries, picked, passed, lam = LAMBDA, pickedById = null) {
+  function rank(posts, picked, passed, lam = LAMBDA, pickedById = null) {
     const pos = meanVector(picked);
     if (!pos) return null;
     const neg = meanVector(passed);
-    const out = entries.map((e) => {
-      if (!e.vector) return { entry: e, score: -Infinity, pos: 0, neg: 0, nearest: null };
+    const out = posts.map((e) => {
+      if (!e.vector) return { post: e, score: -Infinity, pos: 0, neg: 0, nearest: null };
       const p = cosine(e.vector, pos);
       const n = neg ? cosine(e.vector, neg) : 0;
       let nearest = null;
@@ -40,7 +40,7 @@
         let best = -Infinity;
         for (const id in pickedById) { const c = cosine(e.vector, pickedById[id]); if (c > best) { best = c; nearest = id; } }
       }
-      return { entry: e, score: p - lam * n, pos: p, neg: n, nearest };
+      return { post: e, score: p - lam * n, pos: p, neg: n, nearest };
     });
     out.sort((a, b) => b.score - a.score);
     return out;

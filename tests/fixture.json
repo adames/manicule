@@ -1,7 +1,7 @@
 {
   "comment": "Hand-computed. picked=[e1], passed=[e2], lambda=0.25. Order and scores must match in Python and JS.",
   "lambda": 0.25,
-  "entries": [
+  "posts": [
     {
       "id": "e1",
       "vector": [
