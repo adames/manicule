@@ -1,7 +1,7 @@
 [project]
 name = "manicule"
 version = "0.1.0"
-description = "A pointing hand for your feeds: rank what's new by what you've kept."
+description = "A pointing hand for your feeds: rank what's new by what you've picked."
 requires-python = ">=3.11"
 dependencies = [
   "fastembed>=0.8.0",

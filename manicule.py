@@ -6,19 +6,20 @@ The whole method:
 
     score(post) = cos(post, picked) - LAMBDA * cos(post, passed)
 
-where `picked` is the mean embedding of everything you picked and `passed` is
-the mean embedding of everything you passed on. Two averages and a
-subtraction. No training. If you have picked nothing yet, there is no taste to
-rank by and the list stays newest-first.
+where `picked` is the average of the vectors you picked and `passed` is the
+average of the ones you passed on. Two averages and a subtraction. No
+training. `cos` is the cosine of the angle between two vectors: +1 the same
+direction, 0 unrelated, below 0 opposite. With nothing picked there is no
+average to measure against, so the list stays newest-first.
 
 Three subcommands:
 
-    manicule.py rank   feeds.opml --picked notes/ [--passed nope/]   # your daily page
-    manicule.py posts feeds.opml -o site/posts.json              # the static demo's data
-    manicule.py evaluate [site/posts.json]                          # the proof, printed
+    manicule.py rank     feeds.opml --picked notes/ [--passed nope/]  # your daily page
+    manicule.py posts    feeds.opml -o site/posts.json                # the demo's data
+    manicule.py evaluate [site/posts.json]                            # the proof, printed
 
-Embeddings run locally (fastembed, BAAI/bge-small-en-v1.5, 384 dimensions);
-nothing leaves the machine except the feed fetches themselves.
+Every post becomes a vector of 384 numbers, computed on this machine by
+fastembed (BAAI/bge-small-en-v1.5). Nothing leaves it but the feed fetches.
 """
 from __future__ import annotations
 

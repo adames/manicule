@@ -5,6 +5,8 @@ remember your tastes
 a feed that reorders around what you point at. no database, no server, no
 account. one Python file for your own feeds, and a static page for the demo.
 
+full explanation, with today's numbers: <https://manicule.adames.cc/method.html>
+
 ## The whole method
 
 ```
@@ -24,8 +26,8 @@ computed on your machine by
 direction, 0 unrelated, below 0 opposite. nothing leaves your machine but the
 feed fetches.
 
-pick nothing and there's no taste to rank by, so it stays newest first. an
-post with no words sinks to the bottom, but it never gets dropped.
+pick nothing and there's no taste to rank by, so it stays newest first. a post
+with no words sinks to the bottom, but it never gets dropped.
 
 the idea comes from [Commonplace](https://github.com/adames/commonplace), an
 unreleased library I was developing.
@@ -34,13 +36,13 @@ unreleased library I was developing.
 
 the ranker gets tested against a label it can't see: the feed a post came
 from. pick a few posts from one feed, leave the rest in the pile, see where
-they land. median rank of the rest, out of 292, on a recent build:
+they land. median rank of the rest, out of 297, on a recent build:
 
 | picks | the ranker | shared words | newest first | shuffled |
 |---|---|---|---|---|
-| 1 | 21 | 41 | 146 | 146 |
-| 2 | 13 | 30 | 145 | 147 |
-| 5 | 8 | 18 | 140 | 147 |
+| 1 | 24 | 39 | 149 | 148 |
+| 2 | 14 | 29 | 148 | 148 |
+| 5 | 8 | 18 | 142 | 140 |
 
 newest first is the same as shuffled. that's the argument for the whole thing.
 same feed only stands in for same taste, so read it as necessary, not
@@ -73,7 +75,8 @@ put it on a cron and read `today.md` with coffee.
 science, essays, podcasts, sports, food, games. mixed on purpose, so picking
 two things visibly reorders everything.
 
-a first visit lands newest first. press anything and it reorders.
+a first visit lands newest first. pressing a post changes the scores and
+leaves the order alone; `order by taste` sorts on them when you ask.
 
 vectors ship as int8 with one scale each, a quarter the size of float32 in
 JSON and too small a rounding error for the ranking to feel. the browser does
