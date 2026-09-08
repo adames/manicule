@@ -1057,11 +1057,12 @@ samp {
 }
 
 .hands {
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
-} /* the score sits under the finger that made it, on the same centre line */
+} /* the score sits under the finger that made it, on the same centre line, the pair centred in the row */
 
 /* one control, three states. Meaning is form, not colour: empty by default, inverse ink when you point at a row, dashed ink when you pass on one. The hand shows faintly on hover so an empty box still invites a press. */
 
