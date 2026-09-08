@@ -454,8 +454,8 @@ samp {
 }
 
 .page>main>*+* {
-  margin-top: var(--space-5);
-}
+  margin-top: var(--space-6);
+} /* section to section. twice the 16 that separates a section title from its body, so a section reads as one block */
 
 /* the measure bounds the running text only; rules, steps and KV rows run to the column edge like the other pages */
 
@@ -470,8 +470,8 @@ samp {
 }
 
 .prose>*+* {
-  margin-top: var(--space-3);
-}
+  margin-top: var(--space-4);
+} /* a paragraph break has to beat the line spacing inside a paragraph, or the two run together */
 
 .prose p a:not(.btn),
 .prose li a,
@@ -521,9 +521,10 @@ samp {
   color: var(--muted);
 }
 
-.sect+* {
+.sect+*,
+.sect+.caption {
   margin-top: var(--space-4);
-}
+} /* the caption sets its own 8 and would otherwise sit tighter under a title than any other first child */
 
 .caption+.kv {
   margin-top: var(--space-4);
@@ -677,7 +678,7 @@ samp {
 }
 
 .prior {
-  margin-top: var(--space-1);
+  margin-top: var(--space-3);
   font-size: var(--text-xs);
   color: var(--muted);
   max-width: var(--measure);
@@ -1751,7 +1752,7 @@ pre .c {
     column-gap: var(--space-3);
   }
   .page>main>*+* {
-    margin-top: var(--space-4);
+    margin-top: var(--space-5);
   }
   .spec {
     font-size: var(--text-2xs);
