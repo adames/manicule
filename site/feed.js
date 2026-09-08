@@ -382,7 +382,7 @@
       el("spec").innerHTML = [
         `<span title="${esc(utcStamp(posts.generated))}">updated ${esc(timeAgo(posts.generated))}</span>`,
         `<span>updates once a day</span>`,
-        `<span>${posts.feeds.length} feeds</span>`,
+        `<span>${posts.feeds.length} feeds, mixed on purpose</span>`,
       ].join(" ");
 
       for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = posts.posts.length;
