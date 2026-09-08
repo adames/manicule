@@ -656,19 +656,17 @@ samp {
 .formula .term {
   display: inline-flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .formula .lbl {
   margin-top: var(--space-1);
   padding-top: var(--space-1);
   border-top: var(--border-w) solid var(--border-strong);
-  font-family: var(--font-ui);
-  font-size: var(--text-2xs);
-  color: var(--muted);
-  letter-spacing: 0;
+  color: var(--text);
   text-transform: lowercase;
   white-space: nowrap;
-}
+} /* the same face, size and ink as the term above it, and centred under it: a denominator, not a footnote */
 
 .kicker-line {
   margin-top: var(--space-2);

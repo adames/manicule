@@ -234,13 +234,13 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Post]:
 
     for title, url in feeds:
         parsed = feedparser.parse(url)
-        if parsed.bozo and not parsed.posts:
+        if parsed.bozo and not parsed.entries:
             why = getattr(parsed, "bozo_exception", "unreadable")
             print(f"  skip {title}: {why}", file=sys.stderr)
             continue
 
         feed_title = (parsed.feed.get("title") or title).strip()
-        for item in parsed.posts[:per_feed]:
+        for item in parsed.entries[:per_feed]:
             link = (item.get("link") or "").strip()
             if not link:
                 continue
@@ -260,7 +260,7 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Post]:
                 published=published_at(item),
                 kind=kind_of(link, item),
             ))
-        print(f"  {feed_title}: {min(len(parsed.posts), per_feed)}", file=sys.stderr)
+        print(f"  {feed_title}: {min(len(parsed.entries), per_feed)}", file=sys.stderr)
 
     # Newest first is the cold-start order; undated posts sink.
     posts.sort(key=lambda post: post.published, reverse=True)

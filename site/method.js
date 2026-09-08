@@ -184,11 +184,14 @@
 
     // The formula with this post's own numbers in it, in the same shape the
     // formula band on the feed used to have.
-    el("worked-sum").innerHTML = taste.passed.length
-      ? `<span class="side"><span>${signed(scored.score)}</span><span class="op">=</span><span class="term"><span>${signed(scored.pos)}</span><span class="lbl">near your picks</span></span></span>` +
-        `<span class="side"><span class="op">−</span><span class="term"><span>${plain(taste.lambda)} · ${plain(scored.neg)}</span><span class="lbl">near your passes, times λ</span></span></span>`
-      : `<span class="side"><span>${signed(scored.score)}</span><span class="op">=</span><span class="term"><span>${signed(scored.pos)}</span><span class="lbl">near your picks</span></span></span>` +
-        `<span class="side"><span class="op">−</span><span class="term"><span>0.00</span><span class="lbl">nothing passed</span></span></span>`;
+    const term = (value, name) =>
+      `<span class="term"><span>${value}</span><span class="lbl">${name}</span></span>`;
+    el("worked-sum").innerHTML =
+      `<span class="side"><span>${signed(scored.score)}</span><span class="op">=</span>${term(signed(scored.pos), "picked")}</span>` +
+      `<span class="side"><span class="op">−</span>${term(
+        taste.passed.length ? `${plain(taste.lambda)} · ${plain(scored.neg)}` : "0.00",
+        taste.passed.length ? "passed" : "nothing passed",
+      )}</span>`;
 
     // An empty link is a nameless tab stop, so it stays hidden until it has words.
     el("worked-link").textContent = `row ${place} on the feed`;
