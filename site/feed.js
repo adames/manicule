@@ -282,7 +282,7 @@
 
     const left = Math.max(0, visible.length - state.rowsShown);
     el("more").hidden = !left;
-    el("morebtn").innerHTML = `below the fold · <span class="n">${left}</span> more`;
+    el("morebtn").innerHTML = `show <span class="n">${left}</span> more`;
     el("empty").hidden = visible.length > 0;
     writeTheLink();
   }

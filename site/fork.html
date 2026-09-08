@@ -44,7 +44,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <section class="mast" aria-label="make it yours">
         <h1>make it yours</h1>
         <p class="lead">the hosted page ranks my feeds. for yours:</p>
-        <p class="prior">forking needs a github account. no account? the feed page is already yours: pick what you'd read and keep the link, it holds your taste. a fork is for people who want their own list of feeds on a page like this one. three ways, pick your channel</p>
+        <p class="prior">a fork is a copy of this project running on your own feeds. it needs a free github account. without one, the feed page is still yours: pick what you would read and keep the link, which holds your taste. three ways to do it, in order of how much code you want to touch</p>
       </section>
 
       <!-- 1 · the terminal: paste and go -->
@@ -57,7 +57,7 @@ gh api -X POST repos/{owner}/{repo}/pages \
   -f build_type=workflow
 gh workflow run entries</pre>
         <p><button class="btn" type="button" data-copy="gh repo fork adames/manicule --clone &amp;&amp; cd manicule&#10;cp ~/path/to/your/feeds.opml feeds.opml&#10;git commit -am &quot;my feeds&quot; &amp;&amp; git push&#10;gh api -X POST repos/{owner}/{repo}/pages -f build_type=workflow&#10;gh workflow run entries">copy</button></p>
-        <p>five lines: fork and clone, swap the feed list, push, turn on pages, build. a few minutes later your page is up</p>
+        <p>copy the project, replace the feed list, push it back, turn on pages, build. the page is up a few minutes later</p>
         <div class="specimen">
           <div class="lbl"><span>your site</span><span>refreshed once a day</span></div>
           <div class="link"><span class="host">https://</span>&lt;you&gt;<span class="host">.github.io/manicule/</span></div>
@@ -67,7 +67,7 @@ gh workflow run entries</pre>
       <!-- 2 · the browser: the same four moves, by clicking -->
       <section class="prose" aria-labelledby="browser">
         <h2 class="sect" id="browser"><span>in the browser</span><a href="https://github.com/adames/manicule/fork">fork on github</a></h2>
-        <p>no terminal, no code. you need a free github account and a list of your feeds. any feed reader exports that list as one file, usually called <code>feeds.opml</code> or <code>subscriptions.opml</code>. youtube channels, podcasts, and blogs all work</p>
+        <p>no terminal, no code. you need a free github account and your list of feeds. every reader exports that list as one file, named <code>feeds.opml</code> or <code>subscriptions.opml</code>. anything with an rss or atom feed belongs in it: blogs, youtube channels, podcasts</p>
         <ol class="steps">
           <li><span>press <a href="https://github.com/adames/manicule/fork">fork</a> and accept. github makes you a copy of this project</span></li>
           <li><span>in your copy, open the file <code>feeds.opml</code>, press the pencil to edit, paste your own file's contents over it, and press commit changes</span></li>
@@ -81,7 +81,7 @@ gh workflow run entries</pre>
       <!-- 3 · the cli: no website at all -->
       <section class="prose" aria-labelledby="feeds">
         <h2 class="sect" id="feeds"><span>no website, a file</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></h2>
-        <p>the ranker without a page. one python file reads your feeds, ranks them by a folder of notes you already keep, and writes a markdown file</p>
+        <p>the ranker with no page at all. one python file reads your feeds, ranks them against a folder of notes you already keep, and writes the result as markdown</p>
 <pre>uv sync
 uv run manicule.py rank feeds.opml \
   --picked ~/notes \
