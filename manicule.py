@@ -58,8 +58,8 @@ def cosine(a: list[float], b: list[float]) -> float:
     return dot / (length_a * length_b)
 
 
-def centroid(vectors: list[list[float]]) -> list[float] | None:
-    """The mean vector, or None when there is nothing to average."""
+def mean_vector(vectors: list[list[float]]) -> list[float] | None:
+    """The average of some vectors, or None when there is nothing to average."""
     if not vectors:
         return None
     dimensions = len(vectors[0])
@@ -104,10 +104,10 @@ def rank(
     Returns None on a cold start, so the caller keeps its own order, which is
     recency. An entry with no vector sinks to the bottom but is never dropped.
     """
-    picked_mean = centroid(picked)
+    picked_mean = mean_vector(picked)
     if picked_mean is None:
         return None
-    passed_mean = centroid(passed)
+    passed_mean = mean_vector(passed)
 
     scored: list[Scored] = []
     for entry in entries:
@@ -429,7 +429,7 @@ def print_proof(proof: dict | None) -> None:
 def demo_taste(entries: list[Entry], picks: int = 3) -> dict[str, list[str]] | None:
     """A deliberately plural taste, chosen fresh at every build.
 
-    One centroid collapses a plural taste, so three things that sit far apart
+    One average collapses a plural taste, so three things that sit far apart
     make the honest showcase: the list they produce mixes feeds instead of
     burrowing into one.
 
@@ -449,7 +449,7 @@ def demo_taste(entries: list[Entry], picks: int = 3) -> dict[str, list[str]] | N
 
     nominees = []
     for feed_entries in by_feed.values():
-        middle = centroid([e.vector for e in feed_entries])
+        middle = mean_vector([e.vector for e in feed_entries])
         nominees.append(max(feed_entries, key=lambda e: cosine(e.vector, middle)))
     if len(nominees) < picks:
         return None

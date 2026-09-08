@@ -331,7 +331,7 @@
   }
 
   function renderPicks(taste) {
-    const average = Manicule.centroid(taste.picked.map((id) => entryById[id].vector));
+    const average = Manicule.meanVector(taste.picked.map((id) => entryById[id].vector));
     el("picks").innerHTML = taste.picked.map((id) => {
       const pick = entryById[id];
       return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.feed)}</td><td class="num">${signed(Manicule.cosine(pick.vector, average))}</td></tr>`;

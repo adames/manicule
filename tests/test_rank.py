@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from manicule import Entry, centroid, cosine, quantize, rank, snippet  # noqa: E402
+from manicule import Entry, cosine, mean_vector, quantize, rank, snippet  # noqa: E402
 
 FIX = json.loads((Path(__file__).parent / "fixture.json").read_text())
 
@@ -39,9 +39,9 @@ def test_no_dismissed_means_no_penalty():
     assert e4.neg == 0.0 and abs(e4.score - e4.pos) < 1e-9
 
 
-def test_centroid_and_cosine_edges():
-    assert centroid([]) is None
-    assert centroid([[1, 1], [3, 3]]) == [2.0, 2.0]
+def test_mean_vector_and_cosine_edges():
+    assert mean_vector([]) is None
+    assert mean_vector([[1, 1], [3, 3]]) == [2.0, 2.0]
     assert cosine([0, 0], [1, 1]) == 0.0
 
 

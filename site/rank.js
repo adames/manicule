@@ -13,7 +13,7 @@
     return dot / (Math.sqrt(na) * Math.sqrt(nb));
   }
 
-  function centroid(vectors) {
+  function meanVector(vectors) {
     if (!vectors.length) return null;
     const dim = vectors[0].length, out = new Array(dim).fill(0);
     for (const v of vectors) for (let i = 0; i < dim; i++) out[i] += v[i];
@@ -28,9 +28,9 @@
   // pickedById: {id: vector} for the "nearest picked" explanation.
   // Returns null on cold start (nothing picked) — caller keeps recency order.
   function rank(entries, picked, passed, lam = LAMBDA, pickedById = null) {
-    const pos = centroid(picked);
+    const pos = meanVector(picked);
     if (!pos) return null;
-    const neg = centroid(passed);
+    const neg = meanVector(passed);
     const out = entries.map((e) => {
       if (!e.vector) return { entry: e, score: -Infinity, pos: 0, neg: 0, nearest: null };
       const p = cosine(e.vector, pos);
@@ -46,5 +46,5 @@
     return out;
   }
 
-  return { LAMBDA, cosine, centroid, dequantize, rank };
+  return { LAMBDA, cosine, meanVector, dequantize, rank };
 });
