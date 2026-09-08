@@ -300,11 +300,11 @@
     // plus the pool. Every feed is in the pool either way.
     const step = Math.max(1, Math.floor(runs.length / 8));
     const offered = runs.map((run, i) => [i, run]).filter((_, i) => i % step === 0).slice(0, 8);
-    const chip = (value, words, on) =>
+    const choice = (value, words, on) =>
       `<button class="btn quiet" type="button" data-show="${value}"${on ? ' aria-current="true"' : ""}>${words}</button>`;
     el("chart-pick").innerHTML =
-      chip("all", `all ${runs.length} feeds`, showing === "all") +
-      offered.map(([i, run]) => chip(i, esc(run.feed), showing === i)).join("");
+      choice("all", `all ${runs.length} feeds`, showing === "all") +
+      offered.map(([i, run]) => choice(i, esc(run.feed), showing === i)).join("");
   }
 
   document.addEventListener("click", (event) => {
@@ -338,7 +338,7 @@
     }).join("");
     el("picks-cap").textContent = taste.pretend
       ? "on the pretend taste. pick a few things on the feed and this table is yours"
-      : "each pick against the average of all of them. close together and every number is high; a pick from left field pulls the average away from the rest";
+      : "each pick against the average of all of them. picks about one subject all score high; one odd pick pulls the average off the rest and every number drops";
   }
 
   function renderWorked() {

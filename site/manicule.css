@@ -69,12 +69,12 @@
   --transition-fast: .1s ease;
   --transition: .15s ease;
 
-  /* the product's own sizes: the hand at three sizes (and the h1 box that puts the drawn hand at cap height), the kind chip and the meter, the ruler's thumb and ticks, the ledger's fixed columns */
+  /* the product's own sizes: the hand at three sizes (and the h1 box that puts the drawn hand at cap height), the kind badge and the meter, the ruler's thumb and ticks, the ledger's fixed columns */
   --hand-sm: 12px;
   --hand-md: 18px;
   --hand-lg: 22px;
   --hand-h1: 1.1em;
-  --chip-h: 18px;
+  --badge-h: 18px;
   --bar-h: 8px;
   --thumb: 12px;
   --tick-h: 8px;
@@ -954,7 +954,7 @@ samp {
 .kind {
   display: inline-flex;
   align-items: center;
-  height: var(--chip-h);
+  height: var(--badge-h);
   padding: 0 var(--space-1);
   font-family: var(--font-ui);
   font-size: var(--text-2xs);
@@ -1470,20 +1470,20 @@ samp {
   fill: var(--text-secondary);
 }
 
-/* the feed chips under the picking chart */
+/* the feed buttons under the picking chart */
 
-.chips {
+.choices {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-2);
   margin-top: var(--space-3);
 }
 
-.chips .btn {
+.choices .btn {
   font-size: var(--text-2xs);
 }
 
-.chips .btn[aria-current] {
+.choices .btn[aria-current] {
   border-color: var(--ember);
   color: var(--ember);
 }
