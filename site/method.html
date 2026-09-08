@@ -67,7 +67,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <!-- the chart: both axes are numbers the ranker computes -->
       <section aria-label="the picture" id="themap">
         <h2 class="sect"><span>what picking does</span><a href="#proof">the numbers</a></h2>
-        <p class="caption">the test, drawn on today's posts. two posts from one feed become the taste. that feed's other posts stay in the pile with everything else, and the question is where the ranker puts them. every feed takes a turn</p>
+        <p class="caption">the test, drawn on today's posts. two posts from one feed become the taste. that feed's other posts stay in the pile with everything else. every feed takes a turn</p>
         <div id="chart"></div>
         <p class="caption" id="chart-cap"></p>
         <div class="choices" id="chart-pick"></div>
@@ -91,7 +91,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="picks-cap">each pick against the average of all of them. picks about one subject all score high; one odd pick pulls the average off the rest and every number drops</p>
-        <p>an average points one way, so it holds one taste. pick from two subjects and it settles between them, near neither, and both score low. that is the method's real limit. the feed works around it by naming the single pick a post sits nearest, which is the near line under a row</p>
+        <p>an average points one way, so it holds one taste. pick from two subjects and it settles between them, near neither, and both score low. that is the limit of one average. the feed works around it by naming the single pick a post sits nearest, which is the near line under a row</p>
       </section>
 
       <section class="prose" aria-labelledby="second">
@@ -118,7 +118,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <!-- one row, worked: the visitor's own top unmarked row (cold: a pretend taste, named beside the title) -->
       <section aria-label="one row, worked">
         <h2 class="sect"><span>one row, worked<small id="worked-note" hidden></small></span><a id="worked-link" href="./" hidden></a></h2>
-        <p class="caption">the feed prints only the result. here is where it comes from, for the top post on your feed you have not marked</p>
+        <p class="caption">the feed prints the result on its own. this is the arithmetic under it, for the top post you have not marked</p>
         <div class="formula" id="worked-sum" role="img" aria-label="the score of this post, with the numbers filled in"></div>
         <dl class="kv kv--wide" id="worked"><dt>post</dt><dd>loading</dd></dl>
         <p class="caption" id="worked-cap">solid is the score. the dashed part is what λ took</p>
