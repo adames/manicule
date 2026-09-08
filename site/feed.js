@@ -114,7 +114,11 @@
 
   // The result only. The arithmetic behind it is worked in full on the method
   // page; a feed is for reading, and a column of sums is not.
-  function receiptHtml(scored) {
+  // Cold, there is no score to print, but the box is still drawn: a row must
+  // be the same height before and after your first press, or the whole page
+  // moves under you.
+  function receiptHtml(scored, cold) {
+    if (cold) return `<div class="calc" aria-hidden="true"><span class="tot">&nbsp;</span></div>`;
     if (scored.score === -Infinity) return `<div class="calc"><span class="notext">no words, sinks</span></div>`;
     return `<div class="calc" title="how near this is to what you picked, less what you passed"><span class="sr-only">score</span> <span class="tot">${signed(scored.score)}</span></div>`;
   }
@@ -156,11 +160,11 @@
             <div class="meta"><span class="kind">${KIND_LABEL[post.kind] || "web"}</span><span class="feed" title="${esc(post.feed)}">${esc(post.feed)}</span><time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
             <h2 class="title" id="t-${esc(post.id)}"><a href="${esc(post.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(post.title || post.link)}</a></h2>
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
-            ${cold ? "" : nearHtml(scored, isPicked, isPassed)}
+            ${cold ? NO_NEAR : nearHtml(scored, isPicked, isPassed)}
           </div>
           <div class="hands">
             ${controlHtml(post, isPicked, isPassed)}
-            ${cold ? "" : receiptHtml(scored)}
+            ${receiptHtml(scored, cold)}
           </div>
         </li>`;
   }
