@@ -29,11 +29,13 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <a href="./"><span data-hand="rest"></span><span>manicule</span></a>
       <button class="theme" type="button"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></button>
     </div>
-    <nav class="words" aria-label="pages">
-      <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
-      <a href="method.html" data-page="method">method</a>
-      <a href="fork.html" data-page="fork">fork</a>
-    </nav>
+    <div class="strip">
+      <nav class="words" aria-label="pages">
+        <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
+        <a href="method.html" data-page="method">method</a>
+        <a href="fork.html" data-page="fork">fork</a>
+      </nav>
+    </div>
   </header>
 
 
@@ -42,7 +44,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <section class="mast" aria-label="make it yours">
         <h1>make it yours</h1>
         <p class="lead">the hosted page ranks my feeds. for yours:</p>
-        <p class="prior">forking needs a github account. no account? the feed page is already yours: pick what you'd read and keep the link, it holds your marks. a fork is for people who want their own list of feeds on a page like this one. three ways, pick your channel</p>
+        <p class="prior">forking needs a github account. no account? the feed page is already yours: pick what you'd read and keep the link, it holds your taste. a fork is for people who want their own list of feeds on a page like this one. three ways, pick your channel</p>
       </section>
 
       <!-- 1 · the terminal: paste and go -->
@@ -73,7 +75,7 @@ gh workflow run entries</pre>
           <li><span>open the actions tab, choose entries on the left, press run workflow. this builds the page; it takes a few minutes</span></li>
         </ol>
         <p>your page is at <span class="mono">https://&lt;you&gt;.github.io/manicule/</span> with your github name in place of &lt;you&gt;. it refreshes itself every morning</p>
-        <p>your marks stay in your browser and your links</p>
+        <p>your taste stays in your browser and your links</p>
       </section>
 
       <!-- 3 · the cli: no website at all -->

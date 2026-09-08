@@ -346,19 +346,18 @@ samp {
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-4);
-  border-bottom: var(--border-w-strong) solid var(--text);
 }
 
 /* the rules run to the edge; the words in them line up with the page column */
 
 .topbar .brand,
-.topbar .words {
+.strip {
   --gutter: max(var(--space-4), (100% - var(--page-max)) / 2 + var(--space-5));
   padding-inline: var(--gutter);
 }
 
-.topbar .words {
-  padding-inline: calc(var(--gutter) - var(--space-3));
+.strip .words {
+  margin-inline-start: calc(-1 * var(--space-3));
 }
 
 .topbar .brand a {
@@ -390,11 +389,26 @@ samp {
   text-transform: lowercase;
 }
 
+.strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: var(--border-w) solid var(--border);
+}
+
+.strip .acts {
+  display: flex;
+  gap: var(--space-2);
+  flex: none;
+  padding: var(--space-1) 0;
+} /* here in every state: an action that came and went would move the page under you */
+
 .topbar .words {
   display: flex;
   overflow-x: auto;
   scrollbar-width: none;
-  border-bottom: var(--border-w) solid var(--border);
+  min-width: 0;
 }
 
 .topbar .words::-webkit-scrollbar {
@@ -824,6 +838,12 @@ samp {
   white-space: nowrap;
 } /* the counts each stay whole; the line wraps between them when it has to */
 
+@media (max-width:719.98px) {
+  .status .lam {
+    display: none;
+  } /* the ruler is right there and prints the same number */
+}
+
 .status b {
   color: var(--text);
   font-weight: var(--weight-medium);
@@ -840,17 +860,6 @@ samp {
   margin: 0 var(--space-2) 0 var(--space-1);
   opacity: .6;
 } /* a real space precedes each span (for screen readers); the left margin makes up the difference */
-
-.tb-acts {
-  order: 3;
-  display: flex;
-  gap: var(--space-2);
-} /* the acts sit at the far right of the toolbar, where the header's used to be */
-
-.ledger.cold .tb-acts,
-.ledger.borrowed .tb-acts {
-  display: none;
-} /* share and forget wait until there is something to share: a stranger's first move is a hand, not forget */
 
 /* 6 · the ledger: column heads on the 2px rule, then the rows (rank · entry · receipt · hands) */
 

@@ -1,5 +1,5 @@
 // shell.js — what every page shares: the hand, the theme, the active tab,
-// the toast, and the link that carries your marks from page to page.
+// the toast, and the link that carries your taste from page to page.
 // Loads before the page's own script and hands it window.Shell.
 (function () {
   const root = document.documentElement;
@@ -72,7 +72,7 @@
 
   const feedKey = (name) => String(name).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 12);
 
-  function marksIn(hash) {
+  function tasteIn(hash) {
     const parts = new URLSearchParams((hash || "").replace(/^#/, ""));
     const list = (key) => (parts.get(key) || "").split(",").filter(Boolean);
     return { m: list("m"), d: list("d"), s: list("s"), l: parts.get("l") };
@@ -98,15 +98,15 @@
     return isNaN(n) ? NaN : Math.round(Math.min(1, Math.max(0, n)) * 20) / 20;
   }
 
-  // A hash is either marks or nothing. Anything else (#list, from the skip
+  // A hash is either a taste or nothing. Anything else (#list, from the skip
   // link) is a fragment, and must never be read as a state.
-  const isMarks = (hash) => hash === "" || /^#[mdsl]=/.test(hash);
+  const isTaste = (hash) => hash === "" || /^#[mdsl]=/.test(hash);
 
-  // A typed address carries no hash, but this browser may still have marks.
+  // A typed address carries no hash, but this browser may still hold a taste.
   // Put them back before anything reads location.hash, so the printed address,
   // share, and the links to the other pages all agree with the feed.
-  const arriving = marksIn(location.hash);
-  if (isMarks(location.hash) && !arriving.m.length && !arriving.d.length) {
+  const arriving = tasteIn(location.hash);
+  if (isTaste(location.hash) && !arriving.m.length && !arriving.d.length) {
     const saved = mirror() || {};
     const picked = saved.m || [], passed = saved.d || [];
     const lambda = isNaN(lam(arriving.l)) ? lam(saved.l) : lam(arriving.l);
@@ -138,11 +138,11 @@
   renderAddrs();
 
   addEventListener("hashchange", () => {
-    if (isMarks(location.hash)) { carry(); renderAddrs(); }
+    if (isTaste(location.hash)) { carry(); renderAddrs(); }
   });
 
   // Same-page links scroll and focus by hand. Letting the browser do it would
-  // put a fragment in the address bar, replacing the marks and pushing a
+  // put a fragment in the address bar, replacing the taste and pushing a
   // history entry on every press.
   document.addEventListener("click", (event) => {
     const link = event.target.closest('a[href^="#"]');
@@ -192,10 +192,10 @@
 
   document.addEventListener("click", async (event) => {
     if (event.target.closest('[data-act="share"]')) {
-      const { m, d } = marksIn(location.hash);
-      if (!m.length && !d.length) return toast("mark something first");
+      const { m, d } = tasteIn(location.hash);
+      if (!m.length && !d.length) return toast("pick something first");
       const copied = await copy(shareUrl());
-      toast(copied ? "link copied, it carries your marks" : "copy the address bar, it carries your marks");
+      toast(copied ? "link copied, it carries your taste" : "copy the address bar, it carries your taste");
       return;
     }
     const button = event.target.closest("[data-copy]");
@@ -209,5 +209,5 @@
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  window.Shell = { hand, toast, carry, renderAddrs, marksIn, mirror, hashOf, lam, isMarks, esc, feedKey, signed, plain };
+  window.Shell = { hand, toast, carry, renderAddrs, tasteIn, mirror, hashOf, lam, isTaste, esc, feedKey, signed, plain };
 })();

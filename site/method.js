@@ -1,6 +1,6 @@
 // method.js — the method page. Fetches rank() from the repo and prints it as
 // a listing with margin notes, then works one row from the visitor's own
-// marks using the same rank.js the feed uses.
+// taste using the same rank.js the feed uses.
 (function () {
   const el = (id) => document.getElementById(id);
   const { hand, esc, signed, plain } = Shell;
@@ -114,7 +114,7 @@
   // no numbers to show, so a pretend taste stands in: the newest entry picked,
   // the next newest passed.
   function tasteNow() {
-    const link = Shell.marksIn(location.hash);
+    const link = Shell.tasteIn(location.hash);
     let picked = link.m;
     let passed = link.d;
     let lambda = Shell.lam(link.l);
@@ -210,7 +210,7 @@
         : "your λ";
       return `<tr${theirs ? ' class="now"' : ""}><td class="mono">${plain(lambda)}</td><td class="num">${signed(ranked[place].score)}</td><td class="num">${place + 1}</td><td class="lc">${reads}</td></tr>`;
     }).join("");
-    el("lam-cap").textContent = taste.pretend ? "on the pretend taste, live" : "on your marks, live";
+    el("lam-cap").textContent = taste.pretend ? "on the pretend taste, live" : "on your taste, live";
     el("hash").textContent = taste.pretend ? "#m=…&d=…&l=0.25" : linkTo(taste);
   }
 
@@ -375,7 +375,7 @@
 
       renderProof(today.proof);
       renderWorked();
-      addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) renderWorked(); });
+      addEventListener("hashchange", () => { if (Shell.isTaste(location.hash)) renderWorked(); });
     })
     .catch(() => {
       el("worked").innerHTML = `<dt>entry</dt><dd>couldn't load</dd>`;

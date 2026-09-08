@@ -12,7 +12,7 @@
     picked: new Set(),
     passed: new Set(),
     lambda: Manicule.LAMBDA,
-    borrowed: false,  // the link carries marks this browser did not make
+    borrowed: false,  // the link carries a taste this browser did not make
     order: null,      // ids in the order on screen; null is newest first
     rowsShown: ROWS_PER_PAGE,
   };
@@ -24,11 +24,11 @@
   const sameIds = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
 
   function readTheLink() {
-    const link = Shell.marksIn(location.hash);
+    const link = Shell.tasteIn(location.hash);
     const saved = Shell.mirror() || {};
     // The daily rebuild drops entries, and their ids go with them. Ignoring
     // dead ids on both sides means your own stale link still reads as yours,
-    // and a friend's wholly stale link reads as no marks rather than as theirs.
+    // and a friend's wholly stale link reads as empty rather than as theirs.
     const live = (ids) => (ids || []).filter((id) => entryById[id]);
     const mine = { picked: live(saved.m), passed: live(saved.d) };
     const linked = { picked: live(link.m), passed: live(link.d) };
@@ -43,8 +43,8 @@
       state.borrowed = false;
     }
 
-    // λ is a preference, not a mark: the saved one applies to any link that
-    // carries none, and a bare #l=0.5 moves the ruler without clearing marks.
+    // λ is a preference, not a pick: the saved one applies to any link that
+    // carries none, and a bare #l=0.5 moves the ruler without clearing a taste.
     const fromLink = Shell.lam(link.l);
     const fromMirror = Shell.lam(saved.l);
     if (isNaN(fromLink) && !isNaN(fromMirror)) state.lambda = fromMirror;
@@ -59,7 +59,7 @@
       marked || state.lambda !== Manicule.LAMBDA ? state.lambda : null,
     );
     history.replaceState(null, "", hash || location.pathname + location.search);
-    // A borrowed link does not overwrite this browser's own marks until the
+    // A borrowed link does not overwrite this browser's own taste until the
     // first press adopts it.
     if (!state.borrowed) remember();
     Shell.carry();
@@ -121,7 +121,7 @@
 
   // The picked entry this one most resembles, printed only when it changes:
   // a run of rows that all sit near the same thing says it once. The line is
-  // always in the row, with words or without, and it never mentions the mark:
+  // always in the row, with words or without, and it never mentions the state:
   // pressing a control must not move the words under anyone's eye.
   let lastNearest = null;
   const NO_NEAR = `<p class="near"></p>`;
@@ -242,12 +242,15 @@
 
   // The order on screen is a choice, not a consequence: a press changes the
   // scores and nothing moves until the button is pressed.
+  // The same shape in every state, so the line never wraps differently and
+  // never moves the feed below it.
   function drawStatus(cold) {
-    const counts = `<span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n">λ ${state.lambda.toFixed(2)}</span>`;
-    const button = `<button class="btn quiet" data-act="order" type="button">order by taste</button>`;
-    el("status").innerHTML = cold
-      ? `<b>newest first</b> <span class="n">pick something, then order by taste</span>`
-      : `<b>${state.order ? "by taste" : "newest first"}</b> ${counts} ${button}`;
+    const counts = cold
+      ? `<span class="n">nothing picked</span>`
+      : `<span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n lam">λ ${state.lambda.toFixed(2)}</span>`;
+    el("status").innerHTML =
+      `<b>${state.order ? "by taste" : "newest first"}</b> ${counts} ` +
+      `<button class="btn quiet" data-act="order" type="button">order by taste</button>`;
   }
 
   function draw() {
@@ -255,7 +258,7 @@
     const cold = ranked === null;
     if (cold) state.order = null;
 
-    // Scores follow the marks; the order follows state.order.
+    // Scores follow your taste; the order follows state.order.
     const scoredById = {};
     for (const row of ranked || []) scoredById[row.entry.id] = row;
     const inOrder = state.order
@@ -289,8 +292,8 @@
     state.order = ranked ? ranked.map((row) => row.entry.id) : null;
   }
 
-  // Marks that arrive with the page (a link, or this browser's own) land
-  // ordered by taste; that is what the marks are for.
+  // A taste that arrives with the page (a link, or this browser's own) lands
+  // ordered by taste; that is what it is for.
   function drawEverything() {
     readTheLink();
     setRuler();
@@ -329,7 +332,7 @@
     draw();                 // the scores change; the order holds
   });
 
-  // Moving the ruler re-ranks, but it is not a mark, so it does not adopt a
+  // Moving the ruler re-ranks, but it is not a pick, so it does not adopt a
   // borrowed link.
   el("lam").addEventListener("input", (event) => {
     state.lambda = parseFloat(event.target.value);
@@ -362,7 +365,7 @@
   });
 
   // A plain fragment (#list, from the skip link) is not a state.
-  addEventListener("hashchange", () => { if (Shell.isMarks(location.hash)) drawEverything(); });
+  addEventListener("hashchange", () => { if (Shell.isTaste(location.hash)) drawEverything(); });
 
   // ── boot ─────────────────────────────────────────────────────────────────
 

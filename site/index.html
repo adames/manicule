@@ -29,11 +29,17 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <a href="./"><span data-hand="rest"></span><span>manicule</span></a>
       <button class="theme" type="button"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></button>
     </div>
-    <nav class="words" aria-label="pages">
-      <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
-      <a href="method.html" data-page="method">method</a>
-      <a href="fork.html" data-page="fork">fork</a>
-    </nav>
+    <div class="strip">
+      <nav class="words" aria-label="pages">
+        <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
+        <a href="method.html" data-page="method">method</a>
+        <a href="fork.html" data-page="fork">fork</a>
+      </nav>
+      <div class="acts">
+        <button class="btn" type="button" data-act="share" title="copies this page's address; it carries your taste">copy link</button>
+        <button class="btn danger" type="button" data-act="forget" title="clears everything you have picked and passed"><span aria-hidden="true">!</span> forget</button>
+      </div>
+    </div>
   </header>
 
 
@@ -56,15 +62,11 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
             </div>
             <div class="ruler-ends" aria-hidden="true"><span>a little</span><span>as much as a pick</span></div>
           </div>
-          <div class="tb-acts">
-            <button class="btn" type="button" data-act="share">share a link with your marks</button>
-            <button class="btn danger" type="button" data-act="forget"><span aria-hidden="true">!</span> forget</button>
-          </div>
           <p class="status" id="status" aria-live="polite">loading</p>
         </div>
 
         <div class="banner" id="banner" role="status" hidden>
-          <span><b>these marks came with the link</b> · press the box by anything you'd read and they're yours</span>
+          <span><b>this link carries someone's taste</b> · press the box by anything you'd read and it becomes yours</span>
           <span class="acts"><button class="btn" type="button" data-act="fresh">start fresh</button></span>
         </div>
 

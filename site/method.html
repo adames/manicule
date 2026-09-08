@@ -29,11 +29,13 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <a href="./"><span data-hand="rest"></span><span>manicule</span></a>
       <button class="theme" type="button"><span class="moon glyph">☾</span><span class="sun glyph">☼</span></button>
     </div>
-    <nav class="words" aria-label="pages">
-      <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
-      <a href="method.html" data-page="method">method</a>
-      <a href="fork.html" data-page="fork">fork</a>
-    </nav>
+    <div class="strip">
+      <nav class="words" aria-label="pages">
+        <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
+        <a href="method.html" data-page="method">method</a>
+        <a href="fork.html" data-page="fork">fork</a>
+      </nav>
+    </div>
   </header>
 
 
@@ -149,7 +151,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <section aria-label="where your data lives">
         <h2 class="sect"><span>where your data lives</span></h2>
         <dl class="kv">
-          <dt>your marks</dt><dd>in the link and in this browser. <span class="mono" id="hash">#m=…</span>. nothing is sent anywhere</dd>
+          <dt>your taste</dt><dd>in the link and in this browser. <span class="mono" id="hash">#m=…</span>. nothing is sent anywhere</dd>
           <dt>the vectors</dt><dd>made when the page is built, by fastembed's bge-small, on the build machine. they come down in entries.json, <span class="mono" id="dims">270 × 384</span> int8, and rank.js does the math here</dd>
           <dt>the cli</dt><dd>manicule.py rank, on your machine. a markdown page from an opml and a folder of notes. the only traffic is the feed fetches</dd>
           <dt>refresh</dt><dd>once a day, by a github action. the page is rebuilt from the feeds, nothing of yours goes into it</dd>

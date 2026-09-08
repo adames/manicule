@@ -73,7 +73,7 @@ two things visibly reorders everything.
 a first visit lands newest first. press anything and it reorders.
 
 vectors ship int8; the browser does the math in `site/rank.js`, same math as
-the Python. marks live in the URL, so a link is a taste.
+the Python. your taste lives in the URL, so a link is a taste.
 
 ## Make it yours: fork it
 
@@ -87,7 +87,7 @@ the hosted page ranks my feeds. for yours:
 4. push, or run the `entries` workflow by hand. your site is at
    `https://<you>.github.io/manicule/`, refreshed daily at 06:17 UTC.
 
-your marks stay in your browser and your links. if you want the ranker without
+your taste stays in your browser and your links. if you want the ranker without
 a website, skip this and use the CLI above.
 
 ## Tests
