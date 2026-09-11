@@ -44,11 +44,6 @@ NOTE_CHARS = 2000      # a note is embedded from its first ~2000 characters
 MODEL = "BAAI/bge-small-en-v1.5"
 DIM = 384
 
-# Feeds the demo taste never picks from. No judgement on the writing: a demo
-# built on one person's blog shows off that person, not the ranker.
-DEMO_SKIP = {"Simon Willison's Weblog"}
-
-
 # ---------------------------------------------------------------- the math
 
 def cosine(a: list[float], b: list[float]) -> float:
@@ -548,52 +543,7 @@ def print_proof(proof: dict | None) -> None:
         print(f"  {name:9} {w[name]:>5}")
 
 
-# ---------------------------------------------------------------- the demo taste
-
-def demo_taste(posts: list[Post], picks: int = 3) -> dict[str, list[str]] | None:
-    """A deliberately plural taste, chosen fresh at every build.
-
-    One average collapses a plural taste, so three things that sit far apart
-    make the honest showcase: the list they produce mixes feeds instead of
-    burrowing into one.
-
-    Each feed nominates its most typical post, then the nominees furthest
-    apart win. Typical-within-feed matters. Picking whatever was least like
-    everything else kept reaching for the most unusual item of the day, and the
-    most unusual item is often the one you would rather not meet on a
-    stranger's front page.
-    """
-    pool = [e for e in posts if e.vector and e.snippet and e.feed not in DEMO_SKIP]
-    if len(pool) < picks + 1:
-        return None
-
-    by_feed: dict[str, list[Post]] = {}
-    for post in pool:
-        by_feed.setdefault(post.feed, []).append(post)
-
-    nominees = []
-    for feed_posts in by_feed.values():
-        middle = mean_vector([e.vector for e in feed_posts])
-        nominees.append(max(feed_posts, key=lambda e: cosine(e.vector, middle)))
-    if len(nominees) < picks:
-        return None
-
-    pairs = ((a, b) for i, a in enumerate(nominees) for b in nominees[i + 1:])
-    chosen = list(min(pairs, key=lambda pair: cosine(pair[0].vector, pair[1].vector)))
-    while len(chosen) < picks:
-        rest = [e for e in nominees if e not in chosen]
-        if not rest:
-            break
-        closest_to_chosen = lambda e: max(cosine(e.vector, c.vector) for c in chosen)  # noqa: E731
-        chosen.append(min(rest, key=closest_to_chosen))
-
-    # The one to pass on is whatever most resembles the first pick, so the
-    # second term visibly bites.
-    picked_ids = {e.id for e in chosen}
-    rest = [e for e in pool if e.id not in picked_ids]
-    passed = max(rest, key=lambda e: cosine(e.vector, chosen[0].vector)) if rest else None
-    return {"m": [e.id for e in chosen], "d": [passed.id] if passed else []}
-
+# ---------------------------------------------------------------- the spread
 
 def spread(posts: list[Post], count: int = 30) -> list[str]:
     """Ids of `count` posts chosen to sit as far apart as possible.
@@ -896,7 +846,6 @@ def cmd_posts(args: argparse.Namespace) -> int:
         "dim": DIM,
         "lambda": LAMBDA,
         "feeds": sorted({post.feed for post in posts}),
-        "demo": demo_taste(posts),
         "spread": spread(posts),
         "proof": evaluate(posts),
         "labels": [{"t": text, "s": quantize(v)[1]} for text, v in zip(labels, label_vectors)],
