@@ -1,4 +1,4 @@
-// feed.js — the feed page: load the posts, rank them by what you picked,
+// pool.js — the pool page: load the posts, rank them by what you picked,
 // and print every score with its arithmetic. Nothing is stored anywhere: the
 // link is the state, and localStorage only remembers it for a bare visit.
 //
@@ -8,7 +8,6 @@
 // stop meaning anything the moment those posts leave the pool.
 (function () {
   const ROWS_PER_PAGE = 20;
-  const KIND_LABEL = { article: "web", video: "vid", podcast: "pod" };
 
   const { hand, toast, esc, signed } = Shell;
   const el = (id) => document.getElementById(id);
@@ -177,7 +176,7 @@
   function nearHtml(scored, isPicked, isPassed) {
     if (scored.score === -Infinity || isPicked || isPassed) return NO_NEAR;
     // With several tastes, the number is the thing worth saying: it is what
-    // the lines above the feed are numbered by, and a run of rows from one
+    // the lines above the pool are numbered by, and a run of rows from one
     // taste then another is the whole picture. The pick is named when there
     // is one in the pool to name; a taste carried in by a link has none.
     const several = state.taste.picked.length > 1;
@@ -212,7 +211,7 @@
     return `<li class="row${isPicked ? " picked" : ""}${isPassed ? " passed" : ""}" data-id="${esc(post.id)}">
           <span class="n" aria-hidden="true">${place}</span>
           <div class="body">
-            <div class="meta"><span class="kind">${KIND_LABEL[post.kind] || "web"}</span><span class="feed" title="${esc(post.feed)}">${esc(post.feed)}</span><time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
+            <div class="meta"><span class="kind">${esc(post.kind || "text")}</span><span class="feed" title="${esc(post.feed)}">${esc(post.feed)}</span><time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
             <h2 class="title" id="t-${esc(post.id)}"><a href="${esc(post.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(post.title || post.link)}</a></h2>
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
             ${cold ? NO_NEAR : nearHtml(scored, isPicked, isPassed)}
@@ -324,7 +323,7 @@
     if (banner.hidden) return;
     const stillHaveOne = state.taste.picked.length || state.taste.passed.length;
     el("banner-says").innerHTML = state.unreadable
-      ? `<b>this link was written for a different model</b> · the numbers in it mean nothing here, so ${stillHaveOne ? "your own taste is showing instead" : "the feed starts cold"}`
+      ? `<b>this link was written for a different model</b> · the numbers in it mean nothing here, so ${stillHaveOne ? "your own taste is showing instead" : "the pool starts cold"}`
       : `<b>this link carries someone else's taste</b> · press the box beside anything you'd read and it becomes yours`;
   }
 

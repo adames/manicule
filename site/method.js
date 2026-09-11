@@ -1,6 +1,6 @@
 // method.js — the method page. Fetches rank() from the repo and prints it as
 // a listing with margin notes, then works one row from the visitor's own
-// taste using the same rank.js the feed uses.
+// taste using the same rank.js the pool uses.
 (function () {
   const el = (id) => document.getElementById(id);
   const { hand, esc, signed, plain } = Shell;
@@ -150,7 +150,7 @@
                          Manicule.tasteOf(vectors(taste.passed)), lambda, pickedVectors);
   }
 
-  // Links from here open the feed in the same taste, so the row number they
+  // Links from here open the pool in the same taste, so the row number they
   // quote is true even when the taste is pretend.
   const linkTo = (taste) => Shell.hashOf({ m: taste.picked, d: taste.passed, l: taste.lambda });
 
@@ -182,10 +182,10 @@
       <dt>cos(post, passed)</dt><dd>${taste.passed.length ? `<span class="mono">${plain(scored.neg)}</span> <span class="muted">· how close it sits to the average of your passes</span>` : `<span class="mono">0.00</span> <span class="muted">· nothing passed</span>`}</dd>
       <dt>λ</dt><dd><span class="mono">${taste.lambda.toFixed(2)}</span> <span class="muted">· how much of that comes off</span></dd>
       <dt>score</dt><dd><div class="worked-score"><div class="calc">${firstTerm}${subtraction}<span class="tot">${signed(scored.score)}</span></div>${scoreBar(scored)}</div></dd>
-      <dt>closest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(post.vector, nearest.vector))}</span> <span class="muted">· of everything you picked, this is the one it sits nearest. the feed prints it as the near line</span>` : ""}</dd>`;
+      <dt>closest pick</dt><dd>${nearest ? `${hand("rest")}<span class="t">${esc(nearest.title)}</span> <span class="mono muted">${signed(Manicule.cosine(post.vector, nearest.vector))}</span> <span class="muted">· of everything you picked, this is the one it sits nearest. the pool prints it as the near line</span>` : ""}</dd>`;
 
     // The formula with this post's own numbers in it, in the same shape the
-    // formula band on the feed used to have.
+    // formula band on the pool used to have.
     const term = (value, name) =>
       `<span class="term"><span>${value}</span><span class="lbl">${name}</span></span>`;
     el("worked-sum").innerHTML =
@@ -196,7 +196,7 @@
       )}</span>`;
 
     // An empty link is a nameless tab stop, so it stays hidden until it has words.
-    el("worked-link").textContent = `row ${place} on the feed`;
+    el("worked-link").textContent = `row ${place} on the pool`;
     el("worked-link").href = "./" + linkTo(taste);
     el("worked-link").hidden = false;
     el("worked-note").hidden = !taste.pretend;
@@ -339,7 +339,7 @@
 
   // Each pick against the taste it belongs to. Which average that is, is the
   // whole of the clustering: nothing is labelled and nobody chose it.
-  // The same lines as the feed, with the working shown: the three nearest
+  // The same lines as the pool, with the working shown: the three nearest
   // labels and their cosines, then the words, then the feeds.
   function renderTastes(built, pretend) {
     const several = built.length > 1;
@@ -375,7 +375,7 @@
       return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.feed)}</td>${label}<td class="num">${signed(near)}</td></tr>`;
     }).join("");
     el("picks-cap").textContent = taste.pretend
-      ? "on the pretend taste. pick a few things on the feed and this table is yours"
+      ? "on the pretend taste. pick a few things on the pool and this table is yours"
       : built.length > 1
         ? `each pick against its own average. these picks made ${built.length} of them: a pick that sits near none of the averages starts another rather than dragging one off its subject`
         : "each pick against the average of all of them. these picks all sit together, so they made one average";
@@ -398,7 +398,7 @@
 
   // ── the ruler ────────────────────────────────────────────────────────────
   // λ is a preference, not a pick, so moving it only ever changes λ. It rides
-  // in the link with the rest of the taste, which is how the feed hears about it.
+  // in the link with the rest of the taste, which is how the pool hears about it.
 
   function setRuler(value) {
     el("lam").value = value;

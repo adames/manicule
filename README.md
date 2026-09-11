@@ -40,7 +40,7 @@ unreleased library I was developing.
 
 ## What a taste is about
 
-the feed says, above the rows, one line an average:
+the pool says, above the rows, one line an average:
 
 ```
 ☞ taste 1 · 3 picks · about cooking · sourdough, starter, hydration

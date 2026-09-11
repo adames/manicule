@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>manicule · feed</title>
+<title>manicule · pool</title>
 <meta name="description" content="remember your tastes">
 <meta property="og:type" content="website">
-<meta property="og:title" content="manicule · feed">
+<meta property="og:title" content="manicule · pool">
 <meta property="og:description" content="remember your tastes">
 <meta property="og:image" content="https://manicule.adames.cc/og.png">
 <meta property="og:url" content="https://manicule.adames.cc/">
@@ -32,7 +32,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     </div>
     <div class="strip">
       <nav class="words" aria-label="pages">
-        <a href="./" data-page="feed">feed <span class="n" data-count></span></a>
+        <a href="./" data-page="pool">pool <span class="n" data-count></span></a>
         <a href="method.html" data-page="method">method</a>
         <a href="fork.html" data-page="fork">fork</a>
       </nav>
@@ -82,7 +82,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 <div class="toast" id="toast" role="status"></div>
 <script src="rank.js"></script>
 <script src="shell.js"></script>
-<script src="feed.js"></script>
+<script src="pool.js"></script>
 <script>
 /* Yesterday's pool reads on a train. Nothing else changes if this never runs. */
 if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
