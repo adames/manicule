@@ -39,6 +39,13 @@ jobs:
           git push
       # Stamp every local asset with the commit, so a browser can never mix a
       # new page with a script it cached an hour ago.
+      #
+      # After the commit above, on purpose: the stamp lives in the deployed
+      # artifact and never in git. What is committed keeps bare href="manicule.css",
+      # so the only daily diff is the two build outputs. Stamping before the
+      # commit would rewrite every html file on every build, and the stamp would
+      # have to be stripped again to keep the diff readable. So the html on Pages
+      # is not byte-for-byte the html in the repo, and that is the intent.
       - name: stamp the assets
         run: |
           v=$(git rev-parse --short HEAD)
