@@ -213,14 +213,23 @@ def kind_of(link: str, item) -> str:
     return "article"
 
 
-def published_at(item) -> str:
-    """The post's date, or "" when the feed gave none this machine can read.
+# The web is younger than this, and nothing in a feed is from two years hence.
+# Outside the window a feed has got it wrong, whatever it says.
+OLDEST_YEAR = 1990
 
-    Feeds stamp posts with years like 0 and 50000. One of them used to end the
-    build: undated is the honest answer, and an undated post still ranks.
+
+def published_at(item) -> str:
+    """The post's date, or "" when the feed gave none worth believing.
+
+    Feeds stamp posts with years like 1 and 50000. mktime raises on some of
+    them and quietly accepts others depending on the machine, so the year is
+    judged here instead: undated is the honest answer for both, and an undated
+    post still ranks.
     """
     parsed = getattr(item, "published_parsed", None) or getattr(item, "updated_parsed", None)
     if not parsed:
+        return ""
+    if not OLDEST_YEAR <= parsed[0] <= datetime.now(UTC).year + 1:
         return ""
     try:
         return datetime.fromtimestamp(time.mktime(parsed), UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -108,15 +108,26 @@ def test_spread_reaches_every_corner():
 
 
 def test_impossible_dates_read_as_undated():
-    """One feed stamping year 50000 must not end the build."""
+    """One feed stamping year 50000 must not end the build, on any machine.
+
+    mktime raises on some of these and quietly accepts others depending on the
+    platform: macOS refuses year 1, Linux hands back "1-01-01". The year is
+    judged before mktime sees it so both answer the same.
+    """
     import time
+    from datetime import UTC, datetime
+
     from manicule import published_at
 
     class Item:
         def __init__(self, when): self.published_parsed = when
 
-    assert published_at(Item(time.struct_time((50000, 1, 1, 0, 0, 0, 0, 1, 0)))) == ""
-    assert published_at(Item(time.struct_time((1, 1, 1, 0, 0, 0, 0, 1, 0)))) == ""
+    def at(year):
+        return published_at(Item(time.struct_time((year, 1, 1, 0, 0, 0, 0, 1, 0))))
+
+    for year in (0, 1, 1969, 1989, 50000, datetime.now(UTC).year + 5):
+        assert at(year) == "", year
+    assert at(1990).startswith("1990-01-01")
     assert published_at(Item(time.struct_time((2026, 9, 1, 12, 0, 0, 0, 1, 0)))).startswith("2026-09-01")
 
 
