@@ -213,10 +213,18 @@ def kind_of(link: str, item) -> str:
 
 
 def published_at(item) -> str:
+    """The post's date, or "" when the feed gave none this machine can read.
+
+    Feeds stamp posts with years like 0 and 50000. One of them used to end the
+    build: undated is the honest answer, and an undated post still ranks.
+    """
     parsed = getattr(item, "published_parsed", None) or getattr(item, "updated_parsed", None)
     if not parsed:
         return ""
-    return datetime.fromtimestamp(time.mktime(parsed), UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    try:
+        return datetime.fromtimestamp(time.mktime(parsed), UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except (OverflowError, OSError, ValueError):
+        return ""
 
 
 def raw_summary(item) -> str:
@@ -659,7 +667,10 @@ def main(argv: list[str] | None = None) -> int:
     # the CLI does: more feeds at fewer each is the same page weight and a much
     # wider sample.
     demo.add_argument("--per-feed", type=int, default=5)
-    demo.add_argument("--max-age", type=int, default=14, help="days; older posts are left out")
+    # Wide, not recent: a good blog that posts twice a year belongs in the
+    # pool, and newest-first already sinks its older posts to the bottom. The
+    # cutoff is only here to keep a feed that died last year out.
+    demo.add_argument("--max-age", type=int, default=90, help="days; older posts are left out")
     demo.set_defaults(fn=cmd_posts)
 
     proof = commands.add_parser("evaluate", help="rerun the proof on a posts.json and print it")
