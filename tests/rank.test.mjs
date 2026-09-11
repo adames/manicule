@@ -30,3 +30,37 @@ test("dequantize round-trips cosine", () => {
   const q = v.map((x) => Math.round(x / s * 127));
   assert.ok(M.cosine(v, M.dequantize(q, s)) > 0.999);
 });
+
+test("a taste blob is written and read the same in both languages", () => {
+  const T = FIX.taste;
+  assert.equal(M.tasteBlob({ vector: T.vector, count: T.count }), T.blob);
+  const back = M.readTasteBlob(T.blob, T.vector.length);
+  assert.equal(back.count, T.count);
+  assert.ok(M.cosine(back.vector, T.vector) > 0.9999);
+
+  let step = null;
+  for (const vector of T.presses) step = M.press(step, vector);
+  assert.equal(step.count, T.pressed_count);
+  step.vector.forEach((x, i) => assert.ok(Math.abs(x - T.pressed_vector[i]) < 1e-9, `dim ${i}`));
+});
+
+test("a hand-edited taste reads as no taste, never as a crash", () => {
+  for (const bad of ["", "garbage", "a~b~c", "AAAA~1~0", "AAAA~0~5", null, undefined]) {
+    assert.equal(M.readTasteBlob(bad, 8), null, String(bad));
+  }
+  assert.equal(M.unpress(null, [1, 0]), null);
+  assert.equal(M.unpress({ vector: [1, 0], count: 1 }, [1, 0]), null);
+});
+
+test("unpressing puts the average back", () => {
+  const posts = Array.from({ length: 30 }, (_, k) => Array.from({ length: 8 }, (_, i) => Math.sin(k * 3 + i)));
+  let taste = null;
+  for (const v of posts) taste = M.press(taste, v);
+  let undone = taste;
+  for (const v of [...posts.slice(-5)].reverse()) undone = M.unpress(undone, v);
+  assert.equal(undone.count, 25);
+  let again = undone;
+  for (const v of posts.slice(-5)) again = M.press(again, v);
+  assert.equal(again.count, taste.count);
+  again.vector.forEach((x, i) => assert.ok(Math.abs(x - taste.vector[i]) < 1e-9, `dim ${i}`));
+});

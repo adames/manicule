@@ -24,6 +24,7 @@ fastembed (BAAI/bge-small-en-v1.5). Nothing leaves it but the feed fetches.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import html
 import json
@@ -522,11 +523,115 @@ def demo_taste(posts: list[Post], picks: int = 3) -> dict[str, list[str]] | None
     return {"m": [e.id for e in chosen], "d": [passed.id] if passed else []}
 
 
+def spread(posts: list[Post], count: int = 30) -> list[str]:
+    """Ids of `count` posts chosen to sit as far apart as possible.
+
+    Cold start is the hard part of a big pool: a thousand posts and no reason
+    to press any of them. Newest-first answers "what is new", which is not the
+    question. This answers "what is here" — farthest-point sampling, so every
+    corner of the pool gets one seat and whatever a reader is into, something
+    on the first screen is near it.
+
+    It is what categories would be for, done without asking anyone to read a
+    label or make a choice.
+    """
+    import numpy as np
+
+    rows = [p for p in posts if p.vector]
+    if len(rows) <= count:
+        return [p.id for p in rows]
+    vectors = np.array([p.vector for p in rows])
+    vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
+
+    # Start at the middle of the pool, so the run is the same every build and
+    # the first seat is the most ordinary thing here, not the strangest.
+    middle = vectors.mean(axis=0)
+    chosen = [int(np.argmax(vectors @ middle))]
+    nearest = vectors @ vectors[chosen[0]]
+    for _ in range(count - 1):
+        pick = int(np.argmin(nearest))
+        chosen.append(pick)
+        nearest = np.maximum(nearest, vectors @ vectors[pick])
+
+    # Back into feed order, so the screen reads as a feed and not as a ranking.
+    return [rows[i].id for i in sorted(chosen)]
+
+
 def quantize(vector: list[float]) -> tuple[list[int], float]:
     """int8 with one scale per vector: four times smaller than float32 in JSON,
     and the cosine error is well below anything the ranking can feel."""
     scale = max(abs(x) for x in vector) or 1.0
     return [max(-127, min(127, round(x / scale * 127))) for x in vector], scale
+
+
+# ---------------------------------------------------------------- a taste, written down
+
+CAP = 20   # how many picks an average carried in a link may claim
+
+
+def taste_blob(vector: list[float], count: int) -> str:
+    """<base64 of 384 int8>~<scale>~<count>. Mirrors site/rank.js.
+
+    A taste is two averages, so a link holding the averages holds the whole
+    taste, on any day and against any pool. Ids cannot: the pool turns over
+    and they stop pointing at anything.
+    """
+    q, scale = quantize(vector)
+    raw = bytes((x + 256) & 255 for x in q)
+    body = base64.urlsafe_b64encode(raw).decode().rstrip("=")
+    # The scale is printed the way JavaScript prints a number, because the two
+    # must write the same string from the same numbers. Python would say "1.0"
+    # where JavaScript says "1", and the fixture catches exactly that.
+    text = f"{scale:.6g}"
+    if "e" in text:
+        mantissa, exponent = text.split("e")
+        text = f"{mantissa}e{int(exponent)}"
+    return f"{body}~{text}~{count}"
+
+
+def read_taste_blob(text: str, dim: int = DIM) -> tuple[list[float], int] | None:
+    parts = (text or "").split("~")
+    if len(parts) != 3:
+        return None
+    try:
+        scale, count = float(parts[1]), int(parts[2])
+    except ValueError:
+        return None
+    if scale <= 0 or count <= 0:
+        return None
+    pad = "=" * (-len(parts[0]) % 4)
+    try:
+        raw = base64.urlsafe_b64decode(parts[0] + pad)
+    except Exception:  # noqa: BLE001 — a hand-edited link is not an error
+        return None
+    if len(raw) < dim:
+        return None
+    return [dequantize([b - 256 if b > 127 else b for b in raw[:dim]], scale)[i] for i in range(dim)], count
+
+
+def press(taste: tuple[list[float], int] | None, vector: list[float]) -> tuple[list[float], int]:
+    """Fold one post into an average. Mirrors site/rank.js.
+
+    CAP bounds how much an established average may outweigh a new press. Below
+    it every press counts the same, which is what a plain mean does. Above it
+    the two-hundredth press still turns the average by a twentieth instead of a
+    two-hundredth: a taste that cannot set.
+    """
+    if not taste or not taste[1]:
+        return list(vector), 1
+    mean, count = taste
+    w = min(count, CAP)
+    return [(m * w + x) / (w + 1) for m, x in zip(mean, vector)], count + 1
+
+
+def unpress(taste: tuple[list[float], int] | None, vector: list[float]) -> tuple[list[float], int] | None:
+    """Take exactly the same post back out, so a box can be ticked and unticked
+    all day and the average lands where it started."""
+    if not taste or taste[1] <= 1:
+        return None
+    mean, count = taste
+    w = min(count - 1, CAP)
+    return [(m * (w + 1) - x) / w for m, x in zip(mean, vector)], count - 1
 
 
 def write_vectors(posts: list[Post], out: Path) -> None:
@@ -621,6 +726,7 @@ def cmd_posts(args: argparse.Namespace) -> int:
         "lambda": LAMBDA,
         "feeds": sorted({post.feed for post in posts}),
         "demo": demo_taste(posts),
+        "spread": spread(posts),
         "proof": evaluate(posts),
         "posts": rows,
     }

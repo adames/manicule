@@ -75,15 +75,23 @@
   function tasteIn(hash) {
     const parts = new URLSearchParams((hash || "").replace(/^#/, ""));
     const list = (key) => (parts.get(key) || "").split(",").filter(Boolean);
-    return { m: list("m"), d: list("d"), s: list("s"), l: parts.get("l") };
+    return {
+      m: list("m"), d: list("d"), s: list("s"), l: parts.get("l"),
+      v: parts.get("v") || "", w: parts.get("w") || "", k: parts.get("k") || "",
+    };
   }
 
-  function hashOf(picked, passed, lambda, sourceKeys) {
+  // Order matters only to the eye: the short readable parts first, then the
+  // two long averages, so a glance at the address bar still shows the λ.
+  const KEYS = ["m", "d", "s", "l", "v", "w", "k"];
+
+  function hashOf(taste) {
     const parts = [];
-    if (picked.length) parts.push("m=" + picked.join(","));
-    if (passed.length) parts.push("d=" + passed.join(","));
-    if (sourceKeys && sourceKeys.length) parts.push("s=" + sourceKeys.join(","));
-    if (lambda != null) parts.push("l=" + lambda);
+    for (const key of KEYS) {
+      const value = taste[key];
+      if (value == null || value === "" || (Array.isArray(value) && !value.length)) continue;
+      parts.push(key + "=" + (Array.isArray(value) ? value.join(",") : value));
+    }
     return parts.length ? "#" + parts.join("&") : "";
   }
 
@@ -119,18 +127,21 @@
 
   // A hash is either a taste or nothing. Anything else (#list, from the skip
   // link) is a fragment, and must never be read as a state.
-  const isTaste = (hash) => hash === "" || /^#[mdsl]=/.test(hash);
+  const isTaste = (hash) => hash === "" || /^#[mdslvwk]=/.test(hash);
 
   // A typed address carries no hash, but this browser may still hold a taste.
   // Put them back before anything reads location.hash, so the printed address,
   // share, and the links to the other pages all agree with the feed.
   const arriving = tasteIn(location.hash);
-  if (isTaste(location.hash) && !arriving.m.length && !arriving.d.length) {
+  if (isTaste(location.hash) && !arriving.m.length && !arriving.d.length && !arriving.v && !arriving.w) {
     const saved = mirror() || {};
-    const picked = saved.m || [], passed = saved.d || [];
     const lambda = isNaN(lam(arriving.l)) ? lam(saved.l) : lam(arriving.l);
-    if (picked.length || passed.length) {
-      history.replaceState(null, "", hashOf(picked, passed, isNaN(lambda) ? null : lambda));
+    const back = {
+      m: saved.m || [], d: saved.d || [], v: saved.v || "", w: saved.w || "",
+      k: saved.k || "", l: isNaN(lambda) ? null : lambda,
+    };
+    if (back.m.length || back.d.length || back.v || back.w) {
+      history.replaceState(null, "", hashOf(back));
     }
   }
 
@@ -211,8 +222,8 @@
 
   document.addEventListener("click", async (event) => {
     if (event.target.closest('[data-act="share"]')) {
-      const { m, d } = tasteIn(location.hash);
-      if (!m.length && !d.length) return toast("pick something first");
+      const { m, d, v, w } = tasteIn(location.hash);
+      if (!m.length && !d.length && !v && !w) return toast("pick something first");
       const copied = await copy(shareUrl());
       toast(copied ? "link copied, it carries your taste" : "copy the address bar, it carries your taste");
       return;

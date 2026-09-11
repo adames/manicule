@@ -151,7 +151,7 @@
 
   // Links from here open the feed in the same taste, so the row number they
   // quote is true even when the taste is pretend.
-  const linkTo = (taste) => Shell.hashOf(taste.picked, taste.passed, taste.lambda);
+  const linkTo = (taste) => Shell.hashOf({ m: taste.picked, d: taste.passed, l: taste.lambda });
 
   const percent = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
   const dayOf = (iso) => (iso ? iso.slice(0, 10) : "undated");

@@ -75,14 +75,45 @@ put it on a cron and read `today.md` with coffee.
 science, essays, podcasts, sports, food, games. mixed on purpose, so picking
 two things visibly reorders everything.
 
-a first visit lands newest first. pressing a post changes the scores and
-leaves the order alone; `order by taste` sorts on them when you ask.
+a first visit lands on a spread: thirty posts chosen at build time to sit as
+far apart as possible, so whatever you are into, something up there is near it.
+pressing a post changes the scores and leaves the order alone; `order by taste`
+sorts on them when you ask.
 
 vectors ship as int8 with one scale each, packed in `vectors.bin` beside
 `posts.json`, a fifth the size of the same numbers as text and too small a
 rounding error for the ranking to feel. the browser does
 the math in `site/rank.js`, the same math as the Python. your taste lives in
 the URL, so a link is a taste.
+
+## Your taste is the link
+
+there is no account because there is nothing to keep one for. the ranking uses
+two averages, so a link carrying the two averages carries the whole taste — on
+any day, against any pool, on anyone's fork. about 1.1KB of it.
+
+```
+#v=<384 int8, base64>~<scale>~<count>&w=<the same, passed>&k=<model>&l=<λ>
+```
+
+a press folds a post into the average; pressing again takes exactly the same
+post back out. the ids in `m=` only tick the boxes, and stop meaning anything
+when those posts leave the pool. the averages do not.
+
+an average carried in is worth at most twenty presses, so a taste cannot set:
+come back with two hundred presses behind you and the next one still turns it
+by a twentieth.
+
+`k=` is the model that wrote the numbers. a link from a different one is not
+wrong, it is unreadable, and the page says so rather than ranking by noise.
+
+keep the link and the taste is yours. bookmark it and your browser syncs it for
+you. lose it and it is gone: that is the whole of it, and it is why nothing
+here has to hold anything about you.
+
+**a link is a pointer, not a diary.** an average is not anonymous — anyone with
+the pool can rank it and see what you would pick — but it does not name a
+single thing you read.
 
 ## Make it yours: fork it
 

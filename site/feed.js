@@ -1,6 +1,11 @@
 // feed.js — the feed page: load the posts, rank them by what you picked,
 // and print every score with its arithmetic. Nothing is stored anywhere: the
 // link is the state, and localStorage only remembers it for a bare visit.
+//
+// The link carries two things, and only one of them ranks. The two averages
+// are the taste itself: they mean the same thing on any day, against any pool,
+// on anyone's fork. The ids are there to keep the right boxes ticked, and they
+// stop meaning anything the moment those posts leave the pool.
 (function () {
   const ROWS_PER_PAGE = 20;
   const KIND_LABEL = { article: "web", video: "vid", podcast: "pod" };
@@ -11,9 +16,14 @@
   const state = {
     picked: new Set(),
     passed: new Set(),
+    // The taste itself. A press folds a post in; un-pressing takes the same
+    // post back out. Everything ever pressed is in here, including presses on
+    // posts that left the pool months ago.
+    taste: { picked: null, passed: null },
     lambda: Manicule.LAMBDA,
     borrowed: false,  // the link carries a taste this browser did not make
-    order: null,      // ids in the order on screen; null is newest first
+    unreadable: false,// the link carries an average from a different model
+    order: null,      // ids in the order on screen; null is the cold order
     rowsShown: ROWS_PER_PAGE,
   };
   let posts = null;      // posts.json, once it lands
@@ -23,7 +33,23 @@
 
   const sameIds = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
 
+  // An average is only meaningful to the model that made it. A link from a
+  // different one is not wrong, it is unreadable, and reading it anyway would
+  // rank by noise while looking like it worked.
+  const ourModel = () => Shell.feedKey(posts.model);
+
+  function tasteIn(source) {
+    const nothing = { picked: null, passed: null };
+    if (!source.v && !source.w) return nothing;
+    if (source.k && source.k !== ourModel()) {
+      state.unreadable = true;
+      return nothing;
+    }
+    return { picked: Manicule.readTasteBlob(source.v, posts.dim), passed: Manicule.readTasteBlob(source.w, posts.dim) };
+  }
+
   function readTheLink() {
+    state.unreadable = false;
     const link = Shell.tasteIn(location.hash);
     const saved = Shell.mirror() || {};
     // The daily rebuild drops posts, and their ids go with them. Ignoring
@@ -33,13 +59,22 @@
     const mine = { picked: live(saved.m), passed: live(saved.d) };
     const linked = { picked: live(link.m), passed: live(link.d) };
 
-    if (linked.picked.length || linked.passed.length) {
+    const linkTaste = tasteIn(link);
+    const hasLink = linked.picked.length || linked.passed.length || linkTaste.picked || linkTaste.passed;
+
+    if (hasLink) {
       state.picked = new Set(linked.picked);
       state.passed = new Set(linked.passed);
-      state.borrowed = !(sameIds(linked.picked, mine.picked) && sameIds(linked.passed, mine.passed));
+      state.taste = linkTaste;
+      // A link with no ids still carries a taste, so the averages decide too:
+      // a friend's link is borrowed whether or not the posts behind it survive.
+      state.borrowed =
+        !(sameIds(linked.picked, mine.picked) && sameIds(linked.passed, mine.passed)) ||
+        link.v !== (saved.v || "") || link.w !== (saved.w || "");
     } else {
       state.picked = new Set(mine.picked);
       state.passed = new Set(mine.passed);
+      state.taste = tasteIn(saved);
       state.borrowed = false;
     }
 
@@ -52,12 +87,16 @@
   }
 
   function writeTheLink() {
-    const marked = state.picked.size || state.passed.size;
-    const hash = Shell.hashOf(
-      [...state.picked],
-      [...state.passed],
-      marked || state.lambda !== Manicule.LAMBDA ? state.lambda : null,
-    );
+    const { picked, passed } = state.taste;
+    const marked = state.picked.size || state.passed.size || picked || passed;
+    const hash = Shell.hashOf({
+      m: [...state.picked],
+      d: [...state.passed],
+      l: marked || state.lambda !== Manicule.LAMBDA ? state.lambda : null,
+      v: Manicule.tasteBlob(picked),
+      w: Manicule.tasteBlob(passed),
+      k: picked || passed ? ourModel() : "",
+    });
     history.replaceState(null, "", hash || location.pathname + location.search);
     // A borrowed link does not overwrite this browser's own taste until the
     // first press adopts it.
@@ -67,23 +106,34 @@
   }
 
   function remember() {
+    const { picked, passed } = state.taste;
     try {
       localStorage.setItem("manicule", JSON.stringify({
         m: [...state.picked], d: [...state.passed], l: state.lambda,
+        v: Manicule.tasteBlob(picked), w: Manicule.tasteBlob(passed),
+        k: picked || passed ? ourModel() : "",
       }));
     } catch (_) {}
   }
 
   // ── ranking ──────────────────────────────────────────────────────────────
 
-  const vectorsOf = (ids) => [...ids].map((id) => postById[id] && postById[id].vector).filter(Boolean);
-
+  // The taste is already one vector a side, which is all the ranking ever
+  // wanted. Nothing is averaged here: it was averaged as it was pressed.
   function rankBy(lambda) {
+    // Only posts still in the pool can be named as the closest pick. An
+    // average is not a post, so a carried taste ranks without a near line.
     const pickedVectors = {};
     for (const id of state.picked) {
       if (postById[id] && postById[id].vector) pickedVectors[id] = postById[id].vector;
     }
-    return Manicule.rank(posts.posts, vectorsOf(state.picked), vectorsOf(state.passed), lambda, pickedVectors);
+    const { picked, passed } = state.taste;
+    return Manicule.rank(
+      posts.posts,
+      picked ? [picked.vector] : [],
+      passed ? [passed.vector] : [],
+      lambda, pickedVectors,
+    );
   }
 
   // ── words and numbers ────────────────────────────────────────────────────
@@ -249,12 +299,27 @@
   // The same shape in every state, so the line never wraps differently and
   // never moves the feed below it.
   function drawStatus(cold) {
+    const { picked, passed } = state.taste;
     const counts = cold
       ? `<span class="n">nothing picked</span>`
-      : `<span class="n">${state.picked.size} picked</span> <span class="n">${state.passed.size} passed</span> <span class="n lam">λ ${state.lambda.toFixed(2)}</span>`;
+      : `<span class="n">${picked ? picked.count : 0} picked</span> <span class="n">${passed ? passed.count : 0} passed</span> <span class="n lam">λ ${state.lambda.toFixed(2)}</span>`;
     el("status").innerHTML =
-      `<b>${state.order ? "by taste" : "newest first"}</b> ${counts} ` +
+      `<b>${state.order ? "by taste" : cold ? "a spread of what is here" : "newest first"}</b> ${counts} ` +
       `<button class="btn quiet" data-act="order" type="button">order by taste</button>`;
+  }
+
+  // Two things can be true of an arriving link, and only one of them is worth
+  // a word: someone else's taste can be adopted with a press, but a taste from
+  // a different model is not wrong, it is unreadable, and saying nothing would
+  // leave a reader thinking their link had been thrown away.
+  function drawBanner() {
+    const banner = el("banner");
+    banner.hidden = !(state.borrowed || state.unreadable);
+    if (banner.hidden) return;
+    const stillHaveOne = state.taste.picked || state.taste.passed;
+    el("banner-says").innerHTML = state.unreadable
+      ? `<b>this link was written for a different model</b> · the numbers in it mean nothing here, so ${stillHaveOne ? "your own taste is showing instead" : "the feed starts cold"}`
+      : `<b>this link carries someone else's taste</b> · press the box beside anything you'd read and it becomes yours`;
   }
 
   function draw() {
@@ -267,14 +332,14 @@
     for (const row of ranked || []) scoredById[row.post.id] = row;
     const inOrder = state.order
       ? state.order.map((id) => postById[id]).filter(Boolean)
-      : posts.posts;
+      : coldOrder();
     const visible = inOrder.map((post) => scoredById[post.id] || { post });
 
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
     ledger.classList.toggle("borrowed", state.borrowed);
     drawStatus(cold);
-    el("banner").hidden = !state.borrowed;
+    drawBanner();
 
     holdingFocus(() => {
       lastNearest = null;
@@ -289,6 +354,19 @@
     el("morebtn").innerHTML = `show <span class="n">${left}</span> more`;
     el("empty").hidden = visible.length > 0;
     writeTheLink();
+  }
+
+  // A thousand posts and no reason to press any of them is the hard part of a
+  // big pool. Newest first answers "what is new", which nobody asked. The
+  // spread answers "what is here": posts chosen at build time to sit as far
+  // apart as possible, so whatever you are into, something up here is near it.
+  // The rest of the pool follows, newest first, and one press ends the whole
+  // arrangement.
+  function coldOrder() {
+    const seats = (posts.spread || []).map((id) => postById[id]).filter(Boolean);
+    if (!seats.length) return posts.posts;
+    const seated = new Set(seats.map((post) => post.id));
+    return seats.concat(posts.posts.filter((post) => !seated.has(post.id)));
   }
 
   function orderByTaste() {
@@ -310,6 +388,7 @@
   function forget() {
     state.picked.clear();
     state.passed.clear();
+    state.taste = { picked: null, passed: null };
     state.lambda = Manicule.LAMBDA;
     state.borrowed = false;
     state.order = null;
@@ -328,10 +407,22 @@
     const button = event.target.closest("button[data-act]");
     if (!button) return;
     const id = button.closest(".row").dataset.id;
-    // nothing → picked → passed → nothing
-    if (state.picked.has(id)) { state.picked.delete(id); state.passed.add(id); }
-    else if (state.passed.has(id)) { state.passed.delete(id); }
-    else { state.picked.add(id); }
+    const vector = postById[id] && postById[id].vector;
+    // nothing → picked → passed → nothing. Every step moves the same post
+    // between the two averages, so the ticked box and the taste never disagree.
+    if (state.picked.has(id)) {
+      state.picked.delete(id); state.passed.add(id);
+      if (vector) {
+        state.taste.picked = Manicule.unpress(state.taste.picked, vector);
+        state.taste.passed = Manicule.press(state.taste.passed, vector);
+      }
+    } else if (state.passed.has(id)) {
+      state.passed.delete(id);
+      if (vector) state.taste.passed = Manicule.unpress(state.taste.passed, vector);
+    } else {
+      state.picked.add(id);
+      if (vector) state.taste.picked = Manicule.press(state.taste.picked, vector);
+    }
     state.borrowed = false; // the first press makes a borrowed link yours
     draw();                 // the scores change; the order holds
   });
