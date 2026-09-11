@@ -991,7 +991,7 @@ section .ruler-wrap {
 }
 
 .meta .feed {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1007,13 +1007,14 @@ section .ruler-wrap {
 .meta .about::before {
   content: "\00b7  ";
 }
+/* the feed name keeps its width; the labels take what is left of the row
+   and clip only when the row itself is full */
 .meta .about {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 34ch;
 }
 
 .kind {
