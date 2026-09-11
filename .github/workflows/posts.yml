@@ -18,8 +18,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.1.0   # no floating major tag after v7
       - run: uv python install 3.12
       - run: uv sync --group dev
       - run: uv run pytest -q && node --test tests/rank.test.mjs
@@ -51,7 +51,7 @@ jobs:
           v=$(git rev-parse --short HEAD)
           sed -i -E 's/(href="manicule\.css|src="(rank|shell|feed|method)\.js)"/\1?v='"$v"'"/g' site/*.html
           grep -o 'v=[0-9a-f]*' site/index.html | head -1
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with: { path: site }
   deploy:
     needs: build
@@ -59,4 +59,4 @@ jobs:
     environment: { name: github-pages, url: "${{ steps.deployment.outputs.page_url }}" }
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
