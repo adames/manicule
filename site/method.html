@@ -44,7 +44,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <main id="main" tabindex="-1">
       <section class="mast" aria-label="the method">
         <h1>how it works</h1>
-        <p class="reading">every post turns into a vector, and your browser averages the ones you picked. cos(post, picked) is the cosine against that average, or the nearest of them if your picks made more than one. then we score it</p>
+        <p class="reading">every post turns into a vector. your browser averages the ones you picked, and every other post is scored by how near it sits to that average</p>
         <p class="spec"><span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></span><span>rank()</span><span>same math in rank.js</span></p>
       </section>
 
@@ -58,34 +58,27 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <p class="prior">taste algorithm: <a href="https://tullie.ai/blog/building-a-hackernews-for-you-feed">tullie murrell's hn for-you feed</a>, cosine to the mean of your favorites. this one has a second hand</p>
       </div>
 
-      <!-- the explainer: what the math is doing, in order -->
+      <!-- a post is a direction, and the cosine is the whole measure. the
+           nearest/farthest table is here because it is what a cosine looks like -->
       <section class="prose" aria-labelledby="vectors">
-        <h2 class="sect" id="vectors"><span>a vector</span></h2>
+        <h2 class="sect" id="vectors"><span>a post is a direction</span></h2>
         <p>a vector is a list of numbers. every post here has 384 of them, produced by a small language model reading the headline and the first 400 characters of the blurb. the model runs once, when this page is built. it never sees you</p>
         <p>384 numbers are 384 directions, so the list is a direction. posts whose words mean similar things come out pointing the same way. the measure of that is the cosine of the angle between two of them: +1 is the same direction, 0 is unrelated, below 0 is opposite. every number on this site is one of those cosines</p>
-      </section>
-
-      <!-- the chart: both axes are numbers the ranker computes -->
-      <section aria-label="the picture" id="themap">
-        <h2 class="sect"><span>what picking does</span><a href="#proof">the numbers</a></h2>
-        <p class="caption">the test, drawn on today's posts. two posts from one feed become the taste. that feed's other posts stay in the pile with everything else. every feed takes a turn</p>
-        <div id="chart"></div>
-        <p class="caption" id="chart-cap"></p>
-        <div class="choices" id="chart-pick"></div>
         <div class="dt-wrap">
           <table class="dt">
             <thead><tr><th scope="col" class="grow">against the top post on your feed</th><th scope="col">feed</th><th scope="col" class="num">cos</th></tr></thead>
             <tbody id="neighbours"><tr><td colspan="3">loading</td></tr></tbody>
           </table>
         </div>
-        <p class="caption" id="neighbours-cap">the three nearest and the three farthest. +1 would be the same words; near 0 is nothing in common</p>
+        <p class="caption" id="neighbours-cap">the three nearest and the three farthest</p>
+        <p>a post with no words has no vector, so it sinks to the bottom. it is never dropped</p>
       </section>
 
       <section class="prose" aria-labelledby="average">
         <h2 class="sect" id="average"><span>an average is a taste</span></h2>
         <p>add the vectors of everything you picked and divide by how many there are. one vector comes out. that is your taste here: no profile, no history, an average</p>
-        <p>with one exception, and it is the useful one. a pick that sits near none of your averages starts another instead of dragging one off its subject, up to three. cooking and compilers would otherwise average into a direction pointing at neither, and a post is scored against the average it is nearest. one taste behaves exactly as it always did</p>
-        <p>we tested it: readers picking from two unrelated feeds get 23 of every 100 held-out posts into the top ten, against 13 with a single average. readers picking from one feed lose nothing</p>
+        <p>with one exception, and it is the useful one. an average points one way, so it holds one taste: cooking and compilers would average into a direction pointing at neither. so a pick that sits near none of your averages starts another instead of dragging one off its subject, up to three, and a post is scored against the average it is nearest. pick from one subject and it behaves exactly as one average always did</p>
+        <p>measured once, on a pool of about two thousand: picking from two unrelated feeds put 23 of every 100 held-out posts in the top ten, against 13 with a single average, and picking from one feed lost nothing. that pair of numbers is from that one run. every other number on this page is today's</p>
         <p>cos(post, picked) is the cosine between a post and that average. sort on it, highest first, and the pool is ordered</p>
         <div class="dt-wrap">
           <table class="dt">
@@ -94,22 +87,26 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="picks-cap">each pick against the average of all of them. picks about one subject all score high; one odd pick pulls the average off the rest and every number drops</p>
-        <p>an average points one way, so it holds one taste; that is why there can be up to three. what each one is about is read off the pool rather than stored: the feeds its nearest posts come from. the pool prints it above the rows, and it is here too</p>
+        <p>what each taste is about is read off the pool rather than stored: the feeds its nearest posts come from. the pool prints it above the rows, and it is here too</p>
         <ol class="tastes" id="tastes" aria-label="your tastes"></ol>
         <p>the near line under a row names the single pick that row sits nearest, and, with several tastes, which taste. neither is a label anyone chose. it is where the vectors point</p>
+        <p>with nothing picked there is no average to measure against, so the pool stays newest first</p>
       </section>
 
       <section class="prose" aria-labelledby="second">
         <h2 class="sect" id="second"><span>the second hand</span></h2>
         <p>what you pass on averages the same way, into a second vector. cos(post, passed) is the cosine against that one, and λ decides how much of it comes off the score</p>
-        <p>λ is the ruler further down this page. at 0.25, the default, a pass takes away a quarter of what the same closeness to a pick would add. at 1 the two cancel. at 0 passes do nothing. the table below is one post at each setting</p>
-        <p>with nothing picked there is no average to measure against, so the pool stays newest first. a post with no words has no vector and sinks to the bottom, but nothing is dropped</p>
+        <p>at 0.25, the default, a pass takes away a quarter of what the same closeness to a pick would add; at 1 the two cancel. further down there is one post worked at every setting, with the ruler that moves it</p>
       </section>
 
-      <!-- the proof: today's numbers, recomputed at every build -->
+      <!-- the proof: the picture and the medians are one argument, so they are
+           one section. today's numbers, recomputed at every build -->
       <section aria-label="does it work" id="proof">
         <h2 class="sect"><span>does it work</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">evaluate()</a></h2>
         <p class="caption">the test needs an answer the ranker can't see. the feed a post came from is one: the vector never carries it, and posts from one feed share a subject and a voice. so: take one feed. pick a few of its posts, hide the rest in the pile of <span id="proof-n">…</span>, and see where the ranker puts them. lower is better; 1st means the rest of that feed came straight to the top</p>
+        <div id="chart"></div>
+        <p class="caption" id="chart-cap"></p>
+        <div class="choices" id="chart-pick"></div>
         <div class="dt-wrap">
           <table class="dt">
             <thead><tr><th scope="col" class="lc">picks</th><th scope="col" class="num">the ranker</th><th scope="col" class="num">shared words</th><th scope="col" class="num">newest first</th><th scope="col" class="num">shuffled</th></tr></thead>

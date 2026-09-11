@@ -333,8 +333,10 @@
     const row = ({ other, cos }) =>
       `<tr><td><span class="t">${esc(other.title)}</span></td><td class="lc">${esc(other.feed)}</td><td class="num">${signed(cos)}</td></tr>`;
     el("neighbours").innerHTML = rows.map(row).join("");
+    // The cosine scale is defined in the paragraph directly above this table;
+    // saying it twice made the second one read as a different scale.
     el("neighbours-cap").textContent =
-      `“${post.title}” against the three nearest and the three farthest. +1 would be the same words; near 0 is nothing in common`;
+      `“${post.title}” against the three nearest and the three farthest`;
   }
 
   // Each pick against the taste it belongs to. Which average that is, is the
