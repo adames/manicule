@@ -347,7 +347,9 @@
       const k = several ? `<span class="k">taste ${i + 1}</span>` : "";
       const n = `<span class="n">${about.count} ${about.count === 1 ? "pick" : "picks"}${pretend ? ", pretend" : ""}</span>`;
       const labels = about.labels.map((l, j) => `${j ? "" : "about "}<b>${esc(l.text)}</b> <span class="mono">${signed(l.cos)}</span>`).join(", ");
-      const parts = [labels, about.words.length ? esc(about.words.join(", ")) : "", about.feeds.length ? `near ${esc(about.feeds.join(", "))}` : ""];
+      const focus = about.focus ? `<b>${esc(about.focus)}</b> is in half the nearest headlines, so it leads` : "";
+      const when = about.happening ? `<b>${about.happening}</b>: three quarters of the nearest posts are within three days of each other, so this is something happening, not a field` : "";
+      const parts = [focus, when, labels, about.words.length ? esc(about.words.join(", ")) : "", about.feeds.length ? `near ${esc(about.feeds.join(", "))}` : ""];
       return `<li>${hand("rest")}${k}${n}<span class="feeds">${parts.filter(Boolean).join(" · ")}</span></li>`;
     }).join("");
   }

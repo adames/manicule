@@ -341,9 +341,18 @@
     const line = (about, i, isPass) => {
       const k = several && !isPass ? `<span class="k">taste ${i + 1}</span>` : "";
       const n = `<span class="n">${about.count} ${isPass ? "passed" : about.count === 1 ? "pick" : "picks"}</span>`;
-      const label = about.labels.length ? `about <b>${esc(about.labels[0].text)}</b>` : "";
-      const words = about.words.length ? esc(about.words.join(", ")) : "";
-      const said = [label, words].filter(Boolean).join(" · ") || "near nothing in today's pool";
+      // "about the iphone 17 pro · apple and iphone" when one thing dominates;
+      // "about apple and iphone · iphone air, iphone duo" when it is a field.
+      // …and "about apple and iphone · this week: iphone duo, apple surprise"
+      // when the nearest posts are bunched in time: an announcement, not a field.
+      const label = about.labels.length ? esc(about.labels[0].text) : "";
+      const rest = about.words.filter((w) => w !== about.focus);
+      const when = about.happening ? `<b>${about.happening}</b>: ` : "";
+      const specifics = rest.length ? when + esc(rest.join(", ")) : about.happening ? `<b>${about.happening}</b>` : "";
+      const said = about.focus
+        ? [`about <b>${esc(about.focus)}</b>`, label, specifics].filter(Boolean).join(" · ")
+        : [label ? `about <b>${label}</b>` : "", specifics].filter(Boolean).join(" · ")
+          || "near nothing in today's pool";
       const where = about.feeds.length ? ` title="near ${esc(about.feeds.join(", "))}"` : "";
       return `<li>${hand(isPass ? "bird" : "rest")}${k}${n}<span class="feeds"${where}>${said}</span></li>`;
     };

@@ -50,9 +50,21 @@ the feed says, above the rows, one line an average:
 nobody chose those words and nothing is stored. `labels.txt` is a vocabulary
 of things a taste can be about, from "news" down to "nintendo and consoles";
 the build embeds every line with the same model as the posts, and a taste is
-about whichever label its average sits nearest. the specific words are the
-uncommon ones in the headlines nearest the average, and they have to be in at
-least two of them. the method page shows the cosines.
+about whichever label its average sits nearest. the specific part is the
+phrases in the twelve headlines nearest the average — "iphone 17 pro" over
+"iphone" — and a phrase has to be in at least two of them.
+
+two more things the pool can tell, and the line says when it can:
+
+- a phrase in half the nearest headlines is what the taste is about, and it
+  leads: `about lanterns · tv shows and streaming series`.
+- three quarters of the nearest posts within three days of each other, from
+  several feeds, is something happening rather than a field: `about apple and
+  iphone · today: iphone duo, apple surprise, shine event`. an announcement is
+  many feeds saying the same thing at once; a category is spread across the
+  pool's ninety days.
+
+the method page shows the cosines and says which rule fired.
 
 it is read off today's pool, so it is as true of a taste carried in by a link
 as of one pressed just now. the cli prints the same labels in its heading.

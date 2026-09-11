@@ -56,20 +56,39 @@
   //   feeds  — where those nearest posts came from.
   // All of it is read off today's pool, so it is as true of a taste carried
   // in by a link as of one pressed just now.
-  const STOP = new Set(("about after again also among another because before being between both " +
-    "could does doing down during each even every first from have here into just like made make many " +
-    "more most much must never only other over same should since some still such than that their them " +
-    "then there these they this those through under until very were what when where which while whose " +
-    "will with without would your years year week today says said show shows watch look best good new " +
-    "news review reviews guide things thing world time people").split(" "));
-  const tokens = (text) => (String(text || "").toLowerCase().match(/[a-z][a-z'-]{3,}/g) || []);
+  const STOP = new Set(("a an the and or but of to in on at for with from by as is are was were be been " +
+    "it its this that these those there here than then so if not no yes about after again also among another " +
+    "because before being between both could does doing down during each even every first have into just like " +
+    "made make many more most much must never only other over same should since some still such their them " +
+    "they through under until very what when where which while whose will without would your you we our my " +
+    "years year week today says said show shows watch look best good new news review reviews guide things " +
+    "thing world time people how why who what one two three all any can get got has had").split(" "));
+  const tokens = (text) => (String(text || "").toLowerCase().match(/[a-z0-9][a-z0-9'-]{1,}/g) || [])
+    .filter((w) => w.length >= 3 || /\d/.test(w));
 
-  // How many headlines each word is in, once per pool.
+  // The phrases in a headline: every run of one to three words with no
+  // stopword in it. "iphone 17 pro" and "iphone air" are what an announcement
+  // is called in the pool's own words; single words alone gave "shine, event".
+  function phrasesOf(text) {
+    const words = tokens(text);
+    const out = new Set();
+    for (let i = 0; i < words.length; i++) {
+      if (STOP.has(words[i])) continue;
+      out.add(words[i]);
+      if (i + 1 < words.length && !STOP.has(words[i + 1])) {
+        out.add(words[i] + " " + words[i + 1]);
+        if (i + 2 < words.length && !STOP.has(words[i + 2])) out.add(words[i] + " " + words[i + 1] + " " + words[i + 2]);
+      }
+    }
+    return out;
+  }
+
+  // How many headlines each phrase is in, once per pool.
   const dfOf = new WeakMap();
   function documentFrequency(posts) {
     if (dfOf.has(posts)) return dfOf.get(posts);
     const df = {};
-    for (const post of posts) for (const w of new Set(tokens(post.title))) df[w] = (df[w] || 0) + 1;
+    for (const post of posts) for (const g of phrasesOf(post.title)) df[g] = (df[g] || 0) + 1;
     dfOf.set(posts, df);
     return df;
   }
@@ -91,31 +110,56 @@
       for (const { post } of near) counts[post.feed] = (counts[post.feed] || 0) + 1;
       const feeds = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b)).slice(0, 3);
 
-      // A word scores by how many of the nearest headlines it is in, weighed by
-      // how rare it is in the pool. "the" is everywhere and scores nothing;
-      // "lanterns" in three of twelve headlines is the whole story.
-      const score = {};
-      for (const { post } of near) {
-        for (const w of new Set(tokens(post.title))) {
-          if (STOP.has(w)) continue;
-          score[w] = (score[w] || 0) + Math.log(N / ((df[w] || 0) + 1));
-        }
-      }
-      // A word in one headline only is that headline's, not the taste's.
-      const inHow = {};
-      for (const { post } of near) for (const w of new Set(tokens(post.title))) inHow[w] = (inHow[w] || 0) + 1;
       const about = labels
         .map((label) => ({ text: label.text, cos: cosine(one.vector, label.vector) }))
         .sort((a, b) => b.cos - a.cos).slice(0, 3);
 
-      // "about recipes · recipes, chicken" says recipes twice. A word the
+      // A phrase scores by how many of the nearest headlines it is in, weighed
+      // by how rare it is in the pool, with a nod to length: "iphone 17 pro"
+      // over "iphone" when both are there. It has to be in two headlines or
+      // it is one headline's phrase and not the taste's, and a phrase the
       // label already says is not the specific thing.
-      const saidByLabel = new Set(about.length ? tokens(about[0].text) : []);
-      const words = Object.keys(score)
-        .filter((w) => inHow[w] >= 2 && !saidByLabel.has(w))
-        .sort((a, b) => score[b] - score[a] || a.localeCompare(b)).slice(0, 3);
+      const inHow = {};
+      for (const { post } of near) for (const g of phrasesOf(post.title)) inHow[g] = (inHow[g] || 0) + 1;
+      const saidByLabel = about.length ? " " + tokens(about[0].text).join(" ") + " " : "";
+      const scored = Object.keys(inHow)
+        .filter((g) => inHow[g] >= 2 && !saidByLabel.includes(" " + g + " "))
+        .map((g) => ({ g, n: inHow[g], s: inHow[g] * Math.log(N / ((df[g] || 0) + 1)) * (1 + 0.35 * (g.split(" ").length - 1)) }))
+        .sort((a, b) => b.s - a.s || b.g.length - a.g.length || a.g.localeCompare(b.g));
+      const words = [];
+      for (const { g } of scored) {
+        if (words.length === 3) break;
+        // "iphone 17" inside "iphone 17 pro" says nothing new, either way round.
+        if (words.some((w) => (" " + w + " ").includes(" " + g + " ") || (" " + g + " ").includes(" " + w + " "))) continue;
+        words.push(g);
+      }
 
-      return { count: one.count, labels: about, words, feeds, nearest: near.length ? near[0].post : null };
+      // When one phrase is in half the nearest headlines, the taste is not
+      // about a category with that phrase in it; it is about that thing, and
+      // the category is the second clause. This is how "apple and iphone"
+      // becomes "the iphone 17 pro", on the day it is.
+      const lead = scored.length && scored[0].n * 2 >= Math.min(k, near.length) ? scored[0].g : null;
+      const focus = lead && words.includes(lead) ? lead : null;
+
+      // A category's nearest posts are spread across the pool's ninety days.
+      // An announcement's are many feeds within days of each other: eleven
+      // of the twelve nearest to an iphone launch were two days old, while
+      // recipes, wine and an essay on liberalism ran ten to eighty. So: when
+      // three quarters of the nearest posts fall within three days of each
+      // other, from several feeds, the taste is about something happening,
+      // and the page says when rather than pretending it is a field.
+      const dated = near.map(({ post }) => Date.parse(post.published)).filter((t) => !isNaN(t)).sort((a, b) => b - a);
+      let happening = null;
+      if (dated.length >= 6 && feeds.length >= 3) {
+        const newest = dated[0], DAY = 86400000;
+        const bunched = dated.filter((t) => newest - t <= 3 * DAY).length;
+        if (bunched * 4 >= dated.length * 3) {
+          const age = (Date.now() - newest) / DAY;
+          happening = age <= 2 ? "today" : age <= 7 ? "this week" : "lately";
+        }
+      }
+
+      return { count: one.count, labels: about, words, focus, happening, feeds, nearest: near.length ? near[0].post : null };
     });
   }
 

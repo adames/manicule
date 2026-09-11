@@ -132,6 +132,10 @@ test("describe says what a taste is about: a label and the specific words", () =
   assert.ok(about[0].words.includes("sourdough"), about[0].words.join());
   assert.equal(about[1].labels[0].text, "tv shows");
   assert.ok(about[1].words.includes("lanterns"), about[1].words.join());
+  // "lanterns" is in every one of the nearest headlines: the taste is about
+  // lanterns, and "tv shows" is the category it sits in.
+  assert.equal(about[1].focus, "lanterns");
+  assert.equal(about[0].focus, "sourdough");
   // A word in one headline only is not "what the taste is about".
   assert.ok(!about[1].words.includes("finale"));
   // And a word the label already says is not the specific thing.
@@ -140,4 +144,43 @@ test("describe says what a taste is about: a label and the specific words", () =
   assert.ok(!cooked[0].words.includes("sourdough"), cooked[0].words.join());
   // No labels shipped (an older build) is not an error.
   assert.deepEqual(M.describe(M.tasteOf([cook]), posts)[0].labels, []);
+});
+
+test("a phrase beats its own words, and a focus needs half the headlines", () => {
+  const posts = [
+    { id: "1", feed: "a", title: "The iPhone Air and iPhone 17 Pro", vector: [1, 0] },
+    { id: "2", feed: "b", title: "iPhone 17 Pro review roundup", vector: [0.98, 0.1] },
+    { id: "3", feed: "c", title: "Everything Apple announced: iPhone 17 Pro, iPhone Air", vector: [0.97, 0.2] },
+    { id: "4", feed: "d", title: "Apple's surprise and shine event", vector: [0.9, 0.3] },
+    { id: "5", feed: "e", title: "Why the iPhone Air is so thin", vector: [0.95, 0.1] },
+    { id: "6", feed: "f", title: "A cheaper way to buy an old iPhone", vector: [0.8, 0.5] },
+  ];
+  const labels = [{ text: "apple and iphone", vector: [1, 0] }, { text: "sport", vector: [0, 1] }];
+  const [about] = M.describe(M.tasteOf([[1, 0]]), posts, labels, 6);
+  assert.equal(about.labels[0].text, "apple and iphone");
+  assert.ok(about.words.includes("iphone 17 pro"), about.words.join(" | "));
+  assert.ok(!about.words.includes("iphone 17"), "the shorter phrase says nothing new");
+  assert.equal(about.focus, "iphone 17 pro");
+  // Spread the headlines out and nothing dominates: a category, not a thing.
+  const spread = posts.map((p, i) => ({ ...p, title: ["Apple earnings beat", "New MacBook rumours", "iOS bug fixed", "Vision Pro sales", "Tim Cook interview", "AirPods teardown"][i] }));
+  assert.equal(M.describe(M.tasteOf([[1, 0]]), spread, labels, 6)[0].focus, null);
+});
+
+test("posts bunched in time are something happening; spread out, a field", () => {
+  const day = 86400000, now = Date.now();
+  const at = (d) => new Date(now - d * day).toISOString();
+  const mk = (ages) => ages.map((d, i) => ({ id: String(i), feed: "f" + (i % 4), title: "headline " + i, published: at(d), vector: [1, 0.01 * i] }));
+  const taste = M.tasteOf([[1, 0]]);
+  const launch = M.describe(taste, mk([0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 9, 40]), [], 12)[0];
+  assert.equal(launch.happening, "today");
+  const lastWeek = M.describe(taste, mk([5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 30, 60]), [], 12)[0];
+  assert.equal(lastWeek.happening, "this week");
+  const field = M.describe(taste, mk([0, 0, 1, 3, 8, 9, 13, 15, 22, 38, 60, 86]), [], 12)[0];
+  assert.equal(field.happening, null);
+  // One feed shouting is not an announcement.
+  const oneFeed = mk([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).map((p) => ({ ...p, feed: "solo" }));
+  assert.equal(M.describe(taste, oneFeed, [], 12)[0].happening, null);
+  // Undated posts do not count either way.
+  const undated = mk([0, 0, 0, 0, 0, 0]).map((p) => ({ ...p, published: "" }));
+  assert.equal(M.describe(taste, undated, [], 12)[0].happening, null);
 });
