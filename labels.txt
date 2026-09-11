@@ -6,8 +6,13 @@
 # nearest one wins, and a narrow label only wins when it really is closer.
 # a label that is too narrow pulls neighbours in ("the rust programming
 # language" took the go blog), so name a field rather than one thing in it.
+#
+# the sections are the shelves of feeds.opml, so a new shelf can be checked
+# against the words the page has for it. the reader never sees a shelf name;
+# the label is what gets printed. order does not matter to the ranker.
 # lines starting with # are ignored.
 
+# news + world
 news
 world news and politics
 us politics
@@ -15,17 +20,36 @@ uk politics
 elections
 war and conflict
 foreign policy and diplomacy
+international affairs and geopolitics
+china and east asia
+russia and ukraine
+africa
+south asia
 law and courts
 crime and policing
 immigration
+media and journalism
+investigative journalism
+humor and satire
+
+# money + work
 business
 economics
+economics research
 personal finance and investing
 markets and stocks
 startups and venture capital
 cryptocurrency
 work and careers
 management and leadership
+labor and unions
+housing and rent
+home and real estate
+shopping and deals
+productivity and self-improvement
+statistics and data
+
+# code + ai
 technology
 programming and software development
 web development
@@ -33,9 +57,18 @@ open source software
 systems programming (rust, c, c++)
 python programming
 javascript
+the go programming language
+programming languages and compilers
+algorithms and computer science theory
 databases
 operating systems and linux
+cloud computing and devops
+networking and the internet's plumbing
+cryptography
+quantum computing
 computer hardware and chips
+retro computing and vintage hardware
+ios and mac app development
 cybersecurity and hacking
 privacy and surveillance
 artificial intelligence
@@ -46,6 +79,12 @@ apple and iphone
 smartphones and gadgets
 social media and the internet
 big tech companies
+tools and gear reviews
+home automation
+virtual reality
+drones
+
+# science
 science
 physics
 astronomy and space
@@ -56,28 +95,78 @@ biology and genetics
 neuroscience and the brain
 medicine and medical research
 psychology
+history of science and mathematics
+dinosaurs and fossils
+volcanoes and earthquakes
+insects
+maps and geography
+
+# nature + outdoors
 climate change
+climate and energy policy
 weather
 environment and conservation
 energy and electricity
+nature and wildlife
+animals and pets
+birds
+gardening and plants
+hiking and the outdoors
+oceans and marine life
+camping
+fishing and hunting
+national parks
+
+# making + engineering
 engineering
 making and diy electronics
+electronics and circuits
 3d printing and maker projects
-woodworking
 metalworking and machining
-knitting, sewing and textiles
+
+# craft
 crafts
+woodworking
+knitting, sewing and textiles
+ceramics and pottery
+
+# health + body
 health and wellness
 fitness and exercise
 nutrition and diet
+diet and weight loss
 sleep
 mental health
+yoga and meditation
+public health and epidemiology
+healthcare policy
+drugs and pharmaceuticals
+vaccines and infectious disease
+cancer research
+aging and retirement
+death and grief
+parenting and children
+relationships and dating
+weddings
+fashion and style
+beauty and skincare
+education and schools
+
+# food
 food and cooking
 recipes
 baking and bread
+desserts and pastry
+vegetarian and vegan cooking
+grilling and barbecue
+kitchen equipment
 restaurants and dining
 wine, beer and drinks
+cocktails and spirits
 coffee
+tea
+
+# sport
 sport
 football (soccer)
 american football
@@ -87,152 +176,111 @@ tennis
 golf
 cycling
 running and marathons
+swimming and triathlon
+skiing and snowboarding
 motorsport and formula 1
 combat sports and boxing
 olympics
+chess
+
+# music
 music
 pop music
 rock music
 hip hop and rap
 jazz
 classical music
+opera
 electronic and dance music
 music theory and musicianship
+guitar
+synthesizers and music production
 album reviews
+musicals and theatre
+dance
+
+# film + tv
 film and movies
 movie reviews
+film criticism and cinema history
 tv shows and streaming series
-television
+tv recaps and episode reviews
+streaming services (netflix, hbo, disney)
 animation and anime
 comedy
 celebrities and entertainment news
+
+# books + writing
 books and literature
 fiction and novels
+fantasy novels
+science fiction and fantasy
+crime and mystery novels
+memoir and biography
+children's books
 poetry
 writing and publishing
 book reviews
+literary criticism and little magazines
+
+# essays + ideas
 essays and ideas
 philosophy
 religion and spirituality
+intellectual history and the history of ideas
+
+# history
 history
 ancient history and archaeology
+medieval history
 military history
+
+# language
+language and linguistics
+etymology and word origins
+
+# art
 art and museums
 painting and drawing
+
+# photography
 photography
+cameras and lenses
+
+# design + architecture
 graphic design
 typography and fonts
 architecture and buildings
+architecture criticism and the built environment
 interior design and furniture
 urban planning and cities
+
+# cars + transit
 public transit and trains
+trains and railways
 cars and driving
 electric vehicles
+motorcycles
+bicycles and bike commuting
 aviation and airplanes
+boats and sailing
+
+# travel
 travel
 hotels and airlines
+
+# games
 video games
 pc gaming
 nintendo and consoles
 indie games
 board games and tabletop
 game development
+
+# comics
 comics and graphic novels
-superheroes
-science fiction and fantasy
-nature and wildlife
-animals and pets
-birds
-gardening and plants
-hiking and the outdoors
-oceans and marine life
-language and linguistics
-education and schools
-parenting and children
-relationships and dating
-home and real estate
-shopping and deals
-productivity and self-improvement
-media and journalism
-podcasts
-humor and satire
-the go programming language
-ios and mac app development
-architecture criticism and the built environment
-investigative journalism
-tv recaps and episode reviews
-streaming services (netflix, hbo, disney)
-linux and open source
-chess
-running
-swimming and triathlon
-skiing and snowboarding
-fashion and style
-beauty and skincare
-weddings
-death and grief
-aging and retirement
-tools and gear reviews
-maps and geography
-statistics and data
-economics research
-housing and rent
-labor and unions
-healthcare policy
-drugs and pharmaceuticals
-vaccines and infectious disease
-cancer research
-diet and weight loss
-yoga and meditation
-cocktails and spirits
-tea
-vegetarian and vegan cooking
-grilling and barbecue
-desserts and pastry
-kitchen equipment
-guitar
-synthesizers and music production
-musicals and theatre
-opera
-dance
-fantasy novels
-crime and mystery novels
-memoir and biography
-children's books
 comics for kids
-trains and railways
-bicycles and bike commuting
-motorcycles
-boats and sailing
-camping
-fishing and hunting
-national parks
-volcanoes and earthquakes
-dinosaurs and fossils
-insects
-quantum computing
-cryptography
-networking and the internet's plumbing
-cloud computing and devops
-programming languages and compilers
-algorithms and computer science theory
-retro computing and vintage hardware
-electronics and circuits
-home automation
-cameras and lenses
-drones
-virtual reality
-intellectual history and the history of ideas
-medieval history
-history of science and mathematics
-film criticism and cinema history
-literary criticism and little magazines
-ceramics and pottery
-etymology and word origins
-public health and epidemiology
-china and east asia
-russia and ukraine
-africa
-south asia
-international affairs and geopolitics
-climate and energy policy
+superheroes
+
+# podcasts
+podcasts
