@@ -108,6 +108,11 @@
       data.posts.forEach((post, i) => {
         post.vector = "s" in post ? Manicule.dequantize(block.subarray(i * dim, (i + 1) * dim), post.s) : null;
       });
+      // The labels follow the posts in the same file: what a taste can be about.
+      const n = data.posts.length;
+      data.labels = (data.labels || []).map((label, i) => ({
+        text: label.t, vector: Manicule.dequantize(block.subarray((n + i) * dim, (n + i + 1) * dim), label.s),
+      }));
       try { localStorage.setItem("manicule-count", data.posts.length); } catch (_) {}
       for (const slot of all("[data-count]")) slot.textContent = data.posts.length;
       return data;

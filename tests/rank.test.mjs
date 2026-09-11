@@ -102,11 +102,42 @@ test("describe reads a taste off the pool, in feed names", () => {
     { id: "6", feed: "boats", vector: [0.05, 0.95, 0] },
     { id: "7", feed: "nowords", vector: null },
   ];
-  const about = M.describe(taste, posts, 3);
+  const about = M.describe(taste, posts, [], 3);
   assert.equal(about.length, 2);
   assert.deepEqual(about[0].feeds, ["apples", "pears"]);
   assert.equal(about[0].nearest.id, "1");
   assert.deepEqual(about[1].feeds, ["boats"]);
   assert.equal(about[1].count, 1);
   assert.deepEqual(M.describe([], posts), []);
+});
+
+test("describe says what a taste is about: a label and the specific words", () => {
+  const cook = [1, 0, 0], tv = [0, 1, 0];
+  const labels = [
+    { text: "cooking", vector: [0.9, 0.1, 0] },
+    { text: "tv shows", vector: [0.1, 0.9, 0] },
+    { text: "sport", vector: [0, 0, 1] },
+  ];
+  const posts = [
+    { id: "1", feed: "a", title: "Sourdough starter hydration explained", vector: [0.95, 0.05, 0] },
+    { id: "2", feed: "a", title: "A sourdough loaf for beginners", vector: [0.9, 0.1, 0] },
+    { id: "3", feed: "b", title: "Why sourdough needs a long rise", vector: [0.85, 0.15, 0] },
+    { id: "4", feed: "c", title: "Lanterns episode 3 recap", vector: [0.05, 0.95, 0] },
+    { id: "5", feed: "c", title: "Lanterns finale review", vector: [0, 1, 0.05] },
+    { id: "6", feed: "d", title: "Lanterns renewed for season two", vector: [0.1, 0.9, 0] },
+    { id: "7", feed: "e", title: "The transfer window closes", vector: [0, 0, 1] },
+  ];
+  const about = M.describe(M.tasteOf([cook, tv]), posts, labels, 3);
+  assert.equal(about[0].labels[0].text, "cooking");
+  assert.ok(about[0].words.includes("sourdough"), about[0].words.join());
+  assert.equal(about[1].labels[0].text, "tv shows");
+  assert.ok(about[1].words.includes("lanterns"), about[1].words.join());
+  // A word in one headline only is not "what the taste is about".
+  assert.ok(!about[1].words.includes("finale"));
+  // And a word the label already says is not the specific thing.
+  const cooked = M.describe(M.tasteOf([cook]), posts, [{ text: "sourdough baking", vector: [0.9, 0.1, 0] }], 3);
+  assert.equal(cooked[0].labels[0].text, "sourdough baking");
+  assert.ok(!cooked[0].words.includes("sourdough"), cooked[0].words.join());
+  // No labels shipped (an older build) is not an error.
+  assert.deepEqual(M.describe(M.tasteOf([cook]), posts)[0].labels, []);
 });

@@ -47,10 +47,36 @@
   }
   const nearness = (taste, vector) => whichOne(taste, vector).near;
 
-  // What a taste is about, in the pool's own words. Nothing is invented: for
-  // each average, the feeds its nearest posts come from, and the single post
-  // nearest of all. It is where the average points, read off the pool.
-  function describe(taste, posts, k = 12) {
+  // What a taste is about. Nothing is invented and nobody chose it:
+  //   labels — the vocabulary in labels.txt, embedded at build time. A taste is
+  //            about whichever label its average sits nearest: "cooking",
+  //            "tv shows and streaming series". Same model, same cosine.
+  //   words  — the uncommon words in the headlines nearest the average, which
+  //            is where "lanterns" comes from when the label says "tv shows".
+  //   feeds  — where those nearest posts came from.
+  // All of it is read off today's pool, so it is as true of a taste carried
+  // in by a link as of one pressed just now.
+  const STOP = new Set(("about after again also among another because before being between both " +
+    "could does doing down during each even every first from have here into just like made make many " +
+    "more most much must never only other over same should since some still such than that their them " +
+    "then there these they this those through under until very were what when where which while whose " +
+    "will with without would your years year week today says said show shows watch look best good new " +
+    "news review reviews guide things thing world time people").split(" "));
+  const tokens = (text) => (String(text || "").toLowerCase().match(/[a-z][a-z'-]{3,}/g) || []);
+
+  // How many headlines each word is in, once per pool.
+  const dfOf = new WeakMap();
+  function documentFrequency(posts) {
+    if (dfOf.has(posts)) return dfOf.get(posts);
+    const df = {};
+    for (const post of posts) for (const w of new Set(tokens(post.title))) df[w] = (df[w] || 0) + 1;
+    dfOf.set(posts, df);
+    return df;
+  }
+
+  function describe(taste, posts, labels = [], k = 12) {
+    const df = documentFrequency(posts);
+    const N = posts.length + 1;
     return (taste || []).map((one) => {
       const near = [];
       for (const post of posts) {
@@ -60,10 +86,36 @@
         else if (c > near[k - 1].c) { near[k - 1] = { post, c }; near.sort((a, b) => b.c - a.c); }
       }
       if (near.length < k) near.sort((a, b) => b.c - a.c);
+
       const counts = {};
       for (const { post } of near) counts[post.feed] = (counts[post.feed] || 0) + 1;
       const feeds = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b)).slice(0, 3);
-      return { count: one.count, feeds, nearest: near.length ? near[0].post : null };
+
+      // A word scores by how many of the nearest headlines it is in, weighed by
+      // how rare it is in the pool. "the" is everywhere and scores nothing;
+      // "lanterns" in three of twelve headlines is the whole story.
+      const score = {};
+      for (const { post } of near) {
+        for (const w of new Set(tokens(post.title))) {
+          if (STOP.has(w)) continue;
+          score[w] = (score[w] || 0) + Math.log(N / ((df[w] || 0) + 1));
+        }
+      }
+      // A word in one headline only is that headline's, not the taste's.
+      const inHow = {};
+      for (const { post } of near) for (const w of new Set(tokens(post.title))) inHow[w] = (inHow[w] || 0) + 1;
+      const about = labels
+        .map((label) => ({ text: label.text, cos: cosine(one.vector, label.vector) }))
+        .sort((a, b) => b.cos - a.cos).slice(0, 3);
+
+      // "about recipes · recipes, chicken" says recipes twice. A word the
+      // label already says is not the specific thing.
+      const saidByLabel = new Set(about.length ? tokens(about[0].text) : []);
+      const words = Object.keys(score)
+        .filter((w) => inHow[w] >= 2 && !saidByLabel.has(w))
+        .sort((a, b) => score[b] - score[a] || a.localeCompare(b)).slice(0, 3);
+
+      return { count: one.count, labels: about, words, feeds, nearest: near.length ? near[0].post : null };
     });
   }
 

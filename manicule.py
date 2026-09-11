@@ -765,8 +765,19 @@ def nearness(taste: Taste, vector: list[float]) -> float:
     return max(cosine(vector, mean) for mean, _ in taste)
 
 
-def write_vectors(posts: list[Post], out: Path) -> None:
-    """The int8 vectors, packed, one after another in posts.json's order.
+def about(taste: Taste, labels: list[str], label_vectors: list[list[float]]) -> list[str]:
+    """What each average is about: the label from labels.txt it sits nearest.
+    The page does the same in rank.js, with the same vectors."""
+    out = []
+    for mean, _ in taste:
+        best = max(range(len(labels)), key=lambda i: cosine(mean, label_vectors[i]), default=None)
+        out.append(labels[best] if best is not None else "")
+    return out
+
+
+def write_vectors(posts: list[Post], out: Path, labels: list[list[float]] = ()) -> None:
+    """The int8 vectors, packed, one after another in posts.json's order, then
+    the label vectors after them in labels' order.
 
     A post with no vector writes 384 zeros; the JSON row has no scale, and
     that is how a reader knows. Binary is a fifth the size of the same numbers
@@ -774,15 +785,25 @@ def write_vectors(posts: list[Post], out: Path) -> None:
     """
     import numpy as np
     zeros = [0] * DIM
-    block = np.array([quantize(p.vector)[0] if p.vector is not None else zeros for p in posts], dtype=np.int8)
-    out.write_bytes(block.tobytes())
+    rows = [quantize(p.vector)[0] if p.vector is not None else zeros for p in posts]
+    rows += [quantize(v)[0] for v in labels]
+    out.write_bytes(np.array(rows, dtype=np.int8).tobytes())
 
 
 def read_vectors(rows: list[dict], path: Path) -> list[list[float] | None]:
-    """Mirror of write_vectors: the same rows back, dequantized by the JSON scale."""
+    """Mirror of write_vectors: the same rows back, dequantized by the JSON scale.
+    Anything after the posts (the labels) is left in the file."""
     import numpy as np
-    block = np.frombuffer(path.read_bytes(), dtype=np.int8).reshape(len(rows), DIM)
+    block = np.frombuffer(path.read_bytes(), dtype=np.int8)[: len(rows) * DIM].reshape(len(rows), DIM)
     return [dequantize(block[i].tolist(), row["s"]) if "s" in row else None for i, row in enumerate(rows)]
+
+
+def read_labels(path: Path) -> list[str]:
+    """labels.txt: one label a line, # for a comment. What a taste can be about."""
+    if not path.exists():
+        return []
+    return [line.strip() for line in path.read_text().splitlines()
+            if line.strip() and not line.lstrip().startswith("#")]
 
 
 def dequantize(q: list[int], scale: float) -> list[float]:
@@ -802,14 +823,19 @@ def cmd_rank(args: argparse.Namespace) -> int:
     print(f"embedding {len(posts)} posts, {len(picked_notes)} picked, "
           f"{len(passed_notes)} passed…", file=sys.stderr)
     embed_posts(posts)
-    ranked = rank(posts, taste_of(embed(picked_notes)), taste_of(embed(passed_notes)), lam=args.lam)
+    picked_taste, passed_taste = taste_of(embed(picked_notes)), taste_of(embed(passed_notes))
+    ranked = rank(posts, picked_taste, passed_taste, lam=args.lam)
+    labels = read_labels(Path(__file__).with_name("labels.txt"))
+    what = about(picked_taste, labels, embed(labels)) if labels and picked_taste else []
 
     if ranked is None:
         heading = "# newest first — nothing picked yet, so there is no taste to rank by\n"
         rows = [(post, None) for post in posts[:args.limit]]
     else:
+        # "about cooking · tv shows": the same labels the page prints.
+        said = f" · about {' · '.join(dict.fromkeys(what))}" if what else ""
         heading = (f"# ranked by taste — {len(picked_notes)} picked, "
-                   f"{len(passed_notes)} passed, λ={args.lam}\n")
+                   f"{len(passed_notes)} passed, λ={args.lam}{said}\n")
         rows = [(s.post, s) for s in ranked[:args.limit]]
 
     lines = [heading]
@@ -850,6 +876,14 @@ def cmd_posts(args: argparse.Namespace) -> int:
             row["s"] = quantize(post.vector)[1]
         rows.append(row)
 
+    # What a taste can be about. The labels ride in the same model as the
+    # posts, so "cooking" is a direction like any headline, and a taste is
+    # about whichever label its average sits nearest. No runtime model, no
+    # server: a vocabulary and a cosine, the same as everything else here.
+    labels = read_labels(Path(__file__).with_name("labels.txt"))
+    label_vectors = embed(labels) if labels else []
+    print(f"embedding {len(labels)} labels…", file=sys.stderr)
+
     payload = {
         "generated": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "model": MODEL,
@@ -859,11 +893,12 @@ def cmd_posts(args: argparse.Namespace) -> int:
         "demo": demo_taste(posts),
         "spread": spread(posts),
         "proof": evaluate(posts),
+        "labels": [{"t": text, "s": quantize(v)[1]} for text, v in zip(labels, label_vectors)],
         "posts": rows,
     }
     out = Path(args.out)
     out.write_text(json.dumps(payload, separators=(",", ":")))
-    write_vectors(posts, out.with_name("vectors.bin"))
+    write_vectors(posts, out.with_name("vectors.bin"), label_vectors)
     print(f"wrote {out} and vectors.bin: {len(posts)} posts from {len(payload['feeds'])} feeds",
           file=sys.stderr)
     return 0

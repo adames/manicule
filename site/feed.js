@@ -335,17 +335,21 @@
     box.hidden = !picked.length && !passed.length;
     if (box.hidden) { box.innerHTML = ""; return; }
     const several = picked.length > 1;
+    // "about cooking · sourdough, starter, hydration". The label is the
+    // category; the words are the specific thing. The feeds it sits nearest
+    // are in the tooltip, and all three are worked on the method page.
     const line = (about, i, isPass) => {
       const k = several && !isPass ? `<span class="k">taste ${i + 1}</span>` : "";
       const n = `<span class="n">${about.count} ${isPass ? "passed" : about.count === 1 ? "pick" : "picks"}</span>`;
-      const feeds = about.feeds.length
-        ? `<span class="feeds">near ${about.feeds.map((f) => `<b title="${esc(f)}">${esc(shorten(f, 28))}</b>`).join(", ")}</span>`
-        : `<span class="feeds">near nothing in today's pool</span>`;
-      return `<li>${hand(isPass ? "bird" : "rest")}${k}${n}${feeds}</li>`;
+      const label = about.labels.length ? `about <b>${esc(about.labels[0].text)}</b>` : "";
+      const words = about.words.length ? esc(about.words.join(", ")) : "";
+      const said = [label, words].filter(Boolean).join(" · ") || "near nothing in today's pool";
+      const where = about.feeds.length ? ` title="near ${esc(about.feeds.join(", "))}"` : "";
+      return `<li>${hand(isPass ? "bird" : "rest")}${k}${n}<span class="feeds"${where}>${said}</span></li>`;
     };
     box.innerHTML =
-      Manicule.describe(picked, posts.posts).map((about, i) => line(about, i, false)).join("") +
-      Manicule.describe(passed, posts.posts).map((about, i) => line(about, i, true)).join("");
+      Manicule.describe(picked, posts.posts, posts.labels).map((about, i) => line(about, i, false)).join("") +
+      Manicule.describe(passed, posts.posts, posts.labels).map((about, i) => line(about, i, true)).join("");
   }
 
   function draw() {

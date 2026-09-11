@@ -38,6 +38,25 @@ with no words sinks to the bottom, but it never gets dropped.
 the idea comes from [Commonplace](https://github.com/adames/commonplace), an
 unreleased library I was developing.
 
+## What a taste is about
+
+the feed says, above the rows, one line an average:
+
+```
+☞ taste 1 · 3 picks · about cooking · sourdough, starter, hydration
+☞ taste 2 · 1 pick · about tv shows and streaming series · lanterns
+```
+
+nobody chose those words and nothing is stored. `labels.txt` is a vocabulary
+of things a taste can be about, from "news" down to "nintendo and consoles";
+the build embeds every line with the same model as the posts, and a taste is
+about whichever label its average sits nearest. the specific words are the
+uncommon ones in the headlines nearest the average, and they have to be in at
+least two of them. the method page shows the cosines.
+
+it is read off today's pool, so it is as true of a taste carried in by a link
+as of one pressed just now. the cli prints the same labels in its heading.
+
 ## Does it work
 
 the ranker gets tested against a label it can't see: the feed a post came

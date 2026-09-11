@@ -1,0 +1,224 @@
+# labels.txt — what a taste can be about.
+#
+# each line is one label. the build embeds them with the same model as the
+# posts and ships the vectors beside them; a taste is "about" whichever label
+# its average sits nearest. broad and narrow labels both belong here: the
+# nearest one wins, and a narrow label only wins when it really is closer.
+# a label that is too narrow pulls neighbours in ("the rust programming
+# language" took the go blog), so name a field rather than one thing in it.
+# lines starting with # are ignored.
+
+news
+world news and politics
+us politics
+uk politics
+elections
+war and conflict
+foreign policy and diplomacy
+law and courts
+crime and policing
+immigration
+business
+economics
+personal finance and investing
+markets and stocks
+startups and venture capital
+cryptocurrency
+work and careers
+management and leadership
+technology
+programming and software development
+web development
+open source software
+systems programming (rust, c, c++)
+python programming
+javascript
+databases
+operating systems and linux
+computer hardware and chips
+cybersecurity and hacking
+privacy and surveillance
+artificial intelligence
+large language models and chatbots
+machine learning research
+robotics
+apple and iphone
+smartphones and gadgets
+social media and the internet
+big tech companies
+science
+physics
+astronomy and space
+space exploration and rockets
+mathematics
+chemistry
+biology and genetics
+neuroscience and the brain
+medicine and medical research
+psychology
+climate change
+weather
+environment and conservation
+energy and electricity
+engineering
+making and diy electronics
+3d printing and maker projects
+woodworking
+metalworking and machining
+knitting, sewing and textiles
+crafts
+health and wellness
+fitness and exercise
+nutrition and diet
+sleep
+mental health
+food and cooking
+recipes
+baking and bread
+restaurants and dining
+wine, beer and drinks
+coffee
+sport
+football (soccer)
+american football
+basketball
+baseball
+tennis
+golf
+cycling
+running and marathons
+motorsport and formula 1
+combat sports and boxing
+olympics
+music
+pop music
+rock music
+hip hop and rap
+jazz
+classical music
+electronic and dance music
+music theory and musicianship
+album reviews
+film and movies
+movie reviews
+tv shows and streaming series
+television
+animation and anime
+comedy
+celebrities and entertainment news
+books and literature
+fiction and novels
+poetry
+writing and publishing
+book reviews
+essays and ideas
+philosophy
+religion and spirituality
+history
+ancient history and archaeology
+military history
+art and museums
+painting and drawing
+photography
+graphic design
+typography and fonts
+architecture and buildings
+interior design and furniture
+urban planning and cities
+public transit and trains
+cars and driving
+electric vehicles
+aviation and airplanes
+travel
+hotels and airlines
+video games
+pc gaming
+nintendo and consoles
+indie games
+board games and tabletop
+game development
+comics and graphic novels
+superheroes
+science fiction and fantasy
+nature and wildlife
+animals and pets
+birds
+gardening and plants
+hiking and the outdoors
+oceans and marine life
+language and linguistics
+education and schools
+parenting and children
+relationships and dating
+home and real estate
+shopping and deals
+productivity and self-improvement
+media and journalism
+podcasts
+humor and satire
+the go programming language
+ios and mac app development
+architecture criticism and the built environment
+investigative journalism
+tv recaps and episode reviews
+streaming services (netflix, hbo, disney)
+linux and open source
+chess
+running
+swimming and triathlon
+skiing and snowboarding
+fashion and style
+beauty and skincare
+weddings
+death and grief
+aging and retirement
+tools and gear reviews
+maps and geography
+statistics and data
+economics research
+housing and rent
+labor and unions
+healthcare policy
+drugs and pharmaceuticals
+vaccines and infectious disease
+cancer research
+diet and weight loss
+yoga and meditation
+cocktails and spirits
+tea
+vegetarian and vegan cooking
+grilling and barbecue
+desserts and pastry
+kitchen equipment
+guitar
+synthesizers and music production
+musicals and theatre
+opera
+dance
+fantasy novels
+crime and mystery novels
+memoir and biography
+children's books
+comics for kids
+trains and railways
+bicycles and bike commuting
+motorcycles
+boats and sailing
+camping
+fishing and hunting
+national parks
+volcanoes and earthquakes
+dinosaurs and fossils
+insects
+quantum computing
+cryptography
+networking and the internet's plumbing
+cloud computing and devops
+programming languages and compilers
+algorithms and computer science theory
+retro computing and vintage hardware
+electronics and circuits
+home automation
+cameras and lenses
+drones
+virtual reality

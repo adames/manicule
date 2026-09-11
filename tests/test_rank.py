@@ -219,3 +219,34 @@ def test_rank_says_which_average_a_post_sits_nearest():
     by_id = {s.post.id: s for s in rank(posts, taste, [])}
     assert by_id["pa"].which == 0 and by_id["pb"].which == 1
     assert by_id["none"].which == -1
+
+
+def test_labels_ride_behind_the_posts_in_vectors_bin(tmp_path):
+    """The labels follow the posts in the same file, and reading the posts
+    back ignores them; labels.txt skips comments and blank lines."""
+    import random
+    from manicule import DIM, quantize, read_labels, read_vectors, write_vectors
+    rng = random.Random(5)
+    posts = [Post("a", "a", "", "", "", "", "article", [rng.gauss(0, 1) for _ in range(DIM)])]
+    labels = [[rng.gauss(0, 1) for _ in range(DIM)] for _ in range(2)]
+    rows = [{"s": quantize(posts[0].vector)[1]}]
+    path = tmp_path / "vectors.bin"
+    write_vectors(posts, path, labels)
+    assert path.stat().st_size == 3 * DIM
+    back = read_vectors(rows, path)
+    assert len(back) == 1 and cosine(back[0], posts[0].vector) > 0.999
+
+    text = tmp_path / "labels.txt"
+    text.write_text("# a comment\n\ncooking\n  # indented comment\ntv shows\n")
+    assert read_labels(text) == ["cooking", "tv shows"]
+    assert read_labels(tmp_path / "missing.txt") == []
+
+
+def test_about_names_the_nearest_label_per_average():
+    from manicule import about
+    labels = ["cooking", "tv shows", "sport"]
+    vectors = [[0.9, 0.1, 0.0], [0.1, 0.9, 0.0], [0.0, 0.0, 1.0]]
+    taste = taste_of([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+    assert about(taste, labels, vectors) == ["cooking", "tv shows"]
+    assert about([], labels, vectors) == []
+    assert about(taste, [], []) == ["", ""]

@@ -339,13 +339,16 @@
 
   // Each pick against the taste it belongs to. Which average that is, is the
   // whole of the clustering: nothing is labelled and nobody chose it.
+  // The same lines as the feed, with the working shown: the three nearest
+  // labels and their cosines, then the words, then the feeds.
   function renderTastes(built, pretend) {
     const several = built.length > 1;
-    el("tastes").innerHTML = Manicule.describe(built, today.posts).map((about, i) => {
+    el("tastes").innerHTML = Manicule.describe(built, today.posts, today.labels).map((about, i) => {
       const k = several ? `<span class="k">taste ${i + 1}</span>` : "";
       const n = `<span class="n">${about.count} ${about.count === 1 ? "pick" : "picks"}${pretend ? ", pretend" : ""}</span>`;
-      const feeds = `<span class="feeds">near ${about.feeds.map((f) => `<b title="${esc(f)}">${esc(f.length > 28 ? f.slice(0, 27) + "…" : f)}</b>`).join(", ")}</span>`;
-      return `<li>${hand("rest")}${k}${n}${feeds}</li>`;
+      const labels = about.labels.map((l, j) => `${j ? "" : "about "}<b>${esc(l.text)}</b> <span class="mono">${signed(l.cos)}</span>`).join(", ");
+      const parts = [labels, about.words.length ? esc(about.words.join(", ")) : "", about.feeds.length ? `near ${esc(about.feeds.join(", "))}` : ""];
+      return `<li>${hand("rest")}${k}${n}<span class="feeds">${parts.filter(Boolean).join(" · ")}</span></li>`;
     }).join("");
   }
 

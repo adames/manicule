@@ -911,6 +911,10 @@ section .ruler-wrap {
   min-width: 0;
 }
 
+.prose .tastes .feeds {
+  white-space: normal;
+} /* on the method page the line carries the working, so it wraps */
+
 .tastes .feeds b {
   font-weight: var(--weight-medium);
   color: var(--text);
