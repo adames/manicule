@@ -359,6 +359,30 @@
     renderPicks(taste);
   }
 
+  // ── the ruler ────────────────────────────────────────────────────────────
+  // λ is a preference, not a pick, so moving it only ever changes λ. It rides
+  // in the link with the rest of the taste, which is how the feed hears about it.
+
+  function setRuler(value) {
+    el("lam").value = value;
+    el("lamv").value = value.toFixed(2);
+    el("lam").setAttribute("aria-valuetext", "λ " + value.toFixed(2));
+  }
+
+  el("lam").addEventListener("input", (event) => {
+    const lambda = Shell.lam(event.target.value);
+    setRuler(lambda);
+    const now = Shell.tasteIn(location.hash);
+    history.replaceState(null, "", Shell.hashOf({ ...now, l: lambda }));
+    Shell.carry();
+    Shell.renderAddrs();
+    const saved = Shell.mirror();
+    if (saved) {
+      try { localStorage.setItem("manicule", JSON.stringify({ ...saved, l: lambda })); } catch (_) {}
+    }
+    renderWorked();
+  });
+
   // ── boot ─────────────────────────────────────────────────────────────────
 
   fetchSource().then(renderListing);
@@ -370,6 +394,7 @@
       el("dims").textContent = `${today.posts.length} × ${today.dim}`;
 
       renderProof(today.proof);
+      setRuler(tasteNow().lambda);
       renderWorked();
       addEventListener("hashchange", () => { if (Shell.isTaste(location.hash)) renderWorked(); });
     })

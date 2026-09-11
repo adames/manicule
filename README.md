@@ -78,7 +78,11 @@ two things visibly reorders everything.
 a first visit lands on a spread: thirty posts chosen at build time to sit as
 far apart as possible, so whatever you are into, something up there is near it.
 pressing a post changes the scores and leaves the order alone; `order by taste`
-sorts on them when you ask.
+sorts on them when you ask. λ lives on the method page, next to the paragraph
+that explains it.
+
+it installs, too: a manifest and a small service worker, so yesterday's pool
+reads on a train.
 
 vectors ship as int8 with one scale each, packed in `vectors.bin` beside
 `posts.json`, a fifth the size of the same numbers as text and too small a

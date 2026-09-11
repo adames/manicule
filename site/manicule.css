@@ -609,6 +609,15 @@ samp {
   text-wrap: pretty;
 }
 
+/* the one sentence that stands in for an account page */
+.keeping {
+  margin-top: var(--space-2);
+  max-width: var(--measure);
+  font-size: var(--text-sm);
+  color: var(--muted);
+  text-wrap: pretty;
+}
+
 .spec {
   margin-top: var(--space-2);
   display: flex;
@@ -684,6 +693,12 @@ samp {
 }
 
 /* the details: hairlines above and below, +/− at right; the method.html link sits beside the summary, not inside it */
+
+/* the ruler in prose: it is the method page's control, not a toolbar's */
+.prose .ruler-wrap,
+section .ruler-wrap {
+  margin-top: var(--space-4);
+}
 
 /* 5 · toolbar: the λ ruler and the status */
 

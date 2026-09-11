@@ -1,0 +1,14 @@
+{
+  "name": "manicule",
+  "short_name": "manicule",
+  "description": "a feed that reorders around what you point at",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "og.png", "sizes": "1200x630", "type": "image/png" }
+  ]
+}

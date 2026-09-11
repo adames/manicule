@@ -288,12 +288,6 @@
 
   // ── drawing the page ─────────────────────────────────────────────────────
 
-  function setRuler() {
-    el("lam").value = state.lambda;
-    el("lamv").value = state.lambda.toFixed(2);
-    el("lam").setAttribute("aria-valuetext", "λ " + state.lambda.toFixed(2));
-  }
-
   // The order on screen is a choice, not a consequence: a press changes the
   // scores and nothing moves until the button is pressed.
   // The same shape in every state, so the line never wraps differently and
@@ -302,7 +296,7 @@
     const { picked, passed } = state.taste;
     const counts = cold
       ? `<span class="n">nothing picked</span>`
-      : `<span class="n">${picked ? picked.count : 0} picked</span> <span class="n">${passed ? passed.count : 0} passed</span> <span class="n lam">λ ${state.lambda.toFixed(2)}</span>`;
+      : `<span class="n">${picked ? picked.count : 0} picked</span> <span class="n">${passed ? passed.count : 0} passed</span> <a class="n lam" href="method.html">λ ${state.lambda.toFixed(2)}</a>`;
     el("status").innerHTML =
       `<b>${state.order ? "by taste" : cold ? "a spread of what is here" : "newest first"}</b> ${counts} ` +
       `<button class="btn quiet" data-act="order" type="button">order by taste</button>`;
@@ -378,7 +372,6 @@
   // ordered by taste; that is what it is for.
   function drawEverything() {
     readTheLink();
-    setRuler();
     orderByTaste();
     draw();
   }
@@ -393,7 +386,6 @@
     state.borrowed = false;
     state.order = null;
     state.rowsShown = ROWS_PER_PAGE;
-    setRuler();
     gliding(draw);
     // The button that was pressed may be gone: the banner hides, and the
     // toolbar's actions fold away once there is nothing to share.
@@ -425,14 +417,6 @@
     }
     state.borrowed = false; // the first press makes a borrowed link yours
     draw();                 // the scores change; the order holds
-  });
-
-  // Moving the ruler re-ranks, but it is not a pick, so it does not adopt a
-  // borrowed link.
-  el("lam").addEventListener("input", (event) => {
-    state.lambda = parseFloat(event.target.value);
-    setRuler();
-    draw();
   });
 
   el("morebtn").addEventListener("click", () => {
