@@ -243,13 +243,13 @@ def raw_summary(item) -> str:
     return content[0].get("value", "") if content else ""
 
 
-def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | None = None,
-          workers: int = 16, timeout: int = 20, tries: int = 3, per_host_pause: float = 0.15) -> list[Post]:
-    """Fetch every feed at once, keep the newest few of each, drop the old.
+def pull_all(feeds: list[tuple[str, str]], workers: int = 16, timeout: int = 20,
+             tries: int = 3, per_host_pause: float = 0.15) -> list[tuple[str, str, object, object]]:
+    """Every feed downloaded and parsed, as (title, url, parsed, why it failed).
 
     Feeds go out in parallel with a timeout each: at a few hundred feeds one
-    slow host must not hold the build. A feed that fails is skipped and
-    yesterday's file keeps serving.
+    slow host must not hold the build. A feed that fails comes back with
+    parsed=None and the reason.
 
     One host at a time, though: requests to a host queue behind each other, and
     the pause between them grows with how many feeds that host is carrying. A
@@ -311,16 +311,72 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
                     time.sleep(2 * (attempt + 1) ** 2)
         return title, url, None, why
 
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(pull, feeds))
+
+
+def posts_from(parsed, feed_title: str, per_feed: int, oldest: str | None, seen: set[str]) -> list[Post]:
+    """The entries of one parsed feed, as the posts worth keeping.
+
+    `seen` is the whole build's set of ids and is added to here: a post that
+    two feeds both carry belongs to whichever reached it first.
+    """
+    posts: list[Post] = []
+    for item in parsed.entries:
+        if len(posts) >= per_feed:
+            break
+        # Some podcast feeds (megaphone, buzzsprout) give an episode no
+        # link at all, only the audio enclosure. That is the episode.
+        link = (item.get("link") or "").strip()
+        if not link:
+            for enclosure in getattr(item, "enclosures", []) or []:
+                link = str(enclosure.get("href") or "").strip()
+                if link:
+                    break
+        if not link:
+            continue
+        when = published_at(item)
+        # Undated posts stay: a feed that never dates anything is still a feed.
+        if oldest and when and when < oldest:
+            continue
+        # The guid identifies a post; the link sometimes does not. Radiolab
+        # gives every episode the same link, its homepage, so hashing the
+        # link collapsed fourteen episodes into one id.
+        uid = (item.get("id") or item.get("guid") or link).strip() or link
+        if uid in seen:
+            continue
+        seen.add(uid)
+        posts.append(Post(
+            id=hashlib.sha1(uid.encode()).hexdigest()[:8],
+            title=snippet(item.get("title"), 200),
+            link=link,
+            snippet=snippet(raw_summary(item)),
+            feed=feed_title,
+            published=when,
+            kind=kind_of(link, item),
+        ))
+    return posts
+
+
+def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | None = None,
+          workers: int = 16, timeout: int = 20, tries: int = 3, per_host_pause: float = 0.15) -> list[Post]:
+    """Fetch every feed at once, keep the newest few of each, drop the old.
+
+    pull_all does the downloading and the manners; posts_from decides which
+    entries of a feed are worth keeping. This is the two of them, plus the
+    running commentary a build prints as it goes.
+    """
+    pulled = pull_all(feeds, workers, timeout, tries, per_host_pause)
+
+    # After the fetch, not before: the cutoff is measured from the moment the
+    # posts are in hand, which is where it was when this was one function.
     oldest = None
     if max_age_days is not None:
         oldest = (datetime.now(UTC) - timedelta(days=max_age_days)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     posts: list[Post] = []
     seen: set[str] = set()
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        results = list(pool.map(pull, feeds))
-
-    for title, url, parsed, why in results:
+    for title, url, parsed, why in pulled:
         if parsed is None or (parsed.bozo and not parsed.entries):
             why = why or getattr(parsed, "bozo_exception", "unreadable")
             print(f"  skip {title}: {why}", file=sys.stderr)
@@ -330,42 +386,9 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
         # person to be read, the other says "Al Jazeera – Breaking News, World
         # News and Video from Al Jazeera". The feed's own is the fallback.
         feed_title = (title or parsed.feed.get("title") or "").strip()
-        kept = 0
-        for item in parsed.entries:
-            if kept >= per_feed:
-                break
-            # Some podcast feeds (megaphone, buzzsprout) give an episode no
-            # link at all, only the audio enclosure. That is the episode.
-            link = (item.get("link") or "").strip()
-            if not link:
-                for enclosure in getattr(item, "enclosures", []) or []:
-                    link = str(enclosure.get("href") or "").strip()
-                    if link:
-                        break
-            if not link:
-                continue
-            when = published_at(item)
-            # Undated posts stay: a feed that never dates anything is still a feed.
-            if oldest and when and when < oldest:
-                continue
-            # The guid identifies a post; the link sometimes does not. Radiolab
-            # gives every episode the same link, its homepage, so hashing the
-            # link collapsed fourteen episodes into one id.
-            uid = (item.get("id") or item.get("guid") or link).strip() or link
-            if uid in seen:
-                continue
-            seen.add(uid)
-            kept += 1
-            posts.append(Post(
-                id=hashlib.sha1(uid.encode()).hexdigest()[:8],
-                title=snippet(item.get("title"), 200),
-                link=link,
-                snippet=snippet(raw_summary(item)),
-                feed=feed_title,
-                published=when,
-                kind=kind_of(link, item),
-            ))
-        print(f"  {feed_title}: {kept}", file=sys.stderr)
+        kept = posts_from(parsed, feed_title, per_feed, oldest, seen)
+        posts.extend(kept)
+        print(f"  {feed_title}: {len(kept)}", file=sys.stderr)
 
     # Newest first is the cold-start order; undated posts sink.
     posts.sort(key=lambda post: post.published, reverse=True)
