@@ -57,7 +57,6 @@ open source software
 systems programming (rust, c, c++)
 python programming
 javascript
-the go programming language
 programming languages and compilers
 algorithms and computer science theory
 databases
@@ -281,6 +280,3 @@ game development
 comics and graphic novels
 comics for kids
 superheroes
-
-# podcasts
-podcasts
