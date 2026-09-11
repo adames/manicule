@@ -339,7 +339,14 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
         for item in parsed.entries:
             if kept >= per_feed:
                 break
+            # Some podcast feeds (megaphone, buzzsprout) give an episode no
+            # link at all, only the audio enclosure. That is the episode.
             link = (item.get("link") or "").strip()
+            if not link:
+                for enclosure in getattr(item, "enclosures", []) or []:
+                    link = str(enclosure.get("href") or "").strip()
+                    if link:
+                        break
             if not link:
                 continue
             when = published_at(item)
