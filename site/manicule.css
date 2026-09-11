@@ -897,18 +897,18 @@ section .ruler-wrap {
   color: var(--text);
 } /* the number, when there are several: it is what the rows point at */
 
-.tastes .feeds {
+.tastes .sources {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
 }
 
-.prose .tastes .feeds {
+.prose .tastes .sources {
   white-space: normal;
 } /* on the method page the line carries the working, so it wraps */
 
-.tastes .feeds b {
+.tastes .sources b {
   font-weight: var(--weight-medium);
   color: var(--text);
   text-transform: none;
@@ -990,7 +990,7 @@ section .ruler-wrap {
   line-height: var(--leading-tight);
 }
 
-.meta .feed {
+.meta .source {
   flex: 0 0 auto;
   min-width: 0;
   overflow: hidden;
@@ -1007,7 +1007,7 @@ section .ruler-wrap {
 .meta .about::before {
   content: "\00b7  ";
 }
-/* the feed name keeps its width; the labels take what is left of the row
+/* the source name keeps its width; the labels take what is left of the row
    and clip only when the row itself is full */
 .meta .about {
   flex: 1 1 0;
@@ -1499,7 +1499,7 @@ section .ruler-wrap {
   max-width: var(--measure);
 }
 
-/* the picking chart: one feed's entries as ticks on two lines, before and after */
+/* the picking chart: one source's entries as ticks on two lines, before and after */
 
 .map {
   display: block;
@@ -1541,7 +1541,7 @@ section .ruler-wrap {
   fill: var(--text-secondary);
 }
 
-/* the feed buttons under the picking chart */
+/* the source buttons under the picking chart */
 
 .choices {
   display: flex;
@@ -1839,7 +1839,7 @@ pre .c {
   .meta {
     flex-wrap: nowrap;
   }
-  .meta .feed {
+  .meta .source {
     max-width: 16ch;
   }
   .meta .about {

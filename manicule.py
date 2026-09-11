@@ -1,4 +1,4 @@
-"""manicule — a pointing hand for your feeds.
+"""manicule — a pointing hand for your sources.
 
 Rank what's new by what you've picked. No database, no server, no account.
 
@@ -19,7 +19,7 @@ Three subcommands:
     manicule.py evaluate [site/posts.json]                            # the proof, printed
 
 Every post becomes a vector of 384 numbers, computed on this machine by
-fastembed (BAAI/bge-small-en-v1.5). Nothing leaves it but the feed fetches.
+fastembed (BAAI/bge-small-en-v1.5). Nothing leaves it but the source fetches.
 """
 from __future__ import annotations
 
@@ -70,8 +70,8 @@ class Post:
     title: str
     link: str
     snippet: str
-    feed: str
-    published: str          # ISO 8601, or "" when the feed gave no date
+    source: str
+    published: str          # ISO 8601, or "" when the source gave no date
     kind: str               # text | video | audio: read, watch or listen
     vector: list[float] | None = None
 
@@ -148,20 +148,20 @@ def embed_posts(posts: list[Post]) -> None:
         post.vector = vector
 
 
-# ---------------------------------------------------------------- feeds
+# ---------------------------------------------------------------- sources
 
 def parse_opml(path: Path) -> list[tuple[str, str]]:
-    """(title, url) for every outline that carries a feed, de-duplicated."""
+    """(title, url) for every outline that carries a source, de-duplicated."""
     root = ElementTree.parse(path).getroot()
     seen: set[str] = set()
-    feeds: list[tuple[str, str]] = []
+    sources: list[tuple[str, str]] = []
     for node in root.iter("outline"):
         url = (node.get("xmlUrl") or node.get("xmlurl") or "").strip()
         if not url or url in seen:
             continue
         seen.add(url)
-        feeds.append(((node.get("title") or node.get("text") or url).strip(), url))
-    return feeds
+        sources.append(((node.get("title") or node.get("text") or url).strip(), url))
+    return sources
 
 
 BLOCK_TAGS = re.compile(r"</(?:p|div|li|h\d|tr|blockquote)>|<br\s*/?>", re.I)
@@ -185,7 +185,7 @@ FEED_TAILS = re.compile(
 
 
 def snippet(raw: str | None, limit: int = SNIPPET_CHARS) -> str:
-    """A plain-text blurb: no markup, no feed scaffolding, cut at a word."""
+    """A plain-text blurb: no markup, no source scaffolding, cut at a word."""
     if not raw:
         return ""
     # Block tags become spaces so paragraphs do not run together; inline tags
@@ -210,15 +210,15 @@ def kind_of(link: str, item) -> str:
     return "text"
 
 
-# The web is younger than this, and nothing in a feed is from two years hence.
-# Outside the window a feed has got it wrong, whatever it says.
+# The web is younger than this, and nothing in a source is from two years hence.
+# Outside the window a source has got it wrong, whatever it says.
 OLDEST_YEAR = 1990
 
 
 def published_at(item) -> str:
-    """The post's date, or "" when the feed gave none worth believing.
+    """The post's date, or "" when the source gave none worth believing.
 
-    Feeds stamp posts with years like 1 and 50000. mktime raises on some of
+    Sources stamp posts with years like 1 and 50000. mktime raises on some of
     them and quietly accepts others depending on the machine, so the year is
     judged here instead: undated is the honest answer for both, and an undated
     post still ranks.
@@ -235,7 +235,7 @@ def published_at(item) -> str:
 
 
 def raw_summary(item) -> str:
-    """Feeds keep the blurb in different places; YouTube uses media_description."""
+    """Sources keep the blurb in different places; YouTube uses media_description."""
     for key in ("summary", "description", "media_description"):
         value = getattr(item, key, None)
         if value:
@@ -244,21 +244,21 @@ def raw_summary(item) -> str:
     return content[0].get("value", "") if content else ""
 
 
-def pull_all(feeds: list[tuple[str, str]], workers: int = 16, timeout: int = 20,
+def pull_all(sources: list[tuple[str, str]], workers: int = 16, timeout: int = 20,
              tries: int = 3, per_host_pause: float = 0.15) -> list[tuple[str, str, object, object]]:
-    """Every feed downloaded and parsed, as (title, url, parsed, why it failed).
+    """Every source downloaded and parsed, as (title, url, parsed, why it failed).
 
-    Feeds go out in parallel with a timeout each: at a few hundred feeds one
-    slow host must not hold the build. A feed that fails comes back with
+    Sources go out in parallel with a timeout each: at a few hundred sources one
+    slow host must not hold the build. A source that fails comes back with
     parsed=None and the reason.
 
     One host at a time, though: requests to a host queue behind each other, and
-    the pause between them grows with how many feeds that host is carrying. A
-    host with one feed waits nothing. A refusal gets two more goes, backing off
+    the pause between them grows with how many sources that host is carrying. A
+    host with one source waits nothing. A refusal gets two more goes, backing off
     each time. One slow host still cannot hold up the build.
 
     This was built to stop YouTube refusing us and it does not, which is worth
-    writing down so nobody tunes it again hoping. Twenty-eight of these feeds
+    writing down so nobody tunes it again hoping. Twenty-eight of these sources
     are YouTube, and from a GitHub runner it refuses a third to a half of them
     every build, a different set each time:
 
@@ -279,7 +279,7 @@ def pull_all(feeds: list[tuple[str, str]], workers: int = 16, timeout: int = 20,
     locks: dict[str, threading.Lock] = {}
     guard = threading.Lock()
     load: dict[str, int] = {}
-    for _, url in feeds:
+    for _, url in sources:
         host = urlparse(url).netloc
         load[host] = load.get(host, 0) + 1
 
@@ -287,7 +287,7 @@ def pull_all(feeds: list[tuple[str, str]], workers: int = 16, timeout: int = 20,
         with guard:
             return locks.setdefault(host, threading.Lock())
 
-    # A host carrying one feed is not being hammered and waits for nothing.
+    # A host carrying one source is not being hammered and waits for nothing.
     def pause_for(host):
         return min(per_host_pause * (load.get(host, 1) - 1), 3.0)
 
@@ -296,8 +296,8 @@ def pull_all(feeds: list[tuple[str, str]], workers: int = 16, timeout: int = 20,
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.read()
 
-    def pull(feed):
-        title, url = feed
+    def pull(source):
+        title, url = source
         host = urlparse(url).netloc
         why = None
         for attempt in range(tries):
@@ -313,20 +313,20 @@ def pull_all(feeds: list[tuple[str, str]], workers: int = 16, timeout: int = 20,
         return title, url, None, why
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        return list(pool.map(pull, feeds))
+        return list(pool.map(pull, sources))
 
 
-def posts_from(parsed, feed_title: str, per_feed: int, oldest: str | None, seen: set[str]) -> list[Post]:
-    """The entries of one parsed feed, as the posts worth keeping.
+def posts_from(parsed, source_title: str, per_source: int, oldest: str | None, seen: set[str]) -> list[Post]:
+    """The entries of one parsed source, as the posts worth keeping.
 
     `seen` is the whole build's set of ids and is added to here: a post that
-    two feeds both carry belongs to whichever reached it first.
+    two sources both carry belongs to whichever reached it first.
     """
     posts: list[Post] = []
     for item in parsed.entries:
-        if len(posts) >= per_feed:
+        if len(posts) >= per_source:
             break
-        # Some podcast feeds (megaphone, buzzsprout) give an episode no
+        # Some podcast sources (megaphone, buzzsprout) give an episode no
         # link at all, only the audio enclosure. That is the episode.
         link = (item.get("link") or "").strip()
         if not link:
@@ -337,7 +337,7 @@ def posts_from(parsed, feed_title: str, per_feed: int, oldest: str | None, seen:
         if not link:
             continue
         when = published_at(item)
-        # Undated posts stay: a feed that never dates anything is still a feed.
+        # Undated posts stay: a source that never dates anything is still a source.
         if oldest and when and when < oldest:
             continue
         # The guid identifies a post; the link sometimes does not. Radiolab
@@ -352,22 +352,22 @@ def posts_from(parsed, feed_title: str, per_feed: int, oldest: str | None, seen:
             title=snippet(item.get("title"), 200),
             link=link,
             snippet=snippet(raw_summary(item)),
-            feed=feed_title,
+            source=source_title,
             published=when,
             kind=kind_of(link, item),
         ))
     return posts
 
 
-def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | None = None,
+def fetch(sources: list[tuple[str, str]], per_source: int = 20, max_age_days: int | None = None,
           workers: int = 16, timeout: int = 20, tries: int = 3, per_host_pause: float = 0.15) -> list[Post]:
-    """Fetch every feed at once, keep the newest few of each, drop the old.
+    """Fetch every source at once, keep the newest few of each, drop the old.
 
     pull_all does the downloading and the manners; posts_from decides which
-    entries of a feed are worth keeping. This is the two of them, plus the
+    entries of a source are worth keeping. This is the two of them, plus the
     running commentary a build prints as it goes.
     """
-    pulled = pull_all(feeds, workers, timeout, tries, per_host_pause)
+    pulled = pull_all(sources, workers, timeout, tries, per_host_pause)
 
     # After the fetch, not before: the cutoff is measured from the moment the
     # posts are in hand, which is where it was when this was one function.
@@ -383,13 +383,15 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
             print(f"  skip {title}: {why}", file=sys.stderr)
             continue
 
-        # The name in the opml, not the feed's own <title>: one was written by a
+        # The name in the opml, not the source's own <title>: one was written by a
         # person to be read, the other says "Al Jazeera – Breaking News, World
-        # News and Video from Al Jazeera". The feed's own is the fallback.
-        feed_title = (title or parsed.feed.get("title") or "").strip()
-        kept = posts_from(parsed, feed_title, per_feed, oldest, seen)
+        # News and Video from Al Jazeera". The source's own is the fallback.
+        # parsed.feed is feedparser's own name for the channel's metadata, not
+        # ours: the library's API, so it stays spelled the library's way.
+        source_title = (title or parsed.feed.get("title") or "").strip()
+        kept = posts_from(parsed, source_title, per_source, oldest, seen)
         posts.extend(kept)
-        print(f"  {feed_title}: {len(kept)}", file=sys.stderr)
+        print(f"  {source_title}: {len(kept)}", file=sys.stderr)
 
     # Newest first is the cold-start order; undated posts sink.
     posts.sort(key=lambda post: post.published, reverse=True)
@@ -421,18 +423,18 @@ class Trials(NamedTuple):
     where: dict[str, list[int]]
 
 
-def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
-             feed_sample: int | None = 40) -> dict | None:
+def evaluate(posts: list[Post], trials_per_source: int = 30, seed: int = 7,
+             source_sample: int | None = 40) -> dict | None:
     """Does picking a few things surface more of what you want?
 
-    The test needs a label the ranker cannot see. The feed a post came from
-    is one: the embedding never sees it, and posts from one feed share a
+    The test needs a label the ranker cannot see. The source a post came from
+    is one: the embedding never sees it, and posts from one source share a
     subject and a voice, the closest stand-in for "more like this" that does
-    not come from the model itself. Pick a few posts from a feed, leave the
+    not come from the model itself. Pick a few posts from a source, leave the
     rest in the pile, and ask where they land, against the orders a reader
     could otherwise have had.
 
-    Same feed is a stand-in for same taste, not the thing itself: it shows the
+    Same source is a stand-in for same taste, not the thing itself: it shows the
     ranker finds coherent neighbourhoods, which is necessary, not sufficient.
     """
     import numpy as np
@@ -443,7 +445,7 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
         return None
     vectors = np.array([e.vector for e in rows])
     vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
-    feeds = np.array([e.feed for e in rows])
+    sources = np.array([e.source for e in rows])
     kinds = np.array([e.kind for e in rows])
     newest_first = np.argsort(np.array([e.published for e in rows]))[::-1]
     rng = np.random.default_rng(seed)
@@ -499,23 +501,23 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
             "shuffled": places(rng.permutation(rest), held_out),
         }
 
-    # A big pool has hundreds of feeds; testing every one at thirty trials
+    # A big pool has hundreds of sources; testing every one at thirty trials
     # each would take the build hostage. A fixed sample, same seed every day,
     # is the same test on a comparable slice.
-    tested = sorted(set(feeds))
-    if feed_sample and len(tested) > feed_sample:
-        tested = sorted(np.random.default_rng(seed).choice(tested, feed_sample, replace=False))
+    tested = sorted(set(sources))
+    if source_sample and len(tested) > source_sample:
+        tested = sorted(np.random.default_rng(seed).choice(tested, source_sample, replace=False))
 
     def trials(picks_per_trial, only=None) -> Trials:
         where = {name: [] for name in ("ranker", "words", "newest", "shuffled")}
         count = 0
-        for feed in tested:
-            members = np.where(feeds == feed)[0]
+        for source in tested:
+            members = np.where(sources == source)[0]
             if only:
                 members = np.array([i for i in members if kinds[i] in only])
             if len(members) < picks_per_trial + 2:
                 continue
-            for _ in range(trials_per_feed):
+            for _ in range(trials_per_source):
                 picks = rng.choice(members, picks_per_trial, replace=False)
                 held_out = without(members, picks)
                 for name, landed in one_trial(picks, held_out).items():
@@ -529,18 +531,18 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
     def in_top_ten(values, count):
         return round(sum(1 for p in values if p <= 10) / count, 2) if count else None
 
-    # Passing on something: where its feed-mates land, two picks from one feed
+    # Passing on something: where its source-mates land, two picks from one source
     # and two passes from the next, at each λ. This is what the ruler does.
     def lambda_sweep():
-        big = [f for f in sorted(set(feeds)) if (feeds == f).sum() >= 5]
+        big = [f for f in sorted(set(sources)) if (sources == f).sum() >= 5]
         if len(big) < 2:
             return {}
         sweep = {}
         for lam in (0.0, 0.25, 0.5, 1.0):
             landed = []
-            for i, feed_a in enumerate(big):
-                a = np.where(feeds == feed_a)[0]
-                b = np.where(feeds == big[(i + 1) % len(big)])[0]
+            for i, source_a in enumerate(big):
+                a = np.where(sources == source_a)[0]
+                b = np.where(sources == big[(i + 1) % len(big)])[0]
                 for _ in range(10):
                     picks = rng.choice(a, 2, replace=False)
                     passes = rng.choice(b, 2, replace=False)
@@ -559,7 +561,7 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
     text_only = trials(2, only={"text"})
     return {
         "posts": n,
-        "feeds": len(set(feeds)),
+        "sources": len(set(sources)),
         "trials": two_picks.count,
         "median_rank": by_picks,
         "top_ten": {name: in_top_ten(landed, two_picks.count) for name, landed in two_picks.where.items()},
@@ -574,15 +576,15 @@ def print_proof(proof: dict | None) -> None:
         print("too few posts to evaluate", file=sys.stderr)
         return
     names = ("ranker", "words", "newest", "shuffled")
-    print(f"{proof['posts']} posts · {proof['feeds']} feeds · {proof['trials']} trials at 2 picks\n")
+    print(f"{proof['posts']} posts · {proof['sources']} sources · {proof['trials']} trials at 2 picks\n")
     print(f"median rank of the posts you did not pick, out of {proof['posts']}")
     print(f"{'picks':>6} {'ranker':>8} {'words':>8} {'newest':>8} {'shuffled':>9}")
     for k, row in proof["median_rank"].items():
         print(f"{k:>6}" + "".join(f"{row[name]:>9}" for name in names))
-    print("\nof the top ten, how many are from the feed you picked from (2 picks)")
+    print("\nof the top ten, how many are from the source you picked from (2 picks)")
     for name in names:
         print(f"  {name:9} {proof['top_ten'][name]:.2f}")
-    print("\npassing on two from another feed: where the rest of that feed lands")
+    print("\npassing on two from another source: where the rest of that source lands")
     for lam, place in proof["lambda"].items():
         print(f"  λ = {lam:<5} {place:>5}")
     w = proof["written"]
@@ -623,7 +625,7 @@ def spread(posts: list[Post], count: int = 30) -> list[str]:
         chosen.append(pick)
         nearest = np.maximum(nearest, vectors @ vectors[pick])
 
-    # Back into feed order, so the screen reads as a feed and not as a ranking.
+    # Back into source order, so the screen reads as a source and not as a ranking.
     return [rows[i].id for i in sorted(chosen)]
 
 
@@ -842,9 +844,9 @@ def dequantize(q: list[int], scale: float) -> list[float]:
 # ---------------------------------------------------------------- commands
 
 def cmd_rank(args: argparse.Namespace) -> int:
-    """Your own feeds, ranked by your own notes, as a page of Markdown."""
+    """Your own sources, ranked by your own notes, as a page of Markdown."""
     print("fetching…", file=sys.stderr)
-    posts = fetch(parse_opml(Path(args.opml)), per_feed=args.per_feed)
+    posts = fetch(parse_opml(Path(args.opml)), per_source=args.per_source)
     picked_notes = read_notes(Path(args.picked) if args.picked else None)
     passed_notes = read_notes(Path(args.passed) if args.passed else None)
 
@@ -868,7 +870,7 @@ def cmd_rank(args: argparse.Namespace) -> int:
 
     lines = [heading]
     for post, scored in rows:
-        line = f"- [{post.kind}] [{post.title or post.link}]({post.link}) — {post.feed}"
+        line = f"- [{post.kind}] [{post.title or post.link}]({post.link}) — {post.source}"
         if scored is not None and scored.score != float("-inf"):
             line += f"  `{scored.score:+.3f} = {scored.pos:+.3f} − {args.lam}×{scored.neg:.3f}`"
         lines.append(line)
@@ -885,10 +887,10 @@ def cmd_rank(args: argparse.Namespace) -> int:
 
 
 def cmd_posts(args: argparse.Namespace) -> int:
-    """The same feeds, embedded once, as the static page's data."""
-    feeds = parse_opml(Path(args.opml))
-    print(f"fetching {len(feeds)} feeds…", file=sys.stderr)
-    posts = fetch(feeds, per_feed=args.per_feed, max_age_days=args.max_age)
+    """The same sources, embedded once, as the static page's data."""
+    sources = parse_opml(Path(args.opml))
+    print(f"fetching {len(sources)} sources…", file=sys.stderr)
+    posts = fetch(sources, per_source=args.per_source, max_age_days=args.max_age)
     print(f"embedding {len(posts)} posts…", file=sys.stderr)
     embed_posts(posts)
 
@@ -907,7 +909,7 @@ def cmd_posts(args: argparse.Namespace) -> int:
     for post, about_ in zip(posts, abouts, strict=True):
         row = {
             "id": post.id, "title": post.title, "link": post.link,
-            "snippet": post.snippet, "feed": post.feed,
+            "snippet": post.snippet, "source": post.source,
             "published": post.published, "kind": post.kind,
         }
         if post.vector is not None:
@@ -921,7 +923,7 @@ def cmd_posts(args: argparse.Namespace) -> int:
         "model": MODEL,
         "dim": DIM,
         "lambda": LAMBDA,
-        "feeds": sorted({post.feed for post in posts}),
+        "sources": sorted({post.source for post in posts}),
         "spread": spread(posts),
         "proof": evaluate(posts),
         "labels": [{"t": text, "s": quantize(v)[1]} for text, v in zip(labels, label_vectors)],
@@ -930,7 +932,7 @@ def cmd_posts(args: argparse.Namespace) -> int:
     out = Path(args.out)
     out.write_text(json.dumps(payload, separators=(",", ":")))
     write_vectors(posts, out.with_name("vectors.bin"), label_vectors)
-    print(f"wrote {out} and vectors.bin: {len(posts)} posts from {len(payload['feeds'])} feeds",
+    print(f"wrote {out} and vectors.bin: {len(posts)} posts from {len(payload['sources'])} sources",
           file=sys.stderr)
     return 0
 
@@ -941,7 +943,7 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
     payload = json.loads(where.read_text())
     vectors = read_vectors(payload["posts"], where.with_name("vectors.bin"))
     posts = [
-        Post(row["id"], row["title"], row["link"], row["snippet"], row["feed"],
+        Post(row["id"], row["title"], row["link"], row["snippet"], row["source"],
               row["published"], row["kind"], vector)
         for row, vector in zip(payload["posts"], vectors)
     ]
@@ -953,26 +955,26 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="manicule", description=__doc__.split("\n\n")[1])
     commands = parser.add_subparsers(dest="cmd", required=True)
 
-    daily = commands.add_parser("rank", help="rank what's new in your feeds by what you've picked")
+    daily = commands.add_parser("rank", help="rank what's new in your sources by what you've picked")
     daily.add_argument("opml")
     daily.add_argument("--picked", help="folder of .md/.txt you'd want more of (an Obsidian export works)")
     daily.add_argument("--passed", help="folder of .md/.txt you'd want less of")
     daily.add_argument("--lambda", dest="lam", type=float, default=LAMBDA)
-    daily.add_argument("--per-feed", type=int, default=20)
+    daily.add_argument("--per-source", type=int, default=20)
     daily.add_argument("--limit", type=int, default=50)
     daily.add_argument("-o", "--out", help="write Markdown here instead of stdout")
     daily.set_defaults(fn=cmd_rank)
 
-    demo = commands.add_parser("posts", help="fetch + embed feeds into a static JSON for the demo site")
+    demo = commands.add_parser("posts", help="fetch + embed sources into a static JSON for the demo site")
     demo.add_argument("opml")
     demo.add_argument("-o", "--out", default="site/posts.json")
-    # The browser downloads every post, so the demo keeps fewer per feed than
-    # the CLI does: more feeds at fewer each is the same page weight and a much
+    # The browser downloads every post, so the demo keeps fewer per source than
+    # the CLI does: more sources at fewer each is the same page weight and a much
     # wider sample.
-    demo.add_argument("--per-feed", type=int, default=5)
+    demo.add_argument("--per-source", type=int, default=5)
     # Wide, not recent: a good blog that posts twice a year belongs in the
     # pool, and newest-first already sinks its older posts to the bottom. The
-    # cutoff is only here to keep a feed that died last year out.
+    # cutoff is only here to keep a source that died last year out.
     demo.add_argument("--max-age", type=int, default=90, help="days; older posts are left out")
     demo.set_defaults(fn=cmd_posts)
 

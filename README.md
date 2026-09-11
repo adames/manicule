@@ -3,7 +3,7 @@
 remember your tastes
 
 a feed that reorders around what you point at. no database, no server, no
-account. one Python file for your own feeds, and a static page for the demo.
+account. one Python file for your own sources, and a static page for the demo.
 
 full explanation, with today's numbers: <https://manicule.adames.cc/method.html>
 
@@ -30,7 +30,7 @@ computed on your machine by
 [fastembed](https://github.com/qdrant/fastembed) (`BAAI/bge-small-en-v1.5`).
 `cos` is the cosine of the angle between two of those vectors: +1 the same
 direction, 0 unrelated, below 0 opposite. nothing leaves your machine but the
-feed fetches.
+source fetches.
 
 pick nothing and there's no taste to rank by, so it stays newest first. a post
 with no words sinks to the bottom, but it never gets dropped.
@@ -59,9 +59,9 @@ two more things the pool can tell, and the line says when it can:
 - a phrase in half the nearest headlines is what the taste is about, and it
   leads: `about lanterns · tv shows and streaming series`.
 - three quarters of the nearest posts within three days of each other, from
-  several feeds, is something happening rather than a field: `about apple and
+  several sources, is something happening rather than a field: `about apple and
   iphone · today: iphone duo, apple surprise, shine event`. an announcement is
-  many feeds saying the same thing at once; a category is spread across the
+  many sources saying the same thing at once; a category is spread across the
   pool's ninety days.
 
 the method page shows the cosines and says which rule fired.
@@ -71,8 +71,8 @@ as of one pressed just now. the cli prints the same labels in its heading.
 
 ## Does it work
 
-the ranker gets tested against a label it can't see: the feed a post came
-from. pick a few posts from one feed, leave the rest in the pile, see where
+the ranker gets tested against a label it can't see: the source a post came
+from. pick a few posts from one source, leave the rest in the pile, see where
 they land. median rank of the rest, out of 1626, on a recent build:
 
 | picks | the ranker | shared words | newest first | shuffled |
@@ -82,19 +82,19 @@ they land. median rank of the rest, out of 1626, on a recent build:
 | 3 | 38 | 60 | 666 | 813 |
 
 newest first is the same as shuffled. that's the argument for the whole thing.
-same feed only stands in for same taste, so read it as necessary, not
+same source only stands in for same taste, so read it as necessary, not
 sufficient. it runs at every build and the method page prints today's numbers.
 
 the several-averages part is tested against a reader with two unrelated
-tastes: pick two posts from each of two feeds that sit apart, and 23 of every
+tastes: pick two posts from each of two sources that sit apart, and 23 of every
 100 held-out posts land in the top ten, against 13 with a single average. a
-reader picking from one feed loses nothing.
+reader picking from one source loses nothing.
 
 ```bash
 uv run manicule.py evaluate site/posts.json
 ```
 
-## Your own feeds
+## Your own sources
 
 ```bash
 uv sync
@@ -164,11 +164,11 @@ single thing you read.
 
 ## Make it yours: fork it
 
-the hosted page ranks my feeds. for yours:
+the hosted page ranks my sources. for yours:
 
 1. **fork** this repo.
 2. replace **`feeds.opml`** with yours (any reader exports one; each
-   `<outline xmlUrl="…">` is a feed). anything with an RSS or Atom feed works:
+   `<outline xmlUrl="…">` is a source). anything with an RSS or Atom feed works:
    blogs, YouTube channels, podcasts.
 3. in the fork's settings, **Pages → Source: GitHub Actions**.
 4. push, or run the `posts` workflow by hand. your site is at

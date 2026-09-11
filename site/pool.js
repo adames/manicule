@@ -36,7 +36,7 @@
   // An average is only meaningful to the model that made it. A link from a
   // different one is not wrong, it is unreadable, and reading it anyway would
   // rank by noise while looking like it worked.
-  const ourModel = () => Shell.feedKey(posts.model);
+  const ourModel = () => Shell.sourceKey(posts.model);
 
   function tasteIn(source) {
     const nothing = { picked: [], passed: [] };
@@ -142,8 +142,8 @@
     if (!iso) return "undated";
     const then = Date.parse(iso);
     if (isNaN(then)) return iso.slice(0, 10);
-    // Some feeds stamp a post a few hours ahead of now, which would read
-    // "in 5 hours". Nothing in a feed is from the reader's future.
+    // Some sources stamp a post a few hours ahead of now, which would read
+    // "in 5 hours". Nothing in a source is from the reader's future.
     const seconds = Math.min(0, Math.round((then - Date.now()) / 1000));
     for (const [unit, size] of AGO) {
       if (Math.abs(seconds) >= size) return relative.format(Math.round(seconds / size), unit);
@@ -151,13 +151,13 @@
     return "just now";
   }
 
-  // A feed whose summary is only punctuation has no blurb worth printing.
+  // A source whose summary is only punctuation has no blurb worth printing.
   const blurbOf = (post) => ((post.snippet || "").replace(/[.…\s]/g, "") ? post.snippet : "");
 
   // ── one row ──────────────────────────────────────────────────────────────
 
   // The result only. The arithmetic behind it is worked in full on the method
-  // page; a feed is for reading, and a column of sums is not.
+  // page; a source is for reading, and a column of sums is not.
   // Cold, there is no score to print, but the box is still drawn: a row must
   // be the same height before and after your first press, or the whole page
   // moves under you.
@@ -218,7 +218,7 @@
     return `<li class="row${isPicked ? " picked" : ""}${isPassed ? " passed" : ""}" data-id="${esc(post.id)}">
           <span class="n" aria-hidden="true">${place}</span>
           <div class="body">
-            <div class="meta"><span class="kind">${esc(post.kind || "text")}</span><span class="feed" title="${esc(post.feed)}">${esc(post.feed)}</span>${aboutHtml(post)}<time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
+            <div class="meta"><span class="kind">${esc(post.kind || "text")}</span><span class="source" title="${esc(post.source)}">${esc(post.source)}</span>${aboutHtml(post)}<time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
             <h2 class="title" id="t-${esc(post.id)}"><a href="${esc(post.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(post.title || post.link)}</a></h2>
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
             ${cold ? NO_NEAR : nearHtml(scored, isPicked, isPassed)}
@@ -335,7 +335,7 @@
   }
 
   // What your taste is about, said in the pool's own words: for each average,
-  // the feeds its nearest posts come from. Read off the pool, not stored, so
+  // the sources its nearest posts come from. Read off the pool, not stored, so
   // it is as true of a taste carried in by a link as of one pressed just now.
   // This is the see-through view of a vector, and the reason a number in the
   // status line ("in 2 tastes") means something.
@@ -346,7 +346,7 @@
     if (box.hidden) { box.innerHTML = ""; return; }
     const several = picked.length > 1;
     // "about cooking · sourdough, starter, hydration". The label is the
-    // category; the words are the specific thing. The feeds it sits nearest
+    // category; the words are the specific thing. The sources it sits nearest
     // are in the tooltip, and all three are worked on the method page.
     const line = (about, i, isPass) => {
       const k = several && !isPass ? `<span class="k">taste ${i + 1}</span>` : "";
@@ -363,8 +363,8 @@
         ? [`about <b>${esc(about.focus)}</b>`, label, specifics].filter(Boolean).join(" · ")
         : [label ? `about <b>${label}</b>` : "", specifics].filter(Boolean).join(" · ")
           || "near nothing in today's pool";
-      const where = about.feeds.length ? ` title="near ${esc(about.feeds.join(", "))}"` : "";
-      return `<li>${hand(isPass ? "bird" : "rest")}${k}${n}<span class="feeds"${where}>${said}</span></li>`;
+      const where = about.sources.length ? ` title="near ${esc(about.sources.join(", "))}"` : "";
+      return `<li>${hand(isPass ? "bird" : "rest")}${k}${n}<span class="sources"${where}>${said}</span></li>`;
     };
     box.innerHTML =
       Manicule.describe(picked, posts.posts, posts.labels).map((about, i) => line(about, i, false)).join("") +
@@ -515,7 +515,7 @@
       el("spec").innerHTML = [
         `<span title="${esc(utcStamp(posts.generated))}">updated ${esc(timeAgo(posts.generated))}</span>`,
         `<span>updates once a day</span>`,
-        `<span>${posts.feeds.length} feeds, mixed on purpose</span>`,
+        `<span>${posts.sources.length} sources, mixed on purpose</span>`,
       ].join(" ");
 
       drawEverything();
@@ -523,7 +523,7 @@
     .catch((why) => {
       // There is nothing behind the controls, so only the status line stays.
       // The reason is printed, because a rendering bug in here used to read
-      // exactly like a feed that would not download.
+      // exactly like a source that would not download.
       console.error("manicule:", why);
       el("status").textContent = "couldn't load";
       el("spec").textContent = "";

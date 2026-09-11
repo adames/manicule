@@ -55,7 +55,7 @@
   //            "tv shows and streaming series". Same model, same cosine.
   //   words  — the uncommon words in the headlines nearest the average, which
   //            is where "lanterns" comes from when the label says "tv shows".
-  //   feeds  — where those nearest posts came from.
+  //   sources  — where those nearest posts came from.
   // All of it is read off today's pool, so it is as true of a taste carried
   // in by a link as of one pressed just now.
   const STOP = new Set(("a an the and or but of to in on at for with from by as is are was were be been " +
@@ -109,10 +109,10 @@
     return nearest;
   }
 
-  // Where those nearest posts came from, the most-represented feeds first.
-  function feedsOf(nearest, howMany = 3) {
+  // Where those nearest posts came from, the most-represented sources first.
+  function sourcesOf(nearest, howMany = 3) {
     const howManyFrom = {};
-    for (const { post } of nearest) howManyFrom[post.feed] = (howManyFrom[post.feed] || 0) + 1;
+    for (const { post } of nearest) howManyFrom[post.source] = (howManyFrom[post.source] || 0) + 1;
     return Object.keys(howManyFrom)
       .sort((a, b) => howManyFrom[b] - howManyFrom[a] || a.localeCompare(b))
       .slice(0, howMany);
@@ -158,15 +158,15 @@
   }
 
   // A category's nearest posts are spread across the pool's ninety days.
-  // An announcement's are many feeds within days of each other: eleven
+  // An announcement's are many sources within days of each other: eleven
   // of the twelve nearest to an iphone launch were two days old, while
   // recipes, wine and an essay on liberalism ran ten to eighty. So: when
   // three quarters of the nearest posts fall within three days of each
-  // other, from several feeds, the taste is about something happening,
+  // other, from several sources, the taste is about something happening,
   // and the page says when rather than pretending it is a field.
-  function happeningIn(nearest, feedCount) {
+  function happeningIn(nearest, sourceCount) {
     const dated = nearest.map(({ post }) => Date.parse(post.published)).filter((t) => !isNaN(t)).sort((a, b) => b - a);
-    if (dated.length < 6 || feedCount < 3) return null;
+    if (dated.length < 6 || sourceCount < 3) return null;
     const newest = dated[0], DAY = 86400000;
     const bunched = dated.filter((t) => newest - t <= 3 * DAY).length;
     if (bunched * 4 < dated.length * 3) return null;
@@ -179,7 +179,7 @@
     const poolSize = posts.length + 1;
     return (taste || []).map((one) => {
       const nearest = nearestTo(one, posts, k);
-      const feeds = feedsOf(nearest);
+      const sources = sourcesOf(nearest);
       const about = labelsFor(one, labels);
 
       const saidByLabel = about.length ? " " + tokens(about[0].text).join(" ") + " " : "";
@@ -198,8 +198,8 @@
         labels: about,
         words,
         focus,
-        happening: happeningIn(nearest, feeds.length),
-        feeds,
+        happening: happeningIn(nearest, sources.length),
+        sources,
         nearest: nearest.length ? nearest[0].post : null,
       };
     });

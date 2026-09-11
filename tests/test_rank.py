@@ -9,7 +9,7 @@ FIX = json.loads((Path(__file__).parent / "fixture.json").read_text())
 
 
 def _posts():
-    return [Post(id=e["id"], title=e["id"], link="", snippet="", feed="", published="", kind="text", vector=e["vector"]) for e in FIX["posts"]]
+    return [Post(id=e["id"], title=e["id"], link="", snippet="", source="", published="", kind="text", vector=e["vector"]) for e in FIX["posts"]]
 
 
 def test_fixture_order_and_scores():
@@ -63,7 +63,7 @@ def test_snippet_drops_hacker_news_boilerplate():
     assert snippet("Real blurb here. Points: 3") == "Real blurb here."
 
 
-def test_snippet_drops_feed_tails():
+def test_snippet_drops_source_tails():
     wp = "Deep thought. The post Live from ICM 2026: What Is Math For? first appeared on Quanta Magazine."
     assert snippet(wp) == "Deep thought."
     yt = "ADHD meds change signalling. #kurzgesagt #science #adhd Sources & further reading: https://example.org/x"
@@ -97,7 +97,7 @@ def test_spread_reaches_every_corner():
     for f in range(6):
         centre = [rng.gauss(0, 1) for _ in range(16)]
         for i in range(20):
-            posts.append(Post(f"{f}-{i}", "t", "", "", f"feed {f}", "", "text",
+            posts.append(Post(f"{f}-{i}", "t", "", "", f"source {f}", "", "text",
                               [c + rng.gauss(0, 0.25) for c in centre]))
     got = spread(posts, 12)
     assert len(got) == 12
@@ -108,7 +108,7 @@ def test_spread_reaches_every_corner():
 
 
 def test_impossible_dates_read_as_undated():
-    """One feed stamping year 50000 must not end the build, on any machine.
+    """One source stamping year 50000 must not end the build, on any machine.
 
     mktime raises on some of these and quietly accepts others depending on the
     platform: macOS refuses year 1, Linux hands back "1-01-01". The year is

@@ -1,7 +1,7 @@
-"""Which entries in a feed become posts, and which are dropped.
+"""Which entries in a source become posts, and which are dropped.
 
 The rules are small and every one of them is a bug that happened: an episode
-with no link, fourteen episodes sharing one, a feed that dates nothing.
+with no link, fourteen episodes sharing one, a source that dates nothing.
 """
 import sys
 import urllib.request
@@ -11,12 +11,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from manicule import fetch  # noqa: E402
 
-HEAD = b'<?xml version="1.0"?><rss version="2.0"><channel><title>the feed says this</title>'
+HEAD = b'<?xml version="1.0"?><rss version="2.0"><channel><title>the source says this</title>'
 TAIL = b"</channel></rss>"
 
 
 def serve(body, monkeypatch):
-    """One feed, whose body is `body`, fetched with no retries and no waiting."""
+    """One source, whose body is `body`, fetched with no retries and no waiting."""
     class Fake:
         def read(self): return HEAD + body + TAIL
         def __enter__(self): return self
@@ -69,7 +69,7 @@ def test_the_same_guid_twice_is_one_post(monkeypatch):
 
 
 def test_an_undated_post_stays_however_old_the_cutoff(monkeypatch):
-    """A feed that never dates anything is still a feed."""
+    """A source that never dates anything is still a source."""
     posts = serve(item(when=None), monkeypatch)(max_age_days=1)
     assert len(posts) == 1
     assert posts[0].published == ""
@@ -82,13 +82,13 @@ def test_a_post_older_than_the_cutoff_is_dropped(monkeypatch):
     assert [p.title for p in posts] == ["undated"]
 
 
-def test_per_feed_keeps_the_first_few_in_the_feeds_own_order(monkeypatch):
+def test_per_source_keeps_the_first_few_in_the_sources_own_order(monkeypatch):
     body = b"".join(item(title=str(i), link=f"https://x.example/{i}") for i in range(5))
-    posts = serve(body, monkeypatch)(per_feed=2)
+    posts = serve(body, monkeypatch)(per_source=2)
     assert sorted(p.title for p in posts) == ["0", "1"]
 
 
-def test_the_name_in_the_opml_wins_over_the_feeds_own(monkeypatch):
+def test_the_name_in_the_opml_wins_over_the_sources_own(monkeypatch):
     """One was written by a person to be read; the other says 'Al Jazeera – ...'."""
-    assert serve(item(), monkeypatch)()[0].feed == "the opml says this"
-    assert serve(item(), monkeypatch)(title="")[0].feed == "the feed says this"
+    assert serve(item(), monkeypatch)()[0].source == "the opml says this"
+    assert serve(item(), monkeypatch)(title="")[0].source == "the source says this"

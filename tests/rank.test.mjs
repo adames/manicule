@@ -90,23 +90,23 @@ test("rank says which average a post sits nearest", () => {
   assert.equal(byId.none.which, -1);
 });
 
-test("describe reads a taste off the pool, in feed names", () => {
+test("describe reads a taste off the pool, in source names", () => {
   const a = [1, 0, 0], b = [0, 1, 0];
   const taste = M.tasteOf([a, b]);
   const posts = [
-    { id: "1", feed: "apples", vector: [0.95, 0.05, 0] },
-    { id: "2", feed: "apples", vector: [0.9, 0.1, 0] },
-    { id: "3", feed: "pears", vector: [0.8, 0.2, 0] },
-    { id: "4", feed: "boats", vector: [0.1, 0.9, 0] },
-    { id: "5", feed: "boats", vector: [0, 1, 0.1] },
-    { id: "6", feed: "boats", vector: [0.05, 0.95, 0] },
-    { id: "7", feed: "nowords", vector: null },
+    { id: "1", source: "apples", vector: [0.95, 0.05, 0] },
+    { id: "2", source: "apples", vector: [0.9, 0.1, 0] },
+    { id: "3", source: "pears", vector: [0.8, 0.2, 0] },
+    { id: "4", source: "boats", vector: [0.1, 0.9, 0] },
+    { id: "5", source: "boats", vector: [0, 1, 0.1] },
+    { id: "6", source: "boats", vector: [0.05, 0.95, 0] },
+    { id: "7", source: "nowords", vector: null },
   ];
   const about = M.describe(taste, posts, [], 3);
   assert.equal(about.length, 2);
-  assert.deepEqual(about[0].feeds, ["apples", "pears"]);
+  assert.deepEqual(about[0].sources, ["apples", "pears"]);
   assert.equal(about[0].nearest.id, "1");
-  assert.deepEqual(about[1].feeds, ["boats"]);
+  assert.deepEqual(about[1].sources, ["boats"]);
   assert.equal(about[1].count, 1);
   assert.deepEqual(M.describe([], posts), []);
 });
@@ -119,13 +119,13 @@ test("describe says what a taste is about: a label and the specific words", () =
     { text: "sport", vector: [0, 0, 1] },
   ];
   const posts = [
-    { id: "1", feed: "a", title: "Sourdough starter hydration explained", vector: [0.95, 0.05, 0] },
-    { id: "2", feed: "a", title: "A sourdough loaf for beginners", vector: [0.9, 0.1, 0] },
-    { id: "3", feed: "b", title: "Why sourdough needs a long rise", vector: [0.85, 0.15, 0] },
-    { id: "4", feed: "c", title: "Lanterns episode 3 recap", vector: [0.05, 0.95, 0] },
-    { id: "5", feed: "c", title: "Lanterns finale review", vector: [0, 1, 0.05] },
-    { id: "6", feed: "d", title: "Lanterns renewed for season two", vector: [0.1, 0.9, 0] },
-    { id: "7", feed: "e", title: "The transfer window closes", vector: [0, 0, 1] },
+    { id: "1", source: "a", title: "Sourdough starter hydration explained", vector: [0.95, 0.05, 0] },
+    { id: "2", source: "a", title: "A sourdough loaf for beginners", vector: [0.9, 0.1, 0] },
+    { id: "3", source: "b", title: "Why sourdough needs a long rise", vector: [0.85, 0.15, 0] },
+    { id: "4", source: "c", title: "Lanterns episode 3 recap", vector: [0.05, 0.95, 0] },
+    { id: "5", source: "c", title: "Lanterns finale review", vector: [0, 1, 0.05] },
+    { id: "6", source: "d", title: "Lanterns renewed for season two", vector: [0.1, 0.9, 0] },
+    { id: "7", source: "e", title: "The transfer window closes", vector: [0, 0, 1] },
   ];
   const about = M.describe(M.tasteOf([cook, tv]), posts, labels, 3);
   assert.equal(about[0].labels[0].text, "cooking");
@@ -148,12 +148,12 @@ test("describe says what a taste is about: a label and the specific words", () =
 
 test("a phrase beats its own words, and a focus needs half the headlines", () => {
   const posts = [
-    { id: "1", feed: "a", title: "The iPhone Air and iPhone 17 Pro", vector: [1, 0] },
-    { id: "2", feed: "b", title: "iPhone 17 Pro review roundup", vector: [0.98, 0.1] },
-    { id: "3", feed: "c", title: "Everything Apple announced: iPhone 17 Pro, iPhone Air", vector: [0.97, 0.2] },
-    { id: "4", feed: "d", title: "Apple's surprise and shine event", vector: [0.9, 0.3] },
-    { id: "5", feed: "e", title: "Why the iPhone Air is so thin", vector: [0.95, 0.1] },
-    { id: "6", feed: "f", title: "A cheaper way to buy an old iPhone", vector: [0.8, 0.5] },
+    { id: "1", source: "a", title: "The iPhone Air and iPhone 17 Pro", vector: [1, 0] },
+    { id: "2", source: "b", title: "iPhone 17 Pro review roundup", vector: [0.98, 0.1] },
+    { id: "3", source: "c", title: "Everything Apple announced: iPhone 17 Pro, iPhone Air", vector: [0.97, 0.2] },
+    { id: "4", source: "d", title: "Apple's surprise and shine event", vector: [0.9, 0.3] },
+    { id: "5", source: "e", title: "Why the iPhone Air is so thin", vector: [0.95, 0.1] },
+    { id: "6", source: "f", title: "A cheaper way to buy an old iPhone", vector: [0.8, 0.5] },
   ];
   const labels = [{ text: "apple and iphone", vector: [1, 0] }, { text: "sport", vector: [0, 1] }];
   const [about] = M.describe(M.tasteOf([[1, 0]]), posts, labels, 6);
@@ -169,7 +169,7 @@ test("a phrase beats its own words, and a focus needs half the headlines", () =>
 test("posts bunched in time are something happening; spread out, a field", () => {
   const day = 86400000, now = Date.now();
   const at = (d) => new Date(now - d * day).toISOString();
-  const mk = (ages) => ages.map((d, i) => ({ id: String(i), feed: "f" + (i % 4), title: "headline " + i, published: at(d), vector: [1, 0.01 * i] }));
+  const mk = (ages) => ages.map((d, i) => ({ id: String(i), source: "f" + (i % 4), title: "headline " + i, published: at(d), vector: [1, 0.01 * i] }));
   const taste = M.tasteOf([[1, 0]]);
   const launch = M.describe(taste, mk([0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 9, 40]), [], 12)[0];
   assert.equal(launch.happening, "today");
@@ -177,8 +177,8 @@ test("posts bunched in time are something happening; spread out, a field", () =>
   assert.equal(lastWeek.happening, "this week");
   const field = M.describe(taste, mk([0, 0, 1, 3, 8, 9, 13, 15, 22, 38, 60, 86]), [], 12)[0];
   assert.equal(field.happening, null);
-  // One feed shouting is not an announcement.
-  const oneFeed = mk([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).map((p) => ({ ...p, feed: "solo" }));
+  // One source shouting is not an announcement.
+  const oneFeed = mk([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).map((p) => ({ ...p, source: "solo" }));
   assert.equal(M.describe(taste, oneFeed, [], 12)[0].happening, null);
   // Undated posts do not count either way.
   const undated = mk([0, 0, 0, 0, 0, 0]).map((p) => ({ ...p, published: "" }));

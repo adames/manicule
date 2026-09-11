@@ -92,7 +92,7 @@
     el("proof-rows").innerHTML = Object.entries(proof.median_rank).map(([picks, row]) =>
       `<tr><td class="mono">${picks}</td><td class="num">${row.ranker}</td><td class="num">${row.words}</td><td class="num">${row.newest}</td><td class="num">${row.shuffled}</td></tr>`).join("");
     el("proof-cap").textContent =
-      `where the rest of that feed lands, the median, out of ${proof.posts} · ${proof.trials} trials at 2 picks · recomputed each morning`;
+      `where the rest of that source lands, the median, out of ${proof.posts} · ${proof.trials} trials at 2 picks · recomputed each morning`;
 
     const two = proof.median_rank["2"] || {};
     const lam = proof.lambda || {};
@@ -100,8 +100,8 @@
     el("proof-notes").innerHTML = [
       ["newest first", `${mono(nth(two.newest))}, against ${mono(nth(two.shuffled))} shuffled. date order is a shuffle`],
       ["the vectors", `${mono(nth(two.ranker))}, against ${mono(nth(two.words))} from shared words alone. blog posts only, no video or podcast blurbs: ${mono(nth(proof.written.ranker))} against ${mono(nth(proof.written.words))}`],
-      ["λ", `pass on two from a feed and the rest of it sinks: ${sweep}. the default counts a little`],
-      ["the catch", "same feed only stands in for same taste, so read it as necessary, not sufficient"],
+      ["λ", `pass on two from a source and the rest of it sinks: ${sweep}. the default counts a little`],
+      ["the catch", "same source only stands in for same taste, so read it as necessary, not sufficient"],
     ].map(([key, words]) => `<dt>${key}</dt><dd>${words}</dd>`).join("");
   }
 
@@ -177,7 +177,7 @@
     const firstTerm = taste.passed.length ? `<span class="t1">${signed(scored.pos)}</span>` : "";
 
     el("worked").innerHTML = `
-      <dt>post</dt><dd><span class="t">${esc(post.title || post.link)}</span> <span class="sub mono muted">${esc(post.feed)} · ${dayOf(post.published)}</span></dd>
+      <dt>post</dt><dd><span class="t">${esc(post.title || post.link)}</span> <span class="sub mono muted">${esc(post.source)} · ${dayOf(post.published)}</span></dd>
       <dt>cos(post, picked)</dt><dd><span class="mono">${signed(scored.pos)}</span> <span class="muted">· how close it sits to ${built.length > 1 ? `taste ${scored.which + 1}, the nearest of your ${built.length} averages` : "the average of your picks"}</span></dd>
       <dt>cos(post, passed)</dt><dd>${taste.passed.length ? `<span class="mono">${plain(scored.neg)}</span> <span class="muted">· how close it sits to the average of your passes</span>` : `<span class="mono">0.00</span> <span class="muted">· nothing passed</span>`}</dd>
       <dt>λ</dt><dd><span class="mono">${taste.lambda.toFixed(2)}</span> <span class="muted">· how much of that comes off</span></dd>
@@ -222,12 +222,12 @@
   }
 
   // ── what picking does ────────────────────────────────────────────────────
-  // The evaluation, drawn, on today's posts. Take a real feed. Pick two of
-  // its posts. Where does the rest of that feed sit before and after? The
-  // ranker never sees which feed anything came from, so this is the test the
+  // The evaluation, drawn, on today's posts. Take a real source. Pick two of
+  // its posts. Where does the rest of that source sit before and after? The
+  // ranker never sees which source anything came from, so this is the test the
   // numbers in the table below run 1290 times.
 
-  // One feed at a time, so a reader can watch a single case, or all of them
+  // One source at a time, so a reader can watch a single case, or all of them
   // pooled. The button cycles; the picture is the same test either way.
   let trialFeeds = null;
   let showing = "all";
@@ -236,7 +236,7 @@
     if (trialFeeds) return trialFeeds;
     const withWords = today.posts.filter((post) => post.vector);
     const byFeed = {};
-    for (const post of withWords) (byFeed[post.feed] = byFeed[post.feed] || []).push(post);
+    for (const post of withWords) (byFeed[post.source] = byFeed[post.source] || []).push(post);
     const newestFirst = (list) => [...list].sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
     trialFeeds = [];
@@ -252,7 +252,7 @@
       const before = {};
       newestFirst(rest).forEach((post, i) => { before[post.id] = (i + 1) / rest.length; });
       trialFeeds.push({
-        feed: name,
+        source: name,
         picks: picks.map((post) => post.title),
         moves: held.map((post) => ({ title: post.title, was: before[post.id], now: after[post.id] })),
       });
@@ -277,7 +277,7 @@
     const tick = (frac, y, cls, title) =>
       `<line class="${cls}" x1="${sx(frac).toFixed(1)}" y1="${y - 9}" x2="${sx(frac).toFixed(1)}" y2="${y + 9}">` +
       (title ? `<title>${esc(title)}</title>` : "") + `</line>`;
-    // With one feed on show there are few enough posts to join up.
+    // With one source on show there are few enough posts to join up.
     const ties = one
       ? moves.map((m) => `<line class="pick-tie" x1="${sx(m.was).toFixed(1)}" y1="${TOP + 9}" x2="${sx(m.now).toFixed(1)}" y2="${BOT - 9}"/>`)
       : [];
@@ -296,22 +296,22 @@
       `</svg>`;
 
     el("chart-cap").innerHTML = one
-      ? `<b>${esc(one.feed)}</b> gave up two posts to be the taste: ${one.picks.map((t) => `“${esc(t)}”`).join(" and ")}. ` +
+      ? `<b>${esc(one.source)}</b> gave up two posts to be the taste: ${one.picks.map((t) => `“${esc(t)}”`).join(" and ")}. ` +
         `its other ${moves.length} went back in the pile. the lines show where each one moved, ` +
         `the middle of them from ${place(wasMid)} to ${place(nowMid)} of ${outOf}. hover a tick for its title`
-      : `${runs.length} feeds each gave up two posts to be the taste. their other ${moves.length} posts went back in the pile. ` +
-        `date order leaves them spread over the whole feed; two picks pull them to the front. the tall tick is the middle one, ` +
-        `${place(wasMid)} then ${place(nowMid)} of ${outOf}. the ranker was never told which feed anything came from`;
+      : `${runs.length} sources each gave up two posts to be the taste. their other ${moves.length} posts went back in the pile. ` +
+        `date order leaves them spread over the whole source; two picks pull them to the front. the tall tick is the middle one, ` +
+        `${place(wasMid)} then ${place(nowMid)} of ${outOf}. the ranker was never told which source anything came from`;
 
-    // Eight feeds to try, taken evenly across the list so the subjects differ,
-    // plus the pool. Every feed is in the pool either way.
+    // Eight sources to try, taken evenly across the list so the subjects differ,
+    // plus the pool. Every source is in the pool either way.
     const step = Math.max(1, Math.floor(runs.length / 8));
     const offered = runs.map((run, i) => [i, run]).filter((_, i) => i % step === 0).slice(0, 8);
     const choice = (value, words, on) =>
       `<button class="btn quiet" type="button" data-show="${value}"${on ? ' aria-current="true"' : ""}>${words}</button>`;
     el("chart-pick").innerHTML =
-      choice("all", `all ${runs.length} feeds`, showing === "all") +
-      offered.map(([i, run]) => choice(i, esc(run.feed), showing === i)).join("");
+      choice("all", `all ${runs.length} sources`, showing === "all") +
+      offered.map(([i, run]) => choice(i, esc(run.source), showing === i)).join("");
   }
 
   document.addEventListener("click", (event) => {
@@ -331,7 +331,7 @@
       .sort((a, b) => b.cos - a.cos);
     const rows = [...others.slice(0, 3), ...others.slice(-3)];
     const row = ({ other, cos }) =>
-      `<tr><td><span class="t">${esc(other.title)}</span></td><td class="lc">${esc(other.feed)}</td><td class="num">${signed(cos)}</td></tr>`;
+      `<tr><td><span class="t">${esc(other.title)}</span></td><td class="lc">${esc(other.source)}</td><td class="num">${signed(cos)}</td></tr>`;
     el("neighbours").innerHTML = rows.map(row).join("");
     // The cosine scale is defined in the paragraph directly above this table;
     // saying it twice made the second one read as a different scale.
@@ -342,7 +342,7 @@
   // Each pick against the taste it belongs to. Which average that is, is the
   // whole of the clustering: nothing is labelled and nobody chose it.
   // The same lines as the pool, with the working shown: the three nearest
-  // labels and their cosines, then the words, then the feeds.
+  // labels and their cosines, then the words, then the sources.
   function renderTastes(built, pretend) {
     const several = built.length > 1;
     el("tastes").innerHTML = Manicule.describe(built, today.posts, today.labels).map((about, i) => {
@@ -351,8 +351,8 @@
       const labels = about.labels.map((l, j) => `${j ? "" : "about "}<b>${esc(l.text)}</b> <span class="mono">${signed(l.cos)}</span>`).join(", ");
       const focus = about.focus ? `<b>${esc(about.focus)}</b> is in half the nearest headlines, so it leads` : "";
       const when = about.happening ? `<b>${about.happening}</b>: three quarters of the nearest posts are within three days of each other, so this is something happening, not a field` : "";
-      const parts = [focus, when, labels, about.words.length ? esc(about.words.join(", ")) : "", about.feeds.length ? `near ${esc(about.feeds.join(", "))}` : ""];
-      return `<li>${hand("rest")}${k}${n}<span class="feeds">${parts.filter(Boolean).join(" · ")}</span></li>`;
+      const parts = [focus, when, labels, about.words.length ? esc(about.words.join(", ")) : "", about.sources.length ? `near ${esc(about.sources.join(", "))}` : ""];
+      return `<li>${hand("rest")}${k}${n}<span class="sources">${parts.filter(Boolean).join(" · ")}</span></li>`;
     }).join("");
   }
 
@@ -368,13 +368,13 @@
       return { best, near };
     };
     el("picks-head").innerHTML = built.length > 1
-      ? `<tr><th scope="col" class="grow">what you picked</th><th scope="col">feed</th><th scope="col" class="lc">which average</th><th scope="col" class="num">cos to it</th></tr>`
-      : `<tr><th scope="col" class="grow">what you picked</th><th scope="col">feed</th><th scope="col" class="num">cos to the average</th></tr>`;
+      ? `<tr><th scope="col" class="grow">what you picked</th><th scope="col">source</th><th scope="col" class="lc">which average</th><th scope="col" class="num">cos to it</th></tr>`
+      : `<tr><th scope="col" class="grow">what you picked</th><th scope="col">source</th><th scope="col" class="num">cos to the average</th></tr>`;
     el("picks").innerHTML = taste.picked.map((id) => {
       const pick = postById[id];
       const { best, near } = whichOne(pick.vector);
       const label = built.length > 1 ? `<td class="lc">${best + 1} of ${built.length}</td>` : "";
-      return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.feed)}</td>${label}<td class="num">${signed(near)}</td></tr>`;
+      return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.source)}</td>${label}<td class="num">${signed(near)}</td></tr>`;
     }).join("");
     el("picks-cap").textContent = taste.pretend
       ? "on the pretend taste. pick a few things on the pool and this table is yours"

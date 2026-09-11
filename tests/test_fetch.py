@@ -34,12 +34,12 @@ class Fake:
 
 
 def test_one_host_at_a_time(monkeypatch):
-    """Firing every feed at one host at once is what got nine of them refused."""
+    """Firing every source at one host at once is what got nine of them refused."""
     inside, most, lock = [0], [0], threading.Lock()
     monkeypatch.setattr(urllib.request, "urlopen",
                         lambda req, timeout=None: Fake(req.full_url, inside, most, lock))
-    feeds = [(f"f{i}", f"https://one.example/{i}") for i in range(6)]
-    posts = fetch(feeds, per_feed=1, workers=6)
+    sources = [(f"f{i}", f"https://one.example/{i}") for i in range(6)]
+    posts = fetch(sources, per_source=1, workers=6)
     assert len(posts) == 6
     assert most[0] == 1, f"{most[0]} at once on one host"
 
@@ -60,9 +60,9 @@ def test_two_hosts_still_go_at_once(monkeypatch):
                         lambda req, timeout=None: Timed(req.full_url, [0], [0], lock))
     # One host costs the read plus the pause held inside its lock. Two hosts
     # in parallel cost about the same; two hosts in a queue cost twice.
-    feeds = [("a", "https://a.example/f"), ("b", "https://b.example/f")]
+    sources = [("a", "https://a.example/f"), ("b", "https://b.example/f")]
     started = time.monotonic()
-    fetch(feeds, per_feed=1, workers=2)
+    fetch(sources, per_source=1, workers=2)
     took = time.monotonic() - started
     assert took < 1.0, f"two hosts were queued against each other: {took:.2f}s"
 
@@ -78,11 +78,11 @@ def test_one_more_go_before_giving_up(monkeypatch):
         return Fake(req.full_url, [0], [0], threading.Lock())
 
     monkeypatch.setattr(urllib.request, "urlopen", flaky)
-    posts = fetch([("a", "https://a.example/f")], per_feed=1, workers=1)
+    posts = fetch([("a", "https://a.example/f")], per_source=1, workers=1)
     assert len(posts) == 1 and tries["n"] == 2
 
 
-def test_a_feed_that_never_answers_is_skipped_not_fatal(monkeypatch):
+def test_a_source_that_never_answers_is_skipped_not_fatal(monkeypatch):
     """One dead host must not take the build with it."""
     def dead(req, timeout=None):
         if "dead" in req.full_url:
@@ -91,31 +91,31 @@ def test_a_feed_that_never_answers_is_skipped_not_fatal(monkeypatch):
 
     monkeypatch.setattr(urllib.request, "urlopen", dead)
     posts = fetch([("d", "https://dead.example/f"), ("a", "https://a.example/f")],
-                  per_feed=1, workers=2)
+                  per_source=1, workers=2)
     assert len(posts) == 1
 
 
 def test_a_lone_host_waits_for_nothing(monkeypatch):
-    """The pause is for hosts carrying many feeds, not for the other three hundred."""
+    """The pause is for hosts carrying many sources, not for the other three hundred."""
     lock = threading.Lock()
     monkeypatch.setattr(urllib.request, "urlopen",
                         lambda req, timeout=None: Fake(req.full_url, [0], [0], lock))
-    feeds = [(f"f{i}", f"https://h{i}.example/f") for i in range(8)]
+    sources = [(f"f{i}", f"https://h{i}.example/f") for i in range(8)]
     started = time.monotonic()
-    posts = fetch(feeds, per_feed=1, workers=8, per_host_pause=1.0)
+    posts = fetch(sources, per_source=1, workers=8, per_host_pause=1.0)
     took = time.monotonic() - started
     assert len(posts) == 8
     assert took < 0.5, f"eight different hosts paused for each other: {took:.2f}s"
 
 
 def test_a_crowded_host_waits_longer(monkeypatch):
-    """Eight feeds on one host queue, and the wait between them is real."""
+    """Eight sources on one host queue, and the wait between them is real."""
     lock = threading.Lock()
     monkeypatch.setattr(urllib.request, "urlopen",
                         lambda req, timeout=None: Fake(req.full_url, [0], [0], lock))
-    feeds = [(f"f{i}", f"https://one.example/{i}") for i in range(8)]
+    sources = [(f"f{i}", f"https://one.example/{i}") for i in range(8)]
     started = time.monotonic()
-    fetch(feeds, per_feed=1, workers=8, per_host_pause=0.1)
+    fetch(sources, per_source=1, workers=8, per_host_pause=0.1)
     took = time.monotonic() - started
     # Seven gaps of 0.7s each, give or take, on top of the reads.
     assert took > 4.0, f"the crowded host was not paced: {took:.2f}s"

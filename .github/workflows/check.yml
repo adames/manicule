@@ -1,14 +1,14 @@
 # Fetch the pool from a runner and say what it could not reach. Builds to
 # /tmp and deploys nothing: the point is the last "skipped" line. A runner
 # reaches the web from a different address than a laptop does, and some hosts
-# answer it differently, so a feed is not verified until this has run.
+# answer it differently, so a source is not verified until this has run.
 #
-# Run it by hand, on whatever branch carries the feeds you are checking:
+# Run it by hand, on whatever branch carries the sources you are checking:
 #
 #     gh workflow run check.yml --ref your-branch
 #
 # It ran on every claude/** push while the pool was being rebuilt, which was
-# right then and noise now: the pool changes a few feeds at a time.
+# right then and noise now: the pool changes a few sources at a time.
 name: check
 on:
   workflow_dispatch:
@@ -20,4 +20,4 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv python install 3.12
       - run: uv sync
-      - run: uv run manicule.py posts feeds.opml -o /tmp/check.json 2>&1 | grep -E "^  (skip|note|skipped)" || echo "nothing skipped"
+      - run: uv run manicule.py posts sources.opml -o /tmp/check.json 2>&1 | grep -E "^  (skip|note|skipped)" || echo "nothing skipped"
