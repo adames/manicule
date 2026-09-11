@@ -15,6 +15,7 @@
       <outline text="Citation Needed" type="rss" xmlUrl="https://www.citationneeded.news/rss/"/>
       <outline text="Cloudflare Blog" type="rss" xmlUrl="https://blog.cloudflare.com/rss/"/>
       <outline text="Computer Things" type="rss" xmlUrl="https://buttondown.email/hillelwayne/rss"/>
+      <outline text="Computerphile" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA"/>
       <outline text="CSS-Tricks" type="rss" xmlUrl="https://css-tricks.com/feed/"/>
       <outline text="Dan Luu" type="rss" xmlUrl="https://danluu.com/atom.xml"/>
       <outline text="Daring Fireball" type="rss" xmlUrl="https://daringfireball.net/feeds/main"/>
@@ -64,17 +65,21 @@
       <outline text="The GitHub Blog" type="rss" xmlUrl="https://github.blog/feed/"/>
       <outline text="The Go Blog" type="rss" xmlUrl="https://go.dev/blog/feed.atom"/>
       <outline text="The Verge" type="rss" xmlUrl="https://www.theverge.com/rss/index.xml"/>
+      <outline text="Two Minute Papers" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg"/>
       <outline text="Vitalik Buterin&#x27;s website" type="rss" xmlUrl="https://vitalik.eth.limo/feed.xml"/>
       <outline text="WebKit" type="rss" xmlUrl="https://webkit.org/feed/"/>
       <outline text="www.theregister.com - Articles" type="rss" xmlUrl="https://www.theregister.com/headlines.atom"/>
       <outline text="Xe Iaso&#x27;s blog" type="rss" xmlUrl="https://xeiaso.net/blog.rss"/>
     </outline>
     <outline text="science">
+      <outline text="3Blue1Brown (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw"/>
       <outline text="All Articles | Discover Magazine" type="rss" xmlUrl="https://www.discovermagazine.com/rss/all"/>
+      <outline text="Anton Petrov" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCciQ8wFcVoIIMi-lfu8-cjQ"/>
       <outline text="Azimuth" type="rss" xmlUrl="https://johncarlosbaez.wordpress.com/feed/"/>
       <outline text="Big Think" type="rss" xmlUrl="https://bigthink.com/feed/all"/>
       <outline text="Eos" type="rss" xmlUrl="https://eos.org/feed"/>
       <outline text="ESA Top News" type="rss" xmlUrl="https://www.esa.int/rssfeed/Our_Activities/Space_News"/>
+      <outline text="Kurzgesagt – In a Nutshell" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q"/>
       <outline text="Latest from Live Science" type="rss" xmlUrl="https://www.livescience.com/feeds/all"/>
       <outline text="Latest from Space.com" type="rss" xmlUrl="https://www.space.com/feeds/all"/>
       <outline text="Latest News from Science Magazine" type="rss" xmlUrl="https://www.science.org/rss/news_current.xml"/>
@@ -97,6 +102,7 @@
       <outline text="Scientific American Content: Global" type="rss" xmlUrl="http://rss.sciam.com/ScientificAmerican-Global"/>
       <outline text="Shtetl-Optimized" type="rss" xmlUrl="https://scottaaronson.blog/?feed=rss2"/>
       <outline text="Sixty Symbols" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCvBqzzvUBLCs8Y7Axb-jZew"/>
+      <outline text="Steve Mould" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCEIwxahdLz7bap-VDs9h35A"/>
       <outline text="The Transmitter" type="rss" xmlUrl="https://www.thetransmitter.org/feed/"/>
       <outline text="Undark Magazine" type="rss" xmlUrl="https://undark.org/feed/"/>
       <outline text="Universe Today" type="rss" xmlUrl="https://www.universetoday.com/feed"/>
@@ -118,6 +124,8 @@
       <outline text="Ken Shirriff&#x27;s blog" type="rss" xmlUrl="https://www.righto.com/feeds/posts/default"/>
       <outline text="Make: DIY Projects and Ideas for Makers" type="rss" xmlUrl="https://makezine.com/feed/"/>
       <outline text="Original Prusa 3D Printers" type="rss" xmlUrl="https://blog.prusa3d.com/feed/"/>
+      <outline text="Real Engineering" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCR1IuLEqb6UEA_zQ81kwXfg"/>
+      <outline text="Smarter Every Day (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC6107grRI4m0o2-emgoDnAA"/>
       <outline text="Stuff Made Here (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCj1VqrHhDte54oLgPG4xpuQ"/>
       <outline text="Technology Connections" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCy0tKL1T7wFoYcxCe0xjN6Q"/>
       <outline text="Tom Scott" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCBa659QWEk1AI4Tg--mrJ2A"/>
@@ -205,6 +213,7 @@
       <outline text="Words Without Borders" type="rss" xmlUrl="https://www.wordswithoutborders.org/rss/"/>
     </outline>
     <outline text="language">
+      <outline text="Langfocus" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCNhX3WQEkraW3VHPyup8jkQ"/>
       <outline text="Language Log" type="rss" xmlUrl="https://languagelog.ldc.upenn.edu/nll/?feed=atom"/>
       <outline text="Merriam-Webster&#x27;s Word of the Day" type="rss" xmlUrl="https://www.merriam-webster.com/wotd/feed/rss2"/>
       <outline text="OUPblog" type="rss" xmlUrl="https://blog.oup.com/feed/"/>

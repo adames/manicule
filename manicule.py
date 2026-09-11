@@ -248,26 +248,52 @@ def raw_summary(item) -> str:
 
 
 def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | None = None,
-          workers: int = 16, timeout: int = 20) -> list[Post]:
+          workers: int = 16, timeout: int = 20, tries: int = 2) -> list[Post]:
     """Fetch every feed at once, keep the newest few of each, drop the old.
 
     Feeds go out in parallel with a timeout each: at a few hundred feeds one
     slow host must not hold the build. A feed that fails is skipped and
     yesterday's file keeps serving.
+
+    One host at a time, though. Twenty-nine of these feeds are YouTube, and
+    firing them all at once got nine of them refused — a different nine on the
+    next run, which is what rate limiting looks like from the outside. Requests
+    to the same host queue behind each other with a pause between, and anything
+    that still fails gets one more go. Hosts with a single feed, which is most
+    of them, are unaffected.
     """
+    import threading
     import urllib.request
     from concurrent.futures import ThreadPoolExecutor
+    from urllib.parse import urlparse
+
+    locks: dict[str, threading.Lock] = {}
+    guard = threading.Lock()
+
+    def lock_for(host):
+        with guard:
+            return locks.setdefault(host, threading.Lock())
+
+    def get(url):
+        req = urllib.request.Request(url, headers={"User-Agent": "manicule/0.1 (+https://manicule.adames.cc)"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read()
 
     def pull(feed):
         title, url = feed
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "manicule/0.1 (+https://manicule.adames.cc)"})
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                body = r.read()
-        except Exception as why:  # noqa: BLE001 — any failure is a skip
-            return title, url, None, why
-        parsed = feedparser.parse(body)
-        return title, url, parsed, None
+        host = urlparse(url).netloc
+        why = None
+        for attempt in range(tries):
+            try:
+                with lock_for(host):
+                    body = get(url)
+                    time.sleep(0.4)   # inside the lock: the pause is the point
+                return title, url, feedparser.parse(body), None
+            except Exception as e:  # noqa: BLE001 — any failure is worth one more go
+                why = e
+                if attempt + 1 < tries:
+                    time.sleep(2)
+        return title, url, None, why
 
     oldest = None
     if max_age_days is not None:
