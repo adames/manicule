@@ -255,15 +255,24 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
     slow host must not hold the build. A feed that fails is skipped and
     yesterday's file keeps serving.
 
-    One host at a time, though. Twenty-eight of these feeds are YouTube, and
-    firing them all at once got half of them refused — a different half on the
-    next run, which is what rate limiting looks like from the outside.
+    One host at a time, though: requests to a host queue behind each other, and
+    the pause between them grows with how many feeds that host is carrying. A
+    host with one feed waits nothing. A refusal gets two more goes, backing off
+    each time. One slow host still cannot hold up the build.
 
-    So requests to one host queue behind each other, and the pause between them
-    grows with how many feeds that host is carrying: a host with one feed waits
-    nothing, YouTube waits seconds. A refusal gets two more goes, backing off
-    each time. The three hundred hosts with a single feed are untouched by all
-    of this, and one slow host still cannot hold up the build.
+    This was built to stop YouTube refusing us and it does not, which is worth
+    writing down so nobody tunes it again hoping. Twenty-eight of these feeds
+    are YouTube, and from a GitHub runner it refuses a third to a half of them
+    every build, a different set each time:
+
+        sixteen at once                     9 refused, then 8
+        one at a time, 0.4s apart          15 refused
+        one at a time, up to 3s, 2 retries 12 refused
+
+    From a laptop the same build loses two. It is the address, not the pace —
+    a per-IP quota that slowing down only spreads more thinly. What stayed
+    worth keeping is the politeness to every other host and the retry, which
+    does catch the ordinary one-off failure.
     """
     import threading
     import urllib.request
