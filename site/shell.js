@@ -67,10 +67,12 @@
   // ── the link is the state ────────────────────────────────────────────────
   // A hash reads as {m, d, s, l}: picked ids, passed ids, source keys, λ. The
   // mirror is this browser's own copy of the same thing, so a bare visit comes
-  // back to where you were. A source's key is short and readable, and stays put
-  // as long as the source keeps its name.
+  // back to where you were. Nothing writes `s` any more; it is still read so
+  // that a link from when it did keeps working.
 
-  const sourceKey = (name) => String(name).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 12);
+  // A short readable key for a name. Only the model's name goes through it, to
+  // stamp which model an average was made by — it is not a key for a source.
+  const slug = (name) => String(name).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 12);
 
   function tasteIn(hash) {
     const parts = new URLSearchParams((hash || "").replace(/^#/, ""));
@@ -136,7 +138,7 @@
 
   // A typed address carries no hash, but this browser may still hold a taste.
   // Put them back before anything reads location.hash, so the printed address,
-  // share, and the links to the other pages all agree with the source.
+  // share, and the links to the other pages all agree with the feed.
   const arriving = tasteIn(location.hash);
   if (isTaste(location.hash) && !arriving.m.length && !arriving.d.length && !arriving.v && !arriving.w) {
     const saved = mirror() || {};
@@ -181,8 +183,8 @@
     target.focus({ preventScroll: true });
   });
 
-  // ── the post count on the source tab ─────────────────────────────────────
-  // The source writes it after loading; the other pages show the last one seen.
+  // ── the post count on the feed tab ───────────────────────────────────────
+  // The feed writes it after loading; the other pages show the last one seen.
 
   try {
     const counted = localStorage.getItem("manicule-count");
@@ -227,5 +229,5 @@
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  window.Shell = { hand, toast, carry, loadPosts, tasteIn, mirror, hashOf, lam, isTaste, esc, sourceKey, signed, plain };
+  window.Shell = { hand, toast, carry, loadPosts, tasteIn, mirror, hashOf, lam, isTaste, esc, slug, signed, plain };
 })();

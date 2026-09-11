@@ -6,7 +6,7 @@
   const { hand, esc, signed, plain } = Shell;
 
   const UPSTREAM = "adames"; // a fork derives its own owner from the host
-  const sourceUrl = (owner) => `https://raw.githubusercontent.com/${owner}/manicule/main/manicule.py`;
+  const listingUrl = (owner) => `https://raw.githubusercontent.com/${owner}/manicule/main/manicule.py`;
 
   // ── the listing ──────────────────────────────────────────────────────────
   // Each note is keyed by a substring of the line it belongs to, so it finds
@@ -28,12 +28,12 @@
     return match ? match[1].toLowerCase() : null;
   }
 
-  async function fetchSource() {
+  async function fetchListing() {
     const owner = ownerFromHost();
     const owners = owner && owner !== UPSTREAM ? [owner, UPSTREAM] : [UPSTREAM];
     for (const who of owners) {
       try {
-        const response = await fetch(sourceUrl(who), { cache: "no-cache" });
+        const response = await fetch(listingUrl(who), { cache: "no-cache" });
         if (!response.ok) continue;
         const text = await response.text();
         if (text.includes("def rank(")) return { text, owner: who };
@@ -48,9 +48,9 @@
     el("listing-cap").textContent = "";
   }
 
-  function renderListing(source) {
-    if (!source) return showNothing();
-    const lines = source.text.split("\n");
+  function renderListing(listing) {
+    if (!listing) return showNothing();
+    const lines = listing.text.split("\n");
     const first = lines.findIndex((line) => line.startsWith("def rank("));
     const last = first < 0 ? -1 : lines.findIndex((line, i) => i > first && line === "    return scored");
     if (first < 0 || last < 0) return showNothing();
@@ -74,7 +74,7 @@
       `<div class="cap"><span><b>manicule.py</b> · rank()</span><span>${last - first + 1} lines</span></div>` + rows.join("");
     el("listing-cap").textContent = `lines ${first + 1}–${last + 1} · fetched from main`;
     el("listing-github").href =
-      `https://github.com/${source.owner}/manicule/blob/main/manicule.py#L${first + 1}-L${last + 1}`;
+      `https://github.com/${listing.owner}/manicule/blob/main/manicule.py#L${first + 1}-L${last + 1}`;
   }
 
   // ── the proof ────────────────────────────────────────────────────────────
@@ -235,13 +235,13 @@
   function trials() {
     if (trialFeeds) return trialFeeds;
     const withWords = today.posts.filter((post) => post.vector);
-    const byFeed = {};
-    for (const post of withWords) (byFeed[post.source] = byFeed[post.source] || []).push(post);
+    const bySource = {};
+    for (const post of withWords) (bySource[post.source] = bySource[post.source] || []).push(post);
     const newestFirst = (list) => [...list].sort((a, b) => (b.published || "").localeCompare(a.published || ""));
 
     trialFeeds = [];
-    for (const name of Object.keys(byFeed).sort()) {
-      const members = newestFirst(byFeed[name]);
+    for (const name of Object.keys(bySource).sort()) {
+      const members = newestFirst(bySource[name]);
       if (members.length < 4) continue;
       const picks = members.slice(0, 2);
       const held = members.slice(2);
@@ -300,7 +300,7 @@
         `its other ${moves.length} went back in the pile. the lines show where each one moved, ` +
         `the middle of them from ${place(wasMid)} to ${place(nowMid)} of ${outOf}. hover a tick for its title`
       : `${runs.length} sources each gave up two posts to be the taste. their other ${moves.length} posts went back in the pile. ` +
-        `date order leaves them spread over the whole source; two picks pull them to the front. the tall tick is the middle one, ` +
+        `date order leaves them spread over the whole feed; two picks pull them to the front. the tall tick is the middle one, ` +
         `${place(wasMid)} then ${place(nowMid)} of ${outOf}. the ranker was never told which source anything came from`;
 
     // Eight sources to try, taken evenly across the list so the subjects differ,
@@ -423,7 +423,7 @@
 
   // ── boot ─────────────────────────────────────────────────────────────────
 
-  fetchSource().then(renderListing);
+  fetchListing().then(renderListing);
 
   Shell.loadPosts()
     .then((loaded) => {

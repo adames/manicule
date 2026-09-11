@@ -36,16 +36,16 @@
   // An average is only meaningful to the model that made it. A link from a
   // different one is not wrong, it is unreadable, and reading it anyway would
   // rank by noise while looking like it worked.
-  const ourModel = () => Shell.sourceKey(posts.model);
+  const ourModel = () => Shell.slug(posts.model);
 
-  function tasteIn(source) {
+  function tasteIn(from) {
     const nothing = { picked: [], passed: [] };
-    if (!source.v && !source.w) return nothing;
-    if (source.k && source.k !== ourModel()) {
+    if (!from.v && !from.w) return nothing;
+    if (from.k && from.k !== ourModel()) {
       state.unreadable = true;
       return nothing;
     }
-    return { picked: Manicule.readTasteBlob(source.v, posts.dim), passed: Manicule.readTasteBlob(source.w, posts.dim) };
+    return { picked: Manicule.readTasteBlob(from.v, posts.dim), passed: Manicule.readTasteBlob(from.w, posts.dim) };
   }
 
   function readTheLink() {
@@ -151,13 +151,13 @@
     return "just now";
   }
 
-  // A source whose summary is only punctuation has no blurb worth printing.
+  // A post whose summary is only punctuation has no blurb worth printing.
   const blurbOf = (post) => ((post.snippet || "").replace(/[.…\s]/g, "") ? post.snippet : "");
 
   // ── one row ──────────────────────────────────────────────────────────────
 
   // The result only. The arithmetic behind it is worked in full on the method
-  // page; a source is for reading, and a column of sums is not.
+  // page; a feed is for reading, and a column of sums is not.
   // Cold, there is no score to print, but the box is still drawn: a row must
   // be the same height before and after your first press, or the whole page
   // moves under you.

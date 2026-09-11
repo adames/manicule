@@ -185,7 +185,7 @@ FEED_TAILS = re.compile(
 
 
 def snippet(raw: str | None, limit: int = SNIPPET_CHARS) -> str:
-    """A plain-text blurb: no markup, no source scaffolding, cut at a word."""
+    """A plain-text blurb: no markup, no rss scaffolding, cut at a word."""
     if not raw:
         return ""
     # Block tags become spaces so paragraphs do not run together; inline tags
@@ -625,7 +625,7 @@ def spread(posts: list[Post], count: int = 30) -> list[str]:
         chosen.append(pick)
         nearest = np.maximum(nearest, vectors @ vectors[pick])
 
-    # Back into source order, so the screen reads as a source and not as a ranking.
+    # Back into feed order, so the screen reads as a feed and not as a ranking.
     return [rows[i].id for i in sorted(chosen)]
 
 
