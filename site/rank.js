@@ -6,9 +6,11 @@
 })(typeof self !== "undefined" ? self : this, function () {
   const LAMBDA = 0.25;
 
-  // A taste is two averages, so a link that carries the averages carries the
-  // whole taste — on any day, against any pool, on anyone's fork. Ids cannot:
-  // the pool turns over and they stop pointing at anything.
+  // A taste is a few averages a side. The page calls each average a taste
+  // ("taste 1 · 3 picks · about cooking"); in here one side is a Taste and
+  // each entry is `one`. A link that carries the averages carries all of it —
+  // on any day, against any pool, on anyone's fork. Ids cannot: the pool
+  // turns over and they stop pointing at anything.
   //
   // A blob is <base64 of 384 int8>~<scale>~<count>: the direction, the size
   // that was quantized away, and how many picks are behind it.

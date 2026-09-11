@@ -123,12 +123,12 @@
   function rankBy(lambda) {
     // Only posts still in the pool can be named as the closest pick. An
     // average is not a post, so a carried taste ranks without a near line.
-    const pickedVectors = {};
+    const pickedById = {};
     for (const id of state.picked) {
-      if (postById[id] && postById[id].vector) pickedVectors[id] = postById[id].vector;
+      if (postById[id] && postById[id].vector) pickedById[id] = postById[id].vector;
     }
     const { picked, passed } = state.taste;
-    return Manicule.rank(posts.posts, picked, passed, lambda, pickedVectors);
+    return Manicule.rank(posts.posts, picked, passed, lambda, pickedById);
   }
 
   // ── words and numbers ────────────────────────────────────────────────────
