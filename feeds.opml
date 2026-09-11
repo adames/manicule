@@ -210,7 +210,6 @@
       <outline text="Age of Revolutions" type="rss" xmlUrl="https://ageofrevolutions.com/feed/"/>
       <outline text="Antigone" type="rss" xmlUrl="https://antigonejournal.com/feed/"/>
       <outline text="Black Perspectives" type="rss" xmlUrl="https://www.aaihs.org/feed/"/>
-      <outline text="Cliodynamica" type="rss" xmlUrl="https://peterturchin.com/feed/"/>
       <outline text="History Workshop" type="rss" xmlUrl="https://www.historyworkshop.org.uk/feed/"/>
       <outline text="Smithsonian – history" type="rss" xmlUrl="https://www.smithsonianmag.com/rss/history/"/>
       <outline text="JHI Blog" type="rss" xmlUrl="https://www.jhiblog.org/feed/"/>
@@ -403,7 +402,6 @@
       <outline text="RealClimate" type="rss" xmlUrl="https://www.realclimate.org/index.php/feed/"/>
       <outline text="Rewilding Britain" type="rss" xmlUrl="https://www.rewildingbritain.org.uk/feed.rss"/>
       <outline text="Semi-Rad" type="rss" xmlUrl="https://semi-rad.com/feed/"/>
-      <outline text="Sustainability by numbers" type="rss" xmlUrl="https://www.sustainabilitybynumbers.com/feed"/>
       <outline text="The Climate Brink" type="rss" xmlUrl="https://www.theclimatebrink.com/feed"/>
       <outline text="The Eyewall" type="rss" xmlUrl="https://theeyewall.com/feed/"/>
       <outline text="The Revelator" type="rss" xmlUrl="https://therevelator.org/feed/"/>
@@ -485,7 +483,6 @@
       <outline text="xkcd.com" type="rss" xmlUrl="https://xkcd.com/atom.xml"/>
     </outline>
     <outline text="news + world">
-      <outline text="+972 Magazine" type="rss" xmlUrl="https://www.972mag.com/feed/"/>
       <outline text="Africa Is a Country" type="rss" xmlUrl="https://africasacountry.com/feed"/>
       <outline text="Best of The Atlantic" type="rss" xmlUrl="https://www.theatlantic.com/feed/best-of/"/>
       <outline text="Coda Story" type="rss" xmlUrl="https://www.codastory.com/feed/"/>
