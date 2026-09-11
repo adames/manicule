@@ -9,7 +9,7 @@ FIX = json.loads((Path(__file__).parent / "fixture.json").read_text())
 
 
 def _posts():
-    return [Post(id=e["id"], title=e["id"], link="", snippet="", feed="", published="", kind="article", vector=e["vector"]) for e in FIX["posts"]]
+    return [Post(id=e["id"], title=e["id"], link="", snippet="", feed="", published="", kind="text", vector=e["vector"]) for e in FIX["posts"]]
 
 
 def test_fixture_order_and_scores():
@@ -75,9 +75,9 @@ def test_vectors_bin_round_trips(tmp_path):
     from manicule import DIM, quantize, read_vectors, write_vectors
     import random
     rng = random.Random(3)
-    posts = [Post("a", "a", "", "", "", "", "article", [rng.gauss(0, 1) for _ in range(DIM)]),
-             Post("b", "b", "", "", "", "", "article", None),
-             Post("c", "c", "", "", "", "", "article", [rng.gauss(0, 1) for _ in range(DIM)])]
+    posts = [Post("a", "a", "", "", "", "", "text", [rng.gauss(0, 1) for _ in range(DIM)]),
+             Post("b", "b", "", "", "", "", "text", None),
+             Post("c", "c", "", "", "", "", "text", [rng.gauss(0, 1) for _ in range(DIM)])]
     rows = [{"s": quantize(p.vector)[1]} if p.vector else {} for p in posts]
     path = tmp_path / "vectors.bin"
     write_vectors(posts, path)
@@ -97,7 +97,7 @@ def test_spread_reaches_every_corner():
     for f in range(6):
         centre = [rng.gauss(0, 1) for _ in range(16)]
         for i in range(20):
-            posts.append(Post(f"{f}-{i}", "t", "", "", f"feed {f}", "", "article",
+            posts.append(Post(f"{f}-{i}", "t", "", "", f"feed {f}", "", "text",
                               [c + rng.gauss(0, 0.25) for c in centre]))
     got = spread(posts, 12)
     assert len(got) == 12
@@ -213,9 +213,9 @@ def test_unpressing_puts_the_taste_back():
 def test_rank_says_which_average_a_post_sits_nearest():
     a, b = [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]
     taste = taste_of([a, [0.98, 0.2, 0.0], b])
-    posts = [Post("pa", "", "", "", "", "", "article", [0.9, 0.1, 0.0]),
-             Post("pb", "", "", "", "", "", "article", [0.1, 0.9, 0.0]),
-             Post("none", "", "", "", "", "", "article", None)]
+    posts = [Post("pa", "", "", "", "", "", "text", [0.9, 0.1, 0.0]),
+             Post("pb", "", "", "", "", "", "text", [0.1, 0.9, 0.0]),
+             Post("none", "", "", "", "", "", "text", None)]
     by_id = {s.post.id: s for s in rank(posts, taste, [])}
     assert by_id["pa"].which == 0 and by_id["pb"].which == 1
     assert by_id["none"].which == -1
@@ -227,7 +227,7 @@ def test_labels_ride_behind_the_posts_in_vectors_bin(tmp_path):
     import random
     from manicule import DIM, quantize, read_labels, read_vectors, write_vectors
     rng = random.Random(5)
-    posts = [Post("a", "a", "", "", "", "", "article", [rng.gauss(0, 1) for _ in range(DIM)])]
+    posts = [Post("a", "a", "", "", "", "", "text", [rng.gauss(0, 1) for _ in range(DIM)])]
     labels = [[rng.gauss(0, 1) for _ in range(DIM)] for _ in range(2)]
     rows = [{"s": quantize(posts[0].vector)[1]}]
     path = tmp_path / "vectors.bin"

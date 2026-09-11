@@ -76,7 +76,7 @@ class Post:
     snippet: str
     feed: str
     published: str          # ISO 8601, or "" when the feed gave no date
-    kind: str               # article | video | podcast
+    kind: str               # text | video | audio: read, watch or listen
     vector: list[float] | None = None
 
     @property
@@ -210,8 +210,8 @@ def kind_of(link: str, item) -> str:
         return "video"
     for enclosure in getattr(item, "enclosures", []) or []:
         if str(enclosure.get("type", "")).startswith("audio/"):
-            return "podcast"
-    return "article"
+            return "audio"
+    return "text"
 
 
 # The web is younger than this, and nothing in a feed is from two years hence.
@@ -514,7 +514,7 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
         if count:
             by_picks[str(k)] = {name: median(where) for name, where in got.items()}
     count, got = trials(2)
-    written_count, written = trials(2, only={"article"})
+    written_count, written = trials(2, only={"text"})
     return {
         "posts": n,
         "feeds": len(set(feeds)),
@@ -847,8 +847,7 @@ def cmd_rank(args: argparse.Namespace) -> int:
 
     lines = [heading]
     for post, scored in rows:
-        badge = {"video": "VID", "podcast": "POD"}.get(post.kind, "WEB")
-        line = f"- [{badge}] [{post.title or post.link}]({post.link}) — {post.feed}"
+        line = f"- [{post.kind}] [{post.title or post.link}]({post.link}) — {post.feed}"
         if scored is not None and scored.score != float("-inf"):
             line += f"  `{scored.score:+.3f} = {scored.pos:+.3f} − {args.lam}×{scored.neg:.3f}`"
         lines.append(line)

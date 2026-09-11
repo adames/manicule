@@ -16,7 +16,7 @@ def clustered_posts(feeds=4, per_feed=8, dim=16):
         for i in range(per_feed):
             vector = [c + rng.gauss(0, 0.3) for c in centre]
             posts.append(Post(f"{f}-{i}", f"feed {f} post {i}", "", "words here", f"feed {f}",
-                                 f"2026-01-{i + 1:02d}", "article", vector))
+                                 f"2026-01-{i + 1:02d}", "text", vector))
     return posts
 
 
