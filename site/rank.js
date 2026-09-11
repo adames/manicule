@@ -95,73 +95,113 @@
     return df;
   }
 
+  // The k posts nearest an average, nearest first. A running top-k rather than
+  // a sort of the whole pool: this runs on every press.
+  function nearestTo(one, posts, k) {
+    const nearest = [];
+    for (const post of posts) {
+      if (!post.vector) continue;
+      const cos = cosine(post.vector, one.vector);
+      if (nearest.length < k) { nearest.push({ post, cos }); if (nearest.length === k) nearest.sort((a, b) => b.cos - a.cos); }
+      else if (cos > nearest[k - 1].cos) { nearest[k - 1] = { post, cos }; nearest.sort((a, b) => b.cos - a.cos); }
+    }
+    if (nearest.length < k) nearest.sort((a, b) => b.cos - a.cos);
+    return nearest;
+  }
+
+  // Where those nearest posts came from, the most-represented feeds first.
+  function feedsOf(nearest, howMany = 3) {
+    const howManyFrom = {};
+    for (const { post } of nearest) howManyFrom[post.feed] = (howManyFrom[post.feed] || 0) + 1;
+    return Object.keys(howManyFrom)
+      .sort((a, b) => howManyFrom[b] - howManyFrom[a] || a.localeCompare(b))
+      .slice(0, howMany);
+  }
+
+  // The labels the average sits nearest, nearest first.
+  function labelsFor(one, labels, howMany = 3) {
+    return labels
+      .map((label) => ({ text: label.text, cos: cosine(one.vector, label.vector) }))
+      .sort((a, b) => b.cos - a.cos).slice(0, howMany);
+  }
+
+  // A phrase scores by how many of the nearest headlines it is in, weighed
+  // by how rare it is in the pool, with a nod to length: "iphone 17 pro"
+  // over "iphone" when both are there. It has to be in two headlines or
+  // it is one headline's phrase and not the taste's, and a phrase the
+  // label already says is not the specific thing.
+  function phraseScores(nearest, df, poolSize, saidByLabel) {
+    const inHowManyHeadlines = {};
+    for (const { post } of nearest) {
+      for (const phrase of phrasesOf(post.title)) inHowManyHeadlines[phrase] = (inHowManyHeadlines[phrase] || 0) + 1;
+    }
+    return Object.keys(inHowManyHeadlines)
+      .filter((phrase) => inHowManyHeadlines[phrase] >= 2 && !saidByLabel.includes(" " + phrase + " "))
+      .map((phrase) => ({
+        phrase,
+        headlines: inHowManyHeadlines[phrase],
+        score: inHowManyHeadlines[phrase] * Math.log(poolSize / ((df[phrase] || 0) + 1)) * (1 + 0.35 * (phrase.split(" ").length - 1)),
+      }))
+      .sort((a, b) => b.score - a.score || b.phrase.length - a.phrase.length || a.phrase.localeCompare(b.phrase));
+  }
+
+  // The best few phrases, skipping any that says what one already taken says.
+  function pickWords(byScore, howMany = 3) {
+    const words = [];
+    for (const { phrase } of byScore) {
+      if (words.length === howMany) break;
+      // "iphone 17" inside "iphone 17 pro" says nothing new, either way round.
+      if (words.some((w) => (" " + w + " ").includes(" " + phrase + " ") || (" " + phrase + " ").includes(" " + w + " "))) continue;
+      words.push(phrase);
+    }
+    return words;
+  }
+
+  // A category's nearest posts are spread across the pool's ninety days.
+  // An announcement's are many feeds within days of each other: eleven
+  // of the twelve nearest to an iphone launch were two days old, while
+  // recipes, wine and an essay on liberalism ran ten to eighty. So: when
+  // three quarters of the nearest posts fall within three days of each
+  // other, from several feeds, the taste is about something happening,
+  // and the page says when rather than pretending it is a field.
+  function happeningIn(nearest, feedCount) {
+    const dated = nearest.map(({ post }) => Date.parse(post.published)).filter((t) => !isNaN(t)).sort((a, b) => b - a);
+    if (dated.length < 6 || feedCount < 3) return null;
+    const newest = dated[0], DAY = 86400000;
+    const bunched = dated.filter((t) => newest - t <= 3 * DAY).length;
+    if (bunched * 4 < dated.length * 3) return null;
+    const age = (Date.now() - newest) / DAY;
+    return age <= 2 ? "today" : age <= 7 ? "this week" : "lately";
+  }
+
   function describe(taste, posts, labels = [], k = 12) {
     const df = documentFrequency(posts);
-    const N = posts.length + 1;
+    const poolSize = posts.length + 1;
     return (taste || []).map((one) => {
-      const near = [];
-      for (const post of posts) {
-        if (!post.vector) continue;
-        const c = cosine(post.vector, one.vector);
-        if (near.length < k) { near.push({ post, c }); if (near.length === k) near.sort((a, b) => b.c - a.c); }
-        else if (c > near[k - 1].c) { near[k - 1] = { post, c }; near.sort((a, b) => b.c - a.c); }
-      }
-      if (near.length < k) near.sort((a, b) => b.c - a.c);
+      const nearest = nearestTo(one, posts, k);
+      const feeds = feedsOf(nearest);
+      const about = labelsFor(one, labels);
 
-      const counts = {};
-      for (const { post } of near) counts[post.feed] = (counts[post.feed] || 0) + 1;
-      const feeds = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b)).slice(0, 3);
-
-      const about = labels
-        .map((label) => ({ text: label.text, cos: cosine(one.vector, label.vector) }))
-        .sort((a, b) => b.cos - a.cos).slice(0, 3);
-
-      // A phrase scores by how many of the nearest headlines it is in, weighed
-      // by how rare it is in the pool, with a nod to length: "iphone 17 pro"
-      // over "iphone" when both are there. It has to be in two headlines or
-      // it is one headline's phrase and not the taste's, and a phrase the
-      // label already says is not the specific thing.
-      const inHow = {};
-      for (const { post } of near) for (const g of phrasesOf(post.title)) inHow[g] = (inHow[g] || 0) + 1;
       const saidByLabel = about.length ? " " + tokens(about[0].text).join(" ") + " " : "";
-      const scored = Object.keys(inHow)
-        .filter((g) => inHow[g] >= 2 && !saidByLabel.includes(" " + g + " "))
-        .map((g) => ({ g, n: inHow[g], s: inHow[g] * Math.log(N / ((df[g] || 0) + 1)) * (1 + 0.35 * (g.split(" ").length - 1)) }))
-        .sort((a, b) => b.s - a.s || b.g.length - a.g.length || a.g.localeCompare(b.g));
-      const words = [];
-      for (const { g } of scored) {
-        if (words.length === 3) break;
-        // "iphone 17" inside "iphone 17 pro" says nothing new, either way round.
-        if (words.some((w) => (" " + w + " ").includes(" " + g + " ") || (" " + g + " ").includes(" " + w + " "))) continue;
-        words.push(g);
-      }
+      const byScore = phraseScores(nearest, df, poolSize, saidByLabel);
+      const words = pickWords(byScore);
 
       // When one phrase is in half the nearest headlines, the taste is not
       // about a category with that phrase in it; it is about that thing, and
       // the category is the second clause. This is how "apple and iphone"
       // becomes "the iphone 17 pro", on the day it is.
-      const lead = scored.length && scored[0].n * 2 >= Math.min(k, near.length) ? scored[0].g : null;
+      const lead = byScore.length && byScore[0].headlines * 2 >= Math.min(k, nearest.length) ? byScore[0].phrase : null;
       const focus = lead && words.includes(lead) ? lead : null;
 
-      // A category's nearest posts are spread across the pool's ninety days.
-      // An announcement's are many feeds within days of each other: eleven
-      // of the twelve nearest to an iphone launch were two days old, while
-      // recipes, wine and an essay on liberalism ran ten to eighty. So: when
-      // three quarters of the nearest posts fall within three days of each
-      // other, from several feeds, the taste is about something happening,
-      // and the page says when rather than pretending it is a field.
-      const dated = near.map(({ post }) => Date.parse(post.published)).filter((t) => !isNaN(t)).sort((a, b) => b - a);
-      let happening = null;
-      if (dated.length >= 6 && feeds.length >= 3) {
-        const newest = dated[0], DAY = 86400000;
-        const bunched = dated.filter((t) => newest - t <= 3 * DAY).length;
-        if (bunched * 4 >= dated.length * 3) {
-          const age = (Date.now() - newest) / DAY;
-          happening = age <= 2 ? "today" : age <= 7 ? "this week" : "lately";
-        }
-      }
-
-      return { count: one.count, labels: about, words, focus, happening, feeds, nearest: near.length ? near[0].post : null };
+      return {
+        count: one.count,
+        labels: about,
+        words,
+        focus,
+        happening: happeningIn(nearest, feeds.length),
+        feeds,
+        nearest: nearest.length ? nearest[0].post : null,
+      };
     });
   }
 
