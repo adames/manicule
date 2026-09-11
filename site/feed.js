@@ -202,6 +202,13 @@
     return `<button class="mk ${shape}" type="button" data-act="cycle" aria-label="${says}" title="${now}" aria-describedby="t-${esc(post.id)}">${drawing}</button>`;
   }
 
+  // The badge earns its place only when the row is not what a reader assumes.
+  // Text is the default and goes unsaid; video and audio are the exceptions.
+  function kindHtml(post) {
+    const kind = post.kind || "text";
+    return kind === "text" ? "" : `<span class="kind">${esc(kind)}</span>`;
+  }
+
   // "recipes · baking and bread": the two labels the post sits nearest,
   // indices into posts.labels. Read the pair; either alone is a guess.
   function aboutHtml(post) {
@@ -218,7 +225,7 @@
     return `<li class="row${isPicked ? " picked" : ""}${isPassed ? " passed" : ""}" data-id="${esc(post.id)}">
           <span class="n" aria-hidden="true">${place}</span>
           <div class="body">
-            <div class="meta"><span class="kind">${esc(post.kind || "text")}</span><span class="source" title="${esc(post.source)}">${esc(post.source)}</span>${aboutHtml(post)}<time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
+            <div class="meta">${kindHtml(post)}<span class="source" title="${esc(post.source)}">${esc(post.source)}</span>${aboutHtml(post)}<time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
             <h2 class="title" id="t-${esc(post.id)}"><a href="${esc(post.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(post.title || post.link)}</a></h2>
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
             ${cold ? NO_NEAR : nearHtml(scored, isPicked, isPassed)}
