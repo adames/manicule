@@ -24,12 +24,18 @@ jobs:
       - run: uv sync --group dev
       - run: uv run pytest -q && node --test tests/rank.test.mjs
       - run: uv run manicule.py posts feeds.opml -o site/posts.json
+      # A push that lands while this is building makes the plain push here
+      # rejected, and the whole run with it. Rebase onto whatever arrived; the
+      # only files this commit touches are the two build outputs, and for
+      # those the build that just finished is the one to keep (-X theirs is
+      # "the commit being replayed", which is this one).
       - name: commit the posts
         run: |
           git config user.name "manicule-bot"
           git config user.email "manicule-bot@users.noreply.github.com"
           git add site/posts.json site/vectors.bin
           git diff --cached --quiet || git commit -m "posts: $(date -u +%F)"
+          git pull --rebase -X theirs
           git push
       # Stamp every local asset with the commit, so a browser can never mix a
       # new page with a script it cached an hour ago.
