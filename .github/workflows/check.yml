@@ -1,10 +1,17 @@
 # Fetch the pool from a runner and say what it could not reach. Builds to
-# /tmp and deploys nothing: the point is the last "skipped" line.
+# /tmp and deploys nothing: the point is the last "skipped" line. A runner
+# reaches the web from a different address than a laptop does, and some hosts
+# answer it differently, so a feed is not verified until this has run.
+#
+# Run it by hand, on whatever branch carries the feeds you are checking:
+#
+#     gh workflow run check.yml --ref your-branch
+#
+# It ran on every claude/** push while the pool was being rebuilt, which was
+# right then and noise now: the pool changes a few feeds at a time.
 name: check
 on:
   workflow_dispatch:
-  push:
-    branches: ['claude/**']
 jobs:
   fetch:
     runs-on: ubuntu-latest
