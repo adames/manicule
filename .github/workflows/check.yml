@@ -20,4 +20,9 @@ jobs:
       - uses: astral-sh/setup-uv@v10.1.0   # no floating major tag after v7
       - run: uv python install 3.12
       - run: uv sync
-      - run: uv run manicule.py posts sources.opml -o /tmp/check.json 2>&1 | grep -E "^  (skip|note|skipped)" || echo "nothing skipped"
+      # Two steps, not one pipeline: `cmd | grep || echo` cannot fail, so a
+      # build that died reported "nothing skipped" and went green. It hid a
+      # wrong filename here for an afternoon. The fetch has to be able to
+      # fail; only the grep finding nothing is allowed to be fine.
+      - run: uv run manicule.py posts feeds.opml -o /tmp/check.json 2>&1 | tee /tmp/check.log
+      - run: grep -E "^  (skip|note|skipped)" /tmp/check.log || echo "nothing skipped"
