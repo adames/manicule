@@ -470,17 +470,32 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
         """How near each row sits to that taste: its closest average."""
         return (vectors[rows] @ direction(ids).T).max(axis=1)
 
+    # "every row except these", and "which of these are not those". Written as
+    # [i for i in range(n) if i not in picks] this was half the run: a Python
+    # scan of two thousand rows doing a linear search of picks on each one,
+    # once per trial. A mask says the same thing and numpy does the walking.
+    def all_but(picks):
+        keep = np.ones(n, dtype=bool)
+        keep[picks] = False
+        return np.flatnonzero(keep)
+
+    def without(rows, picks):
+        return rows[~np.isin(rows, picks)]
+
     def places(order, held_out):
-        place = {post: p + 1 for p, post in enumerate(order)}
-        return [place[i] for i in held_out]
+        # order is always a permutation of every row but the picks, and
+        # held_out is always inside it, so every place read here was written.
+        place = np.empty(n, dtype=np.int64)
+        place[order] = np.arange(1, len(order) + 1)
+        return place[held_out].tolist()
 
     def one_trial(picks, held_out):
-        rest = np.array([i for i in range(n) if i not in picks])
+        rest = all_but(picks)
         scores = towards(rest, picks)
         return {
             "ranker": places(rest[np.argsort(-scores)], held_out),
             "words": places(rest[np.argsort(-shared_words(picks, rest))], held_out),
-            "newest": places([i for i in newest_first if i not in picks], held_out),
+            "newest": places(without(newest_first, picks), held_out),
             "shuffled": places(rng.permutation(rest), held_out),
         }
 
@@ -502,7 +517,7 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
                 continue
             for _ in range(trials_per_feed):
                 picks = rng.choice(members, picks_per_trial, replace=False)
-                held_out = [i for i in members if i not in picks]
+                held_out = without(members, picks)
                 for name, landed in one_trial(picks, held_out).items():
                     where[name].extend(landed)
                 count += 1
@@ -529,9 +544,9 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
                 for _ in range(10):
                     picks = rng.choice(a, 2, replace=False)
                     passes = rng.choice(b, 2, replace=False)
-                    rest = np.array([x for x in range(n) if x not in picks])
+                    rest = all_but(picks)
                     scores = towards(rest, picks) - lam * towards(rest, passes)
-                    landed.extend(places(rest[np.argsort(-scores)], [x for x in b if x not in passes]))
+                    landed.extend(places(rest[np.argsort(-scores)], without(b, passes)))
             sweep[str(lam)] = median(landed)
         return sweep
 
