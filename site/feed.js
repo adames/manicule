@@ -296,9 +296,9 @@
   // The order on screen is a choice, not a consequence: a press changes the
   // scores and nothing moves until the button is pressed.
   // A control is drawn only while pressing it would do something. Cold there
-  // is no taste to order by and nothing to forget, so the line is the words
+  // is no taste to order by and nothing to reset, so the line is the words
   // alone; ordered and untouched since, "order by taste" would be a no-op and
-  // is not offered. "forget" sits beside the counts it clears.
+  // is not offered. "reset" sits beside the counts it clears.
   function drawStatus(cold, stale) {
     const { picked, passed } = state.taste;
     // Two averages is a fact about your taste worth a word; one is just how
@@ -309,7 +309,7 @@
       : `<span class="n">${Manicule.pressesIn(picked)} picked</span>${shape} <span class="n">${Manicule.pressesIn(passed)} passed</span> <a class="n lam" href="method.html">λ ${state.lambda.toFixed(2)}</a>`;
     const acts = cold ? "" :
       (stale ? ` <button class="btn quiet" data-act="order" type="button">order by taste</button>` : "") +
-      ` <button class="btn quiet" data-act="forget" type="button" title="clears everything you have picked and passed">forget</button>`;
+      ` <button class="btn quiet" data-act="reset" type="button" title="clears what you picked and passed, and puts λ back to its default">reset</button>`;
     el("status").innerHTML =
       `<b>${state.order ? "by taste" : cold ? "a spread of what is here" : "newest first"}</b> ${counts}${acts}`;
   }
@@ -432,7 +432,7 @@
 
   // ── what a press does ────────────────────────────────────────────────────
 
-  function forget() {
+  function reset() {
     state.picked.clear();
     state.passed.clear();
     state.taste = { picked: [], passed: [] };
@@ -442,7 +442,7 @@
     state.rowsShown = ROWS_PER_PAGE;
     gliding(draw);
     // The button that was pressed is gone: the banner hides, and the status
-    // line drops "forget" once there is nothing to forget.
+    // line drops "reset" once there is nothing to reset.
     const focused = document.activeElement;
     if (!focused || focused === document.body || !focused.offsetParent) {
       el("list").focus({ preventScroll: true });
@@ -487,8 +487,7 @@
   });
 
   document.addEventListener("click", (event) => {
-    if (event.target.closest('[data-act="forget"]')) { forget(); toast("forgotten"); }
-    else if (event.target.closest('[data-act="fresh"]')) forget();
+    if (event.target.closest('[data-act="reset"]')) { reset(); toast("reset"); }
     else if (event.target.closest('[data-act="order"]') && posts) {
       orderByTaste();
       state.rowsShown = ROWS_PER_PAGE;
