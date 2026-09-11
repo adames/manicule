@@ -37,10 +37,34 @@
   // How near a post sits to a taste: the closest of its averages, because a
   // reader who likes two unrelated things is near one of them, never the
   // midpoint. With one average this is the plain cosine it always was.
-  function nearness(taste, vector) {
-    let best = -Infinity;
-    for (const one of taste) best = Math.max(best, cosine(vector, one.vector));
-    return best;
+  function whichOne(taste, vector) {
+    let best = -1, near = -Infinity;
+    for (let i = 0; i < taste.length; i++) {
+      const c = cosine(vector, taste[i].vector);
+      if (c > near) { near = c; best = i; }
+    }
+    return { best, near };
+  }
+  const nearness = (taste, vector) => whichOne(taste, vector).near;
+
+  // What a taste is about, in the pool's own words. Nothing is invented: for
+  // each average, the feeds its nearest posts come from, and the single post
+  // nearest of all. It is where the average points, read off the pool.
+  function describe(taste, posts, k = 12) {
+    return (taste || []).map((one) => {
+      const near = [];
+      for (const post of posts) {
+        if (!post.vector) continue;
+        const c = cosine(post.vector, one.vector);
+        if (near.length < k) { near.push({ post, c }); if (near.length === k) near.sort((a, b) => b.c - a.c); }
+        else if (c > near[k - 1].c) { near[k - 1] = { post, c }; near.sort((a, b) => b.c - a.c); }
+      }
+      if (near.length < k) near.sort((a, b) => b.c - a.c);
+      const counts = {};
+      for (const { post } of near) counts[post.feed] = (counts[post.feed] || 0) + 1;
+      const feeds = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b)).slice(0, 3);
+      return { count: one.count, feeds, nearest: near.length ? near[0].post : null };
+    });
   }
 
   // posts: [{id, vector|null, ...}]; picked/passed: tastes, each an array of
@@ -51,15 +75,15 @@
     passed = passed || [];
     if (!picked.length) return null;
     const out = posts.map((e) => {
-      if (!e.vector) return { post: e, score: -Infinity, pos: 0, neg: 0, nearest: null };
-      const p = nearness(picked, e.vector);
+      if (!e.vector) return { post: e, score: -Infinity, pos: 0, neg: 0, nearest: null, which: -1 };
+      const { best: which, near: p } = whichOne(picked, e.vector);
       const n = passed.length ? nearness(passed, e.vector) : 0;
       let nearest = null;
       if (pickedById) {
         let best = -Infinity;
         for (const id in pickedById) { const c = cosine(e.vector, pickedById[id]); if (c > best) { best = c; nearest = id; } }
       }
-      return { post: e, score: p - lam * n, pos: p, neg: n, nearest };
+      return { post: e, score: p - lam * n, pos: p, neg: n, nearest, which };
     });
     out.sort((a, b) => b.score - a.score);
     return out;
@@ -152,18 +176,6 @@
     return { vector: out, count: one.count - 1 };
   }
 
-  // Which average a post belongs to. The one it is nearest, if it is near at
-  // all; otherwise a new one, up to MOST. Nothing is labelled and nothing is
-  // chosen by the reader: liking two unrelated things is just two averages.
-  function whichOne(taste, vector) {
-    let best = -1, near = -Infinity;
-    for (let i = 0; i < taste.length; i++) {
-      const c = cosine(vector, taste[i].vector);
-      if (c > near) { near = c; best = i; }
-    }
-    return { best, near };
-  }
-
   function press(taste, vector) {
     const out = (taste || []).slice();
     const { best, near } = whichOne(out, vector);
@@ -187,6 +199,6 @@
   const tasteOf = (vectors) => vectors.reduce(press, []);
   const pressesIn = (taste) => (taste || []).reduce((n, one) => n + one.count, 0);
 
-  return { LAMBDA, CAP, NEAR, MOST, cosine, meanVector, dequantize, rank, nearness,
+  return { LAMBDA, CAP, NEAR, MOST, cosine, meanVector, dequantize, rank, nearness, whichOne, describe,
            tasteBlob, readTasteBlob, press, unpress, tasteOf, pressesIn };
 });

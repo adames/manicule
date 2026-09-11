@@ -37,7 +37,6 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <a href="fork.html" data-page="fork">fork</a>
       </nav>
       <div class="acts">
-        <button class="btn" type="button" data-act="share" title="copies this page's address; the address is your taste">keep</button>
         <button class="btn danger" type="button" data-act="forget" title="clears everything you have picked and passed"><span aria-hidden="true">!</span> forget</button>
       </div>
     </div>
@@ -50,7 +49,6 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <h1>get to the <span class="sr-only">☞</span><span data-hand="rest"></span></h1>
         <p class="lead">a feed that reorders around what you point at.</p>
         <p class="spec" id="spec"><span>loading</span></p>
-        <p class="keeping">your taste is this link. there is no account because the link is the account. keep it and it is yours; lose it and it is gone.</p>
       </section>
 
       <!-- the ledger -->
@@ -58,6 +56,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <div class="toolbar">
           <p class="status" id="status" aria-live="polite">loading</p>
         </div>
+
+        <!-- what your taste is about, read off the pool. one line an average -->
+        <ol class="tastes" id="tastes" aria-label="your tastes" hidden></ol>
 
         <div class="banner" id="banner" role="status" hidden>
           <span id="banner-says"></span>

@@ -157,18 +157,8 @@
   }
   carry();
 
-  // The address the share button copies, printed in the first door. It is the
-  // same string share hands you, so the page never shows a link it would not.
-  const folder = () => location.pathname.replace(/[^/]*$/, "");
-  const shareUrl = () => location.origin + folder() + location.hash;
-  const address = (hash = location.hash) => location.host + folder() + (hash || "");
-  function renderAddrs(hash = location.hash) {
-    for (const slot of all("[data-addr]")) slot.textContent = address(hash);
-  }
-  renderAddrs();
-
   addEventListener("hashchange", () => {
-    if (isTaste(location.hash)) { carry(); renderAddrs(); }
+    if (isTaste(location.hash)) carry();
   });
 
   // Same-page links scroll and focus by hand. Letting the browser do it would
@@ -214,20 +204,13 @@
     clearToast = setTimeout(() => { box.textContent = ""; }, 1800);
   }
 
-  // ── share and copy ───────────────────────────────────────────────────────
+  // ── copy ─────────────────────────────────────────────────────────────────
 
   async function copy(text) {
     try { await navigator.clipboard.writeText(text); return true; } catch (_) { return false; }
   }
 
   document.addEventListener("click", async (event) => {
-    if (event.target.closest('[data-act="share"]')) {
-      const { m, d, v, w } = tasteIn(location.hash);
-      if (!m.length && !d.length && !v && !w) return toast("pick something first");
-      const copied = await copy(shareUrl());
-      toast(copied ? "link copied, it carries your taste" : "copy the address bar, it carries your taste");
-      return;
-    }
     const button = event.target.closest("[data-copy]");
     if (button) toast((await copy(button.dataset.copy)) ? "copied" : "couldn't copy");
   });
@@ -239,5 +222,5 @@
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  window.Shell = { hand, toast, carry, loadPosts, renderAddrs, tasteIn, mirror, hashOf, lam, isTaste, esc, feedKey, signed, plain };
+  window.Shell = { hand, toast, carry, loadPosts, tasteIn, mirror, hashOf, lam, isTaste, esc, feedKey, signed, plain };
 })();

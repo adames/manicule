@@ -208,3 +208,14 @@ def test_unpressing_puts_the_taste_back():
     assert [c for _, c in again] == [c for _, c in taste]
     for (was, _), (now, _) in zip(taste, again):
         assert all(abs(a - b) < 1e-9 for a, b in zip(was, now))
+
+
+def test_rank_says_which_average_a_post_sits_nearest():
+    a, b = [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]
+    taste = taste_of([a, [0.98, 0.2, 0.0], b])
+    posts = [Post("pa", "", "", "", "", "", "article", [0.9, 0.1, 0.0]),
+             Post("pb", "", "", "", "", "", "article", [0.1, 0.9, 0.0]),
+             Post("none", "", "", "", "", "", "article", None)]
+    by_id = {s.post.id: s for s in rank(posts, taste, [])}
+    assert by_id["pa"].which == 0 and by_id["pb"].which == 1
+    assert by_id["none"].which == -1

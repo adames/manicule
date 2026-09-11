@@ -103,7 +103,6 @@
     // first press adopts it.
     if (!state.borrowed) remember();
     Shell.carry();
-    Shell.renderAddrs();
   }
 
   function remember() {
@@ -173,14 +172,24 @@
   // a run of rows that all sit near the same thing says it once. The line is
   // always in the row, with words or without, and it never mentions the state:
   // pressing a control must not move the words under anyone's eye.
-  let lastNearest = null;
+  let lastNear = null;
   const NO_NEAR = `<p class="near"></p>`;
   function nearHtml(scored, isPicked, isPassed) {
     if (scored.score === -Infinity || isPicked || isPassed) return NO_NEAR;
+    // With several tastes, the number is the thing worth saying: it is what
+    // the lines above the feed are numbered by, and a run of rows from one
+    // taste then another is the whole picture. The pick is named when there
+    // is one in the pool to name; a taste carried in by a link has none.
+    const several = state.taste.picked.length > 1;
     const nearest = scored.nearest && postById[scored.nearest];
-    if (!nearest || scored.nearest === lastNearest) return NO_NEAR;
-    lastNearest = scored.nearest;
-    return `<p class="near">${hand("rest")}<span>near your pick</span><span class="t" title="${esc(nearest.title)}">“${esc(shorten(nearest.title, 48))}”</span></p>`;
+    const key = `${several ? scored.which : ""}:${nearest ? scored.nearest : ""}`;
+    if ((!nearest && !several) || key === lastNear) return NO_NEAR;
+    lastNear = key;
+    const taste = several ? `<span class="k">taste ${scored.which + 1}</span>` : "";
+    const pick = nearest
+      ? `<span>${several ? "· " : ""}near your pick</span><span class="t" title="${esc(nearest.title)}">“${esc(shorten(nearest.title, 48))}”</span>`
+      : "";
+    return `<p class="near">${hand("rest")}${taste}${pick}</p>`;
   }
 
   // One control, three states. A press advances it, and its name says what the
@@ -315,6 +324,30 @@
       : `<b>this link carries someone else's taste</b> · press the box beside anything you'd read and it becomes yours`;
   }
 
+  // What your taste is about, said in the pool's own words: for each average,
+  // the feeds its nearest posts come from. Read off the pool, not stored, so
+  // it is as true of a taste carried in by a link as of one pressed just now.
+  // This is the see-through view of a vector, and the reason a number in the
+  // status line ("in 2 tastes") means something.
+  function drawTastes() {
+    const box = el("tastes");
+    const { picked, passed } = state.taste;
+    box.hidden = !picked.length && !passed.length;
+    if (box.hidden) { box.innerHTML = ""; return; }
+    const several = picked.length > 1;
+    const line = (about, i, isPass) => {
+      const k = several && !isPass ? `<span class="k">taste ${i + 1}</span>` : "";
+      const n = `<span class="n">${about.count} ${isPass ? "passed" : about.count === 1 ? "pick" : "picks"}</span>`;
+      const feeds = about.feeds.length
+        ? `<span class="feeds">near ${about.feeds.map((f) => `<b title="${esc(f)}">${esc(shorten(f, 28))}</b>`).join(", ")}</span>`
+        : `<span class="feeds">near nothing in today's pool</span>`;
+      return `<li>${hand(isPass ? "bird" : "rest")}${k}${n}${feeds}</li>`;
+    };
+    box.innerHTML =
+      Manicule.describe(picked, posts.posts).map((about, i) => line(about, i, false)).join("") +
+      Manicule.describe(passed, posts.posts).map((about, i) => line(about, i, true)).join("");
+  }
+
   function draw() {
     const ranked = rankBy(state.lambda);
     const cold = ranked === null;
@@ -332,10 +365,11 @@
     ledger.classList.toggle("cold", cold);
     ledger.classList.toggle("borrowed", state.borrowed);
     drawStatus(cold);
+    drawTastes();
     drawBanner();
 
     holdingFocus(() => {
-      lastNearest = null;
+      lastNear = null;
       el("list").innerHTML = visible
         .slice(0, state.rowsShown)
         .map((scored, i) => rowHtml(scored, i + 1, cold))

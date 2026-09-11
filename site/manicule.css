@@ -609,15 +609,6 @@ samp {
   text-wrap: pretty;
 }
 
-/* the one sentence that stands in for an account page */
-.keeping {
-  margin-top: var(--space-2);
-  max-width: var(--measure);
-  font-size: var(--text-sm);
-  color: var(--muted);
-  text-wrap: pretty;
-}
-
 .spec {
   margin-top: var(--space-2);
   display: flex;
@@ -875,6 +866,57 @@ section .ruler-wrap {
   opacity: .6;
 } /* a real space precedes each span (for screen readers); the left margin makes up the difference */
 
+/* your tastes, read off the pool: one line an average, in the status's voice */
+.tastes {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  letter-spacing: -.01em;
+  text-transform: lowercase;
+}
+
+.tastes li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.tastes svg {
+  width: var(--hand-sm);
+  height: var(--hand-sm);
+  flex: none;
+  align-self: center;
+}
+
+.tastes .k,
+.tastes .n {
+  flex: none;
+}
+
+.tastes .k {
+  color: var(--text);
+} /* the number, when there are several: it is what the rows point at */
+
+.tastes .feeds {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tastes .feeds b {
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  text-transform: none;
+}
+
 /* 6 · the ledger: column heads on the 2px rule, then the rows (rank · entry · receipt · hands) */
 
 .list {
@@ -1032,6 +1074,11 @@ section .ruler-wrap {
 .near svg {
   width: var(--hand-sm);
   height: var(--hand-sm);
+  flex: none;
+}
+
+.near .k {
+  color: var(--text);
   flex: none;
 }
 

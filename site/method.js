@@ -169,6 +169,7 @@
 
   function renderWorkedRow(taste, scored, place) {
     const post = scored.post;
+    const built = Manicule.tasteOf(taste.picked.map((id) => postById[id].vector));
     const nearest = scored.nearest && postById[scored.nearest];
     const subtraction = taste.passed.length
       ? ` <span class="t2">− ${taste.lambda.toFixed(2)} × ${plain(scored.neg)}</span> <span class="eq sr-only">=</span> `
@@ -177,7 +178,7 @@
 
     el("worked").innerHTML = `
       <dt>post</dt><dd><span class="t">${esc(post.title || post.link)}</span> <span class="sub mono muted">${esc(post.feed)} · ${dayOf(post.published)}</span></dd>
-      <dt>cos(post, picked)</dt><dd><span class="mono">${signed(scored.pos)}</span> <span class="muted">· how close it sits to the average of your picks</span></dd>
+      <dt>cos(post, picked)</dt><dd><span class="mono">${signed(scored.pos)}</span> <span class="muted">· how close it sits to ${built.length > 1 ? `taste ${scored.which + 1}, the nearest of your ${built.length} averages` : "the average of your picks"}</span></dd>
       <dt>cos(post, passed)</dt><dd>${taste.passed.length ? `<span class="mono">${plain(scored.neg)}</span> <span class="muted">· how close it sits to the average of your passes</span>` : `<span class="mono">0.00</span> <span class="muted">· nothing passed</span>`}</dd>
       <dt>λ</dt><dd><span class="mono">${taste.lambda.toFixed(2)}</span> <span class="muted">· how much of that comes off</span></dd>
       <dt>score</dt><dd><div class="worked-score"><div class="calc">${firstTerm}${subtraction}<span class="tot">${signed(scored.score)}</span></div>${scoreBar(scored)}</div></dd>
@@ -215,7 +216,9 @@
       return `<tr${theirs ? ' class="now"' : ""}><td class="mono">${plain(lambda)}</td><td class="num">${signed(ranked[place].score)}</td><td class="num">${place + 1}</td><td class="lc">${reads}</td></tr>`;
     }).join("");
     el("lam-cap").textContent = taste.pretend ? "on the pretend taste, live" : "on your taste, live";
-    el("hash").textContent = taste.pretend ? "#m=…&d=…&l=0.25" : linkTo(taste);
+    // The real link is a kilobyte of base64; the shape is what is worth showing.
+    const shape = (hash) => hash.replace(/=[A-Za-z0-9_\-]{40,}[^&]*/g, "=…");
+    el("hash").textContent = taste.pretend ? "#m=…&v=…&k=…&l=0.25" : shape(location.hash || linkTo(taste));
   }
 
   // ── what picking does ────────────────────────────────────────────────────
@@ -336,8 +339,19 @@
 
   // Each pick against the taste it belongs to. Which average that is, is the
   // whole of the clustering: nothing is labelled and nobody chose it.
+  function renderTastes(built, pretend) {
+    const several = built.length > 1;
+    el("tastes").innerHTML = Manicule.describe(built, today.posts).map((about, i) => {
+      const k = several ? `<span class="k">taste ${i + 1}</span>` : "";
+      const n = `<span class="n">${about.count} ${about.count === 1 ? "pick" : "picks"}${pretend ? ", pretend" : ""}</span>`;
+      const feeds = `<span class="feeds">near ${about.feeds.map((f) => `<b title="${esc(f)}">${esc(f.length > 28 ? f.slice(0, 27) + "…" : f)}</b>`).join(", ")}</span>`;
+      return `<li>${hand("rest")}${k}${n}${feeds}</li>`;
+    }).join("");
+  }
+
   function renderPicks(taste) {
     const built = Manicule.tasteOf(taste.picked.map((id) => postById[id].vector));
+    renderTastes(built, taste.pretend);
     const whichOne = (vector) => {
       let best = 0, near = -Infinity;
       built.forEach((one, i) => {
@@ -393,7 +407,6 @@
     const now = Shell.tasteIn(location.hash);
     history.replaceState(null, "", Shell.hashOf({ ...now, l: lambda }));
     Shell.carry();
-    Shell.renderAddrs();
     const saved = Shell.mirror();
     if (saved) {
       try { localStorage.setItem("manicule", JSON.stringify({ ...saved, l: lambda })); } catch (_) {}

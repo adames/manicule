@@ -92,6 +92,7 @@ class Scored:
     pos: float              # cos(post, picked)
     neg: float              # cos(post, passed), 0 when nothing is passed
     nearest: str | None     # id of the picked post it most resembles
+    which: int = 0          # index of the picked average it sits nearest
 
 
 def rank(
@@ -114,14 +115,14 @@ def rank(
     scored: list[Scored] = []
     for post in posts:
         if post.vector is None:
-            scored.append(Scored(post, float("-inf"), 0.0, 0.0, None))
+            scored.append(Scored(post, float("-inf"), 0.0, 0.0, None, -1))
             continue
-        towards = nearness(picked, post.vector)
+        which, towards = which_one(picked, post.vector)
         away = nearness(passed, post.vector) if passed else 0.0
         nearest = None
         if picked_ids:
             nearest = max(picked_ids, key=lambda id: cosine(post.vector, picked_ids[id]))
-        scored.append(Scored(post, towards - lam * away, towards, away, nearest))
+        scored.append(Scored(post, towards - lam * away, towards, away, nearest, which))
 
     scored.sort(key=lambda s: s.score, reverse=True)
     return scored
@@ -330,7 +331,10 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
             print(f"  skip {title}: {why}", file=sys.stderr)
             continue
 
-        feed_title = (parsed.feed.get("title") or title).strip()
+        # The name in the opml, not the feed's own <title>: one was written by a
+        # person to be read, the other says "Al Jazeera – Breaking News, World
+        # News and Video from Al Jazeera". The feed's own is the fallback.
+        feed_title = (title or parsed.feed.get("title") or "").strip()
         kept = 0
         for item in parsed.entries:
             if kept >= per_feed:

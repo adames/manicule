@@ -44,7 +44,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <main id="main" tabindex="-1">
       <section class="mast" aria-label="the method">
         <h1>how it works</h1>
-        <p class="reading">every post turns into a vector, and your browser averages the ones you picked. cos(post, picked) is the cosine against that average. then we score it</p>
+        <p class="reading">every post turns into a vector, and your browser averages the ones you picked. cos(post, picked) is the cosine against that average, or the nearest of them if your picks made more than one. then we score it</p>
         <p class="spec"><span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></span><span>rank()</span><span>same math in rank.js</span></p>
       </section>
 
@@ -94,13 +94,15 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="picks-cap">each pick against the average of all of them. picks about one subject all score high; one odd pick pulls the average off the rest and every number drops</p>
-        <p>an average points one way, so it holds one taste. pick from two subjects and it settles between them, near neither, and both score low. that is the limit of one average. the feed works around it by naming the single pick a post sits nearest, which is the near line under a row</p>
+        <p>an average points one way, so it holds one taste; that is why there can be up to three. what each one is about is read off the pool rather than stored: the feeds its nearest posts come from. the feed prints it above the rows, and it is here too</p>
+        <ol class="tastes" id="tastes" aria-label="your tastes"></ol>
+        <p>the near line under a row names the single pick that row sits nearest, and, with several tastes, which taste. neither is a label anyone chose. it is where the vectors point</p>
       </section>
 
       <section class="prose" aria-labelledby="second">
         <h2 class="sect" id="second"><span>the second hand</span></h2>
         <p>what you pass on averages the same way, into a second vector. cos(post, passed) is the cosine against that one, and λ decides how much of it comes off the score</p>
-        <p>λ is the ruler on the feed. at 0.25, the default, a pass takes away a quarter of what the same closeness to a pick would add. at 1 the two cancel. at 0 passes do nothing. the table below is one post at each setting</p>
+        <p>λ is the ruler further down this page. at 0.25, the default, a pass takes away a quarter of what the same closeness to a pick would add. at 1 the two cancel. at 0 passes do nothing. the table below is one post at each setting</p>
         <p>with nothing picked there is no average to measure against, so the feed stays newest first. a post with no words has no vector and sinks to the bottom, but nothing is dropped</p>
       </section>
 
@@ -162,7 +164,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <section aria-label="where your data lives">
         <h2 class="sect"><span>where your data lives</span></h2>
         <dl class="kv">
-          <dt>your taste</dt><dd>in the link and in this browser. <span class="mono" id="hash">#m=…</span>. nothing is sent anywhere</dd>
+          <dt>your taste</dt><dd>in the link and in this browser: the averages themselves, int8 and base64, beside the ids that tick the boxes. <span class="mono" id="hash">#v=…</span>. nothing is sent anywhere</dd>
           <dt>the vectors</dt><dd>made when the page is built, by fastembed's bge-small, on the build machine. they come down in vectors.bin, next to posts.json, <span class="mono" id="dims">270 × 384</span> int8, and rank.js does the math here</dd>
           <dt>the cli</dt><dd>manicule.py rank, on your machine. a markdown page from an opml and a folder of notes. the only traffic is the feed fetches</dd>
           <dt>refresh</dt><dd>once a day, by a github action. the page is rebuilt from the feeds, nothing of yours goes into it</dd>

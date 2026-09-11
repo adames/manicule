@@ -77,3 +77,36 @@ test("two unrelated tastes do not average into neither", () => {
   const many = M.tasteOf([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0]]);
   assert.equal(many.length, M.MOST);
 });
+
+test("rank says which average a post sits nearest", () => {
+  const a = [1, 0, 0], b = [0, 1, 0];
+  const taste = M.tasteOf([a, [0.98, 0.2, 0], b]);
+  const posts = [
+    { id: "pa", vector: [0.9, 0.1, 0] }, { id: "pb", vector: [0.1, 0.9, 0] }, { id: "none", vector: null },
+  ];
+  const byId = Object.fromEntries(M.rank(posts, taste, []).map((s) => [s.post.id, s]));
+  assert.equal(byId.pa.which, 0);
+  assert.equal(byId.pb.which, 1);
+  assert.equal(byId.none.which, -1);
+});
+
+test("describe reads a taste off the pool, in feed names", () => {
+  const a = [1, 0, 0], b = [0, 1, 0];
+  const taste = M.tasteOf([a, b]);
+  const posts = [
+    { id: "1", feed: "apples", vector: [0.95, 0.05, 0] },
+    { id: "2", feed: "apples", vector: [0.9, 0.1, 0] },
+    { id: "3", feed: "pears", vector: [0.8, 0.2, 0] },
+    { id: "4", feed: "boats", vector: [0.1, 0.9, 0] },
+    { id: "5", feed: "boats", vector: [0, 1, 0.1] },
+    { id: "6", feed: "boats", vector: [0.05, 0.95, 0] },
+    { id: "7", feed: "nowords", vector: null },
+  ];
+  const about = M.describe(taste, posts, 3);
+  assert.equal(about.length, 2);
+  assert.deepEqual(about[0].feeds, ["apples", "pears"]);
+  assert.equal(about[0].nearest.id, "1");
+  assert.deepEqual(about[1].feeds, ["boats"]);
+  assert.equal(about[1].count, 1);
+  assert.deepEqual(M.describe([], posts), []);
+});
