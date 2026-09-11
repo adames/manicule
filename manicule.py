@@ -34,6 +34,7 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import NamedTuple
 from xml.etree import ElementTree
 
 import feedparser
@@ -412,6 +413,14 @@ def read_notes(folder: Path | None) -> list[str]:
 
 # ---------------------------------------------------------------- the proof
 
+class Trials(NamedTuple):
+    """One batch of trials: how many were run, and where the held-out posts
+    landed under each order. `where` is {"ranker"|"words"|"newest"|"shuffled":
+    [place, ...]}, every trial's places run together."""
+    count: int
+    where: dict[str, list[int]]
+
+
 def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
              feed_sample: int | None = 40) -> dict | None:
     """Does picking a few things surface more of what you want?
@@ -482,8 +491,8 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
     if feed_sample and len(tested) > feed_sample:
         tested = sorted(np.random.default_rng(seed).choice(tested, feed_sample, replace=False))
 
-    def trials(picks_per_trial, only=None):
-        got = {name: [] for name in ("ranker", "words", "newest", "shuffled")}
+    def trials(picks_per_trial, only=None) -> Trials:
+        where = {name: [] for name in ("ranker", "words", "newest", "shuffled")}
         count = 0
         for feed in tested:
             members = np.where(feeds == feed)[0]
@@ -494,10 +503,10 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
             for _ in range(trials_per_feed):
                 picks = rng.choice(members, picks_per_trial, replace=False)
                 held_out = [i for i in members if i not in picks]
-                for name, where in one_trial(picks, held_out).items():
-                    got[name].extend(where)
+                for name, landed in one_trial(picks, held_out).items():
+                    where[name].extend(landed)
                 count += 1
-        return count, got
+        return Trials(count, where)
 
     def median(values):
         return int(round(float(np.median(values)))) if values else None
@@ -528,19 +537,20 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
 
     by_picks = {}
     for k in (1, 2, 3, 5):
-        count, got = trials(k)
-        if count:
-            by_picks[str(k)] = {name: median(where) for name, where in got.items()}
-    count, got = trials(2)
-    written_count, written = trials(2, only={"text"})
+        run = trials(k)
+        if run.count:
+            by_picks[str(k)] = {name: median(landed) for name, landed in run.where.items()}
+    two_picks = trials(2)
+    text_only = trials(2, only={"text"})
     return {
         "posts": n,
         "feeds": len(set(feeds)),
-        "trials": count,
+        "trials": two_picks.count,
         "median_rank": by_picks,
-        "top_ten": {name: in_top_ten(where, count) for name, where in got.items()},
+        "top_ten": {name: in_top_ten(landed, two_picks.count) for name, landed in two_picks.where.items()},
         "lambda": lambda_sweep(),
-        "written": {"trials": written_count, **{name: median(where) for name, where in written.items()}},
+        "written": {"trials": text_only.count,
+                    **{name: median(landed) for name, landed in text_only.where.items()}},
     }
 
 
