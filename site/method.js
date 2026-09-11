@@ -146,7 +146,8 @@
     const vectors = (ids) => ids.map((id) => postById[id].vector);
     const pickedVectors = {};
     for (const id of taste.picked) pickedVectors[id] = postById[id].vector;
-    return Manicule.rank(today.posts, vectors(taste.picked), vectors(taste.passed), lambda, pickedVectors);
+    return Manicule.rank(today.posts, Manicule.tasteOf(vectors(taste.picked)),
+                         Manicule.tasteOf(vectors(taste.passed)), lambda, pickedVectors);
   }
 
   // Links from here open the feed in the same taste, so the row number they
@@ -242,7 +243,7 @@
       const picks = members.slice(0, 2);
       const held = members.slice(2);
       const rest = withWords.filter((post) => !picks.includes(post));
-      const ranked = Manicule.rank(rest, picks.map((post) => post.vector), [], Manicule.LAMBDA, {});
+      const ranked = Manicule.rank(rest, Manicule.tasteOf(picks.map((post) => post.vector)), [], Manicule.LAMBDA, {});
       const after = {};
       ranked.forEach((row, i) => { after[row.post.id] = (i + 1) / ranked.length; });
       const before = {};
@@ -333,15 +334,32 @@
       `“${post.title}” against the three nearest and the three farthest. +1 would be the same words; near 0 is nothing in common`;
   }
 
+  // Each pick against the taste it belongs to. Which average that is, is the
+  // whole of the clustering: nothing is labelled and nobody chose it.
   function renderPicks(taste) {
-    const average = Manicule.meanVector(taste.picked.map((id) => postById[id].vector));
+    const built = Manicule.tasteOf(taste.picked.map((id) => postById[id].vector));
+    const whichOne = (vector) => {
+      let best = 0, near = -Infinity;
+      built.forEach((one, i) => {
+        const c = Manicule.cosine(vector, one.vector);
+        if (c > near) { near = c; best = i; }
+      });
+      return { best, near };
+    };
+    el("picks-head").innerHTML = built.length > 1
+      ? `<tr><th scope="col" class="grow">what you picked</th><th scope="col">feed</th><th scope="col" class="lc">which average</th><th scope="col" class="num">cos to it</th></tr>`
+      : `<tr><th scope="col" class="grow">what you picked</th><th scope="col">feed</th><th scope="col" class="num">cos to the average</th></tr>`;
     el("picks").innerHTML = taste.picked.map((id) => {
       const pick = postById[id];
-      return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.feed)}</td><td class="num">${signed(Manicule.cosine(pick.vector, average))}</td></tr>`;
+      const { best, near } = whichOne(pick.vector);
+      const label = built.length > 1 ? `<td class="lc">${best + 1} of ${built.length}</td>` : "";
+      return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.feed)}</td>${label}<td class="num">${signed(near)}</td></tr>`;
     }).join("");
     el("picks-cap").textContent = taste.pretend
       ? "on the pretend taste. pick a few things on the feed and this table is yours"
-      : "each pick against the average of all of them. picks about one subject all score high; one odd pick pulls the average off the rest and every number drops";
+      : built.length > 1
+        ? `each pick against its own average. these picks made ${built.length} of them: a pick that sits near none of the averages starts another rather than dragging one off its subject`
+        : "each pick against the average of all of them. these picks all sit together, so they made one average";
   }
 
   function renderWorked() {

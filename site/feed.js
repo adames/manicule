@@ -16,10 +16,11 @@
   const state = {
     picked: new Set(),
     passed: new Set(),
-    // The taste itself. A press folds a post in; un-pressing takes the same
-    // post back out. Everything ever pressed is in here, including presses on
-    // posts that left the pool months ago.
-    taste: { picked: null, passed: null },
+    // The taste itself: a few averages a side, not one. Cooking and compilers
+    // do not average into a direction pointing at neither. A press folds a post
+    // into the average it belongs to; un-pressing takes the same post back out.
+    // Everything ever pressed is in here, including posts long gone.
+    taste: { picked: [], passed: [] },
     lambda: Manicule.LAMBDA,
     borrowed: false,  // the link carries a taste this browser did not make
     unreadable: false,// the link carries an average from a different model
@@ -39,7 +40,7 @@
   const ourModel = () => Shell.feedKey(posts.model);
 
   function tasteIn(source) {
-    const nothing = { picked: null, passed: null };
+    const nothing = { picked: [], passed: [] };
     if (!source.v && !source.w) return nothing;
     if (source.k && source.k !== ourModel()) {
       state.unreadable = true;
@@ -60,7 +61,7 @@
     const linked = { picked: live(link.m), passed: live(link.d) };
 
     const linkTaste = tasteIn(link);
-    const hasLink = linked.picked.length || linked.passed.length || linkTaste.picked || linkTaste.passed;
+    const hasLink = linked.picked.length || linked.passed.length || linkTaste.picked.length || linkTaste.passed.length;
 
     if (hasLink) {
       state.picked = new Set(linked.picked);
@@ -88,14 +89,14 @@
 
   function writeTheLink() {
     const { picked, passed } = state.taste;
-    const marked = state.picked.size || state.passed.size || picked || passed;
+    const marked = state.picked.size || state.passed.size || picked.length || passed.length;
     const hash = Shell.hashOf({
       m: [...state.picked],
       d: [...state.passed],
       l: marked || state.lambda !== Manicule.LAMBDA ? state.lambda : null,
       v: Manicule.tasteBlob(picked),
       w: Manicule.tasteBlob(passed),
-      k: picked || passed ? ourModel() : "",
+      k: picked.length || passed.length ? ourModel() : "",
     });
     history.replaceState(null, "", hash || location.pathname + location.search);
     // A borrowed link does not overwrite this browser's own taste until the
@@ -111,14 +112,14 @@
       localStorage.setItem("manicule", JSON.stringify({
         m: [...state.picked], d: [...state.passed], l: state.lambda,
         v: Manicule.tasteBlob(picked), w: Manicule.tasteBlob(passed),
-        k: picked || passed ? ourModel() : "",
+        k: picked.length || passed.length ? ourModel() : "",
       }));
     } catch (_) {}
   }
 
   // ── ranking ──────────────────────────────────────────────────────────────
 
-  // The taste is already one vector a side, which is all the ranking ever
+  // The taste is already a few averages a side, which is all the ranking ever
   // wanted. Nothing is averaged here: it was averaged as it was pressed.
   function rankBy(lambda) {
     // Only posts still in the pool can be named as the closest pick. An
@@ -128,12 +129,7 @@
       if (postById[id] && postById[id].vector) pickedVectors[id] = postById[id].vector;
     }
     const { picked, passed } = state.taste;
-    return Manicule.rank(
-      posts.posts,
-      picked ? [picked.vector] : [],
-      passed ? [passed.vector] : [],
-      lambda, pickedVectors,
-    );
+    return Manicule.rank(posts.posts, picked, passed, lambda, pickedVectors);
   }
 
   // ── words and numbers ────────────────────────────────────────────────────
@@ -294,9 +290,12 @@
   // never moves the feed below it.
   function drawStatus(cold) {
     const { picked, passed } = state.taste;
+    // Two averages is a fact about your taste worth a word; one is just how
+    // averages work, and saying "1 taste" would be noise on every other visit.
+    const shape = picked.length > 1 ? ` <span class="n">in ${picked.length} tastes</span>` : "";
     const counts = cold
       ? `<span class="n">nothing picked</span>`
-      : `<span class="n">${picked ? picked.count : 0} picked</span> <span class="n">${passed ? passed.count : 0} passed</span> <a class="n lam" href="method.html">λ ${state.lambda.toFixed(2)}</a>`;
+      : `<span class="n">${Manicule.pressesIn(picked)} picked</span>${shape} <span class="n">${Manicule.pressesIn(passed)} passed</span> <a class="n lam" href="method.html">λ ${state.lambda.toFixed(2)}</a>`;
     el("status").innerHTML =
       `<b>${state.order ? "by taste" : cold ? "a spread of what is here" : "newest first"}</b> ${counts} ` +
       `<button class="btn quiet" data-act="order" type="button">order by taste</button>`;
@@ -310,7 +309,7 @@
     const banner = el("banner");
     banner.hidden = !(state.borrowed || state.unreadable);
     if (banner.hidden) return;
-    const stillHaveOne = state.taste.picked || state.taste.passed;
+    const stillHaveOne = state.taste.picked.length || state.taste.passed.length;
     el("banner-says").innerHTML = state.unreadable
       ? `<b>this link was written for a different model</b> · the numbers in it mean nothing here, so ${stillHaveOne ? "your own taste is showing instead" : "the feed starts cold"}`
       : `<b>this link carries someone else's taste</b> · press the box beside anything you'd read and it becomes yours`;
@@ -381,7 +380,7 @@
   function forget() {
     state.picked.clear();
     state.passed.clear();
-    state.taste = { picked: null, passed: null };
+    state.taste = { picked: [], passed: [] };
     state.lambda = Manicule.LAMBDA;
     state.borrowed = false;
     state.order = null;
@@ -461,8 +460,11 @@
 
       drawEverything();
     })
-    .catch(() => {
+    .catch((why) => {
       // There is nothing behind the controls, so only the status line stays.
+      // The reason is printed, because a rendering bug in here used to read
+      // exactly like a feed that would not download.
+      console.error("manicule:", why);
       el("status").textContent = "couldn't load";
       el("spec").textContent = "";
       el("ledger").classList.add("cold", "dead");

@@ -96,28 +96,28 @@ class Scored:
 
 def rank(
     posts: list[Post],
-    picked: list[list[float]],
-    passed: list[list[float]],
+    picked: "Taste",
+    passed: "Taste",
     lam: float = LAMBDA,
     picked_ids: dict[str, list[float]] | None = None,
 ) -> list[Scored] | None:
     """Order `posts` best-first by taste.
 
-    Returns None on a cold start, so the caller keeps its own order, which is
-    recency. A post with no vector sinks to the bottom but is never dropped.
+    `picked` and `passed` are tastes: each one several averages, scored by
+    whichever is nearest. Returns None on a cold start, so the caller keeps its
+    own order, which is recency. A post with no vector sinks to the bottom but
+    is never dropped.
     """
-    picked_mean = mean_vector(picked)
-    if picked_mean is None:
+    if not picked:
         return None
-    passed_mean = mean_vector(passed)
 
     scored: list[Scored] = []
     for post in posts:
         if post.vector is None:
             scored.append(Scored(post, float("-inf"), 0.0, 0.0, None))
             continue
-        towards = cosine(post.vector, picked_mean)
-        away = cosine(post.vector, passed_mean) if passed_mean is not None else 0.0
+        towards = nearness(picked, post.vector)
+        away = nearness(passed, post.vector) if passed else 0.0
         nearest = None
         if picked_ids:
             nearest = max(picked_ids, key=lambda id: cosine(post.vector, picked_ids[id]))
@@ -368,8 +368,14 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
         return np.array([sum(weight[w] for w in words[c] & wanted) for c in candidates])
 
     def direction(ids):
-        mean = vectors[ids].mean(axis=0)
-        return mean / np.linalg.norm(mean)
+        """The taste a set of picks makes, as unit rows: what press() would build."""
+        taste = taste_of([list(vectors[i]) for i in ids])
+        means = np.array([mean for mean, _ in taste])
+        return means / np.linalg.norm(means, axis=1, keepdims=True)
+
+    def towards(rows, ids):
+        """How near each row sits to that taste: its closest average."""
+        return (vectors[rows] @ direction(ids).T).max(axis=1)
 
     def places(order, held_out):
         place = {post: p + 1 for p, post in enumerate(order)}
@@ -377,7 +383,7 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
 
     def one_trial(picks, held_out):
         rest = np.array([i for i in range(n) if i not in picks])
-        scores = vectors[rest] @ direction(picks)
+        scores = towards(rest, picks)
         return {
             "ranker": places(rest[np.argsort(-scores)], held_out),
             "words": places(rest[np.argsort(-shared_words(picks, rest))], held_out),
@@ -431,7 +437,7 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
                     picks = rng.choice(a, 2, replace=False)
                     passes = rng.choice(b, 2, replace=False)
                     rest = np.array([x for x in range(n) if x not in picks])
-                    scores = vectors[rest] @ direction(picks) - lam * (vectors[rest] @ direction(passes))
+                    scores = towards(rest, picks) - lam * towards(rest, passes)
                     landed.extend(places(rest[np.argsort(-scores)], [x for x in b if x not in passes]))
             sweep[str(lam)] = median(landed)
         return sweep
@@ -566,16 +572,13 @@ def quantize(vector: list[float]) -> tuple[list[int], float]:
 
 # ---------------------------------------------------------------- a taste, written down
 
-CAP = 20   # how many picks an average carried in a link may claim
+CAP = 20     # how many presses an average may claim against a new one
+NEAR = 0.55  # a post this close to an average joins it
+MOST = 3     # how many averages one taste may have
 
 
-def taste_blob(vector: list[float], count: int) -> str:
-    """<base64 of 384 int8>~<scale>~<count>. Mirrors site/rank.js.
-
-    A taste is two averages, so a link holding the averages holds the whole
-    taste, on any day and against any pool. Ids cannot: the pool turns over
-    and they stop pointing at anything.
-    """
+def one_blob(vector: list[float], count: int) -> str:
+    """<base64 of 384 int8>~<scale>~<count>. Mirrors site/rank.js."""
     q, scale = quantize(vector)
     raw = bytes((x + 256) & 255 for x in q)
     body = base64.urlsafe_b64encode(raw).decode().rstrip("=")
@@ -589,7 +592,7 @@ def taste_blob(vector: list[float], count: int) -> str:
     return f"{body}~{text}~{count}"
 
 
-def read_taste_blob(text: str, dim: int = DIM) -> tuple[list[float], int] | None:
+def read_one(text: str, dim: int = DIM) -> tuple[list[float], int] | None:
     parts = (text or "").split("~")
     if len(parts) != 3:
         return None
@@ -606,32 +609,101 @@ def read_taste_blob(text: str, dim: int = DIM) -> tuple[list[float], int] | None
         return None
     if len(raw) < dim:
         return None
-    return [dequantize([b - 256 if b > 127 else b for b in raw[:dim]], scale)[i] for i in range(dim)], count
+    return dequantize([b - 256 if b > 127 else b for b in raw[:dim]], scale), count
 
 
-def press(taste: tuple[list[float], int] | None, vector: list[float]) -> tuple[list[float], int]:
-    """Fold one post into an average. Mirrors site/rank.js.
+def taste_blob(taste: Taste) -> str:
+    """A taste is several averages, so a blob is several blobs.
+
+    The whole taste fits in a link, which is why there is no account: the
+    ranking only ever sees these averages, on any day and against any pool.
+    Ids cannot do this — the pool turns over and they stop pointing at
+    anything. "!" separates them because a fragment carries it as itself.
+    """
+    return "!".join(one_blob(mean, count) for mean, count in (taste or []))
+
+
+def read_taste_blob(text: str, dim: int = DIM) -> Taste:
+    out: Taste = []
+    for part in (text or "").split("!"):
+        one = read_one(part, dim)
+        if one:
+            out.append(one)
+    return out
+
+
+Taste = list[tuple[list[float], int]]   # several averages, each with its count
+
+
+def fold_in(one: tuple[list[float], int], vector: list[float]) -> tuple[list[float], int]:
+    mean, count = one
+    w = min(count, CAP)
+    return [(m * w + x) / (w + 1) for m, x in zip(mean, vector)], count + 1
+
+
+def fold_out(one: tuple[list[float], int], vector: list[float]) -> tuple[list[float], int] | None:
+    mean, count = one
+    if count <= 1:
+        return None
+    w = min(count - 1, CAP)
+    return [(m * (w + 1) - x) / w for m, x in zip(mean, vector)], count - 1
+
+
+def which_one(taste: Taste, vector: list[float]) -> tuple[int, float]:
+    """Which average a post belongs to: the one it is nearest."""
+    if not taste:
+        return -1, float("-inf")
+    scores = [cosine(vector, mean) for mean, _ in taste]
+    best = max(range(len(scores)), key=scores.__getitem__)
+    return best, scores[best]
+
+
+def press(taste: Taste | None, vector: list[float]) -> Taste:
+    """Fold one post into the average it belongs to, or start a new one.
+
+    A reader who likes two unrelated things is near one of them and never the
+    midpoint, so a taste is several averages, up to MOST. Nothing is labelled
+    and nothing is chosen by the reader.
 
     CAP bounds how much an established average may outweigh a new press. Below
     it every press counts the same, which is what a plain mean does. Above it
     the two-hundredth press still turns the average by a twentieth instead of a
     two-hundredth: a taste that cannot set.
     """
-    if not taste or not taste[1]:
-        return list(vector), 1
-    mean, count = taste
-    w = min(count, CAP)
-    return [(m * w + x) / (w + 1) for m, x in zip(mean, vector)], count + 1
+    out = list(taste or [])
+    best, near = which_one(out, vector)
+    if best >= 0 and (near >= NEAR or len(out) >= MOST):
+        out[best] = fold_in(out[best], vector)
+    else:
+        out.append((list(vector), 1))
+    return out
 
 
-def unpress(taste: tuple[list[float], int] | None, vector: list[float]) -> tuple[list[float], int] | None:
-    """Take exactly the same post back out, so a box can be ticked and unticked
-    all day and the average lands where it started."""
-    if not taste or taste[1] <= 1:
-        return None
-    mean, count = taste
-    w = min(count - 1, CAP)
-    return [(m * (w + 1) - x) / w for m, x in zip(mean, vector)], count - 1
+def unpress(taste: Taste | None, vector: list[float]) -> Taste:
+    """The same post back out of the same average, so a box can be ticked and
+    unticked all day and the taste lands where it started."""
+    out = list(taste or [])
+    best, _ = which_one(out, vector)
+    if best < 0:
+        return out
+    left = fold_out(out[best], vector)
+    if left:
+        out[best] = left
+    else:
+        out.pop(best)
+    return out
+
+
+def taste_of(vectors: list[list[float]]) -> Taste:
+    taste: Taste = []
+    for vector in vectors:
+        taste = press(taste, vector)
+    return taste
+
+
+def nearness(taste: Taste, vector: list[float]) -> float:
+    """How near a post sits to a taste: the closest of its averages."""
+    return max(cosine(vector, mean) for mean, _ in taste)
 
 
 def write_vectors(posts: list[Post], out: Path) -> None:
@@ -671,7 +743,7 @@ def cmd_rank(args: argparse.Namespace) -> int:
     print(f"embedding {len(posts)} posts, {len(picked_notes)} picked, "
           f"{len(passed_notes)} passed…", file=sys.stderr)
     embed_posts(posts)
-    ranked = rank(posts, embed(picked_notes), embed(passed_notes), lam=args.lam)
+    ranked = rank(posts, taste_of(embed(picked_notes)), taste_of(embed(passed_notes)), lam=args.lam)
 
     if ranked is None:
         heading = "# newest first — nothing picked yet, so there is no taste to rank by\n"

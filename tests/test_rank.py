@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from manicule import Post, cosine, mean_vector, quantize, rank, snippet  # noqa: E402
+from manicule import Post, cosine, mean_vector, quantize, rank, snippet, taste_of  # noqa: E402
 
 FIX = json.loads((Path(__file__).parent / "fixture.json").read_text())
 
@@ -15,8 +15,8 @@ def _posts():
 def test_fixture_order_and_scores():
     posts = _posts()
     by_id = {e.id: e.vector for e in posts}
-    picked = [by_id[i] for i in FIX["picked"]]
-    passed = [by_id[i] for i in FIX["passed"]]
+    picked = taste_of([by_id[i] for i in FIX["picked"]])
+    passed = taste_of([by_id[i] for i in FIX["passed"]])
     ranked = rank(posts, picked, passed, lam=FIX["lambda"], picked_ids={i: by_id[i] for i in FIX["picked"]})
     assert [s.post.id for s in ranked] == FIX["expected_order"]
     for s in ranked:
@@ -29,12 +29,12 @@ def test_fixture_order_and_scores():
 
 
 def test_cold_start_returns_none():
-    assert rank(_posts(), [], [[0, 1, 0, 0]]) is None
+    assert rank(_posts(), [], taste_of([[0, 1, 0, 0]])) is None
 
 
 def test_no_dismissed_means_no_penalty():
     posts = _posts()
-    ranked = rank(posts, [[1, 0, 0, 0]], [])
+    ranked = rank(posts, taste_of([[1, 0, 0, 0]]), [])
     e4 = next(s for s in ranked if s.post.id == "e4")
     assert e4.neg == 0.0 and abs(e4.score - e4.pos) < 1e-9
 
@@ -122,64 +122,78 @@ def test_impossible_dates_read_as_undated():
 
 def test_taste_blob_matches_the_fixture():
     """The blob is a shared format: JS writes the same string from the same numbers."""
-    from manicule import press, read_taste_blob, taste_blob
+    from manicule import read_taste_blob, taste_blob
     t = FIX["taste"]
-    assert taste_blob(t["vector"], t["count"]) == t["blob"]
-    vector, count = read_taste_blob(t["blob"], len(t["vector"]))
-    assert count == t["count"]
-    assert cosine(vector, t["vector"]) > 0.9999
+    one = [(t["vector"], t["count"])]
+    assert taste_blob(one) == t["blob"]
+    read = read_taste_blob(t["blob"], len(t["vector"]))
+    assert len(read) == 1 and read[0][1] == t["count"]
+    assert cosine(read[0][0], t["vector"]) > 0.9999
 
-    step = None
-    for vector in t["presses"]:
-        step = press(step, vector)
-    assert step[1] == t["pressed_count"]
-    assert all(abs(a - b) < 1e-9 for a, b in zip(step[0], t["pressed_vector"]))
+    built = taste_of(t["presses"])
+    assert [count for _, count in built] == t["pressed_counts"]
+    for (mean, _), expected in zip(built, t["pressed_vectors"]):
+        assert all(abs(a - b) < 1e-9 for a, b in zip(mean, expected))
 
 
 def test_a_hand_edited_taste_reads_as_no_taste():
-    from manicule import read_taste_blob, unpress
-    for bad in ("", "garbage", "a~b~c", "AAAA~1~0", "AAAA~0~5"):
-        assert read_taste_blob(bad, 8) is None, bad
+    from manicule import read_taste_blob, taste_blob, unpress
+    for bad in ("", "garbage", "a~b~c", "AAAA~1~0", "AAAA~0~5", "!!"):
+        assert read_taste_blob(bad, 8) == [], bad
+    # A blob with one readable average and one ruined one keeps the readable one.
+    good = taste_blob([([1.0] * 8, 3)])
+    assert len(read_taste_blob(good + "!wrecked", 8)) == 1
     # Un-pressing the only press leaves no taste, not a taste of nothing.
-    assert unpress(None, [1.0, 0.0]) is None
-    assert unpress(([1.0, 0.0], 1), [1.0, 0.0]) is None
+    assert unpress(None, [1.0, 0.0]) == []
+    assert unpress([([1.0, 0.0], 1)], [1.0, 0.0]) == []
 
 
 def test_a_settled_taste_cannot_set():
     """A press against two hundred must count as much as a press against twenty."""
-    from manicule import CAP, press
-    settled, count = press(([1.0, 0.0], 200), [0.0, 1.0])
+    from manicule import CAP, fold_in
+    settled, count = fold_in(([1.0, 0.0], 200), [0.0, 1.0])
     assert count == 201
-    at_the_cap, _ = press(([1.0, 0.0], CAP), [0.0, 1.0])
+    at_the_cap, _ = fold_in(([1.0, 0.0], CAP), [0.0, 1.0])
     assert cosine(settled, at_the_cap) > 0.99999
     # And it is a real turn, not a rounding error.
     assert cosine(settled, [1.0, 0.0]) < 0.9995
 
 
-def test_below_the_cap_a_taste_is_a_plain_mean():
-    from manicule import mean_vector, press
-    posts = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]
-    taste = None
-    for vector in posts:
-        taste = press(taste, vector)
-    assert taste[1] == 3
-    assert all(abs(a - b) < 1e-12 for a, b in zip(taste[0], mean_vector(posts)))
+def test_one_average_below_the_cap_is_a_plain_mean():
+    """Posts that sit together make one average, and it is the mean they always were."""
+    from manicule import mean_vector
+    posts = [[1.0, 0.1], [0.98, 0.2], [1.0, 0.0]]
+    taste = taste_of(posts)
+    assert len(taste) == 1 and taste[0][1] == 3
+    assert all(abs(a - b) < 1e-12 for a, b in zip(taste[0][0], mean_vector(posts)))
 
 
-def test_unpressing_puts_the_average_back():
-    """Tick and untick all day: the average must land where it started."""
+def test_two_unrelated_tastes_do_not_average_into_neither():
+    """Cooking and compilers must not collapse into a direction pointing at
+    neither. That is the whole reason a taste is more than one average."""
+    from manicule import MOST, nearness
+    a, b = [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]
+    taste = taste_of([a, [0.98, 0.2, 0.0], b])
+    assert len(taste) == 2
+    assert nearness(taste, b) > 0.99
+    assert cosine(mean_vector([a, [0.98, 0.2, 0.0], b]), b) < 0.7
+    # And it stops at MOST, however many directions get pressed.
+    many = taste_of([[1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0], [-1.0, 0, 0], [0, -1.0, 0]])
+    assert len(many) == MOST
+
+
+def test_unpressing_puts_the_taste_back():
+    """Tick and untick all day: the taste must land where it started."""
     import math
     from manicule import press, unpress
     posts = [[math.sin(k * 3 + i) for i in range(8)] for k in range(30)]
-    taste = None
-    for vector in posts:
-        taste = press(taste, vector)
+    taste = taste_of(posts)
     undone = taste
     for vector in reversed(posts[-5:]):
         undone = unpress(undone, vector)
-    assert undone[1] == 25
     again = undone
     for vector in posts[-5:]:
         again = press(again, vector)
-    assert again[1] == taste[1]
-    assert all(abs(a - b) < 1e-9 for a, b in zip(again[0], taste[0]))
+    assert [c for _, c in again] == [c for _, c in taste]
+    for (was, _), (now, _) in zip(taste, again):
+        assert all(abs(a - b) < 1e-9 for a, b in zip(was, now))

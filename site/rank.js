@@ -12,7 +12,9 @@
   //
   // A blob is <base64 of 384 int8>~<scale>~<count>: the direction, the size
   // that was quantized away, and how many picks are behind it.
-  const CAP = 20;   // how many picks an inherited average may claim
+  const CAP = 20;   // how many presses an average may claim against a new one
+  const NEAR = 0.55;// a post this close to an average joins it
+  const MOST = 3;   // how many averages one taste may have
 
   function cosine(a, b) {
     let dot = 0, na = 0, nb = 0;
@@ -32,17 +34,26 @@
   // int8 + one scale per vector, as written by manicule.py's quantize().
   function dequantize(q, s) { const v = new Array(q.length); for (let i = 0; i < q.length; i++) v[i] = q[i] / 127 * s; return v; }
 
-  // posts: [{id, vector|null, ...}]; picked/passed: arrays of vectors;
-  // pickedById: {id: vector} for the "nearest picked" explanation.
+  // How near a post sits to a taste: the closest of its averages, because a
+  // reader who likes two unrelated things is near one of them, never the
+  // midpoint. With one average this is the plain cosine it always was.
+  function nearness(taste, vector) {
+    let best = -Infinity;
+    for (const one of taste) best = Math.max(best, cosine(vector, one.vector));
+    return best;
+  }
+
+  // posts: [{id, vector|null, ...}]; picked/passed: tastes, each an array of
+  // {vector, count}; pickedById: {id: vector} for the "nearest picked" line.
   // Returns null on cold start (nothing picked) — caller keeps recency order.
   function rank(posts, picked, passed, lam = LAMBDA, pickedById = null) {
-    const pos = meanVector(picked);
-    if (!pos) return null;
-    const neg = meanVector(passed);
+    picked = picked || [];
+    passed = passed || [];
+    if (!picked.length) return null;
     const out = posts.map((e) => {
       if (!e.vector) return { post: e, score: -Infinity, pos: 0, neg: 0, nearest: null };
-      const p = cosine(e.vector, pos);
-      const n = neg ? cosine(e.vector, neg) : 0;
+      const p = nearness(picked, e.vector);
+      const n = passed.length ? nearness(passed, e.vector) : 0;
       let nearest = null;
       if (pickedById) {
         let best = -Infinity;
@@ -85,16 +96,15 @@
 
   const signedByte = (b) => (b > 127 ? b - 256 : b);
 
-  function tasteBlob(taste) {
-    if (!taste || !taste.vector) return "";
+  function oneBlob(one) {
     let scale = 0;
-    for (const x of taste.vector) scale = Math.max(scale, Math.abs(x));
+    for (const x of one.vector) scale = Math.max(scale, Math.abs(x));
     scale = scale || 1;
-    const bytes = taste.vector.map((x) => (Math.max(-127, Math.min(127, Math.round(x / scale * 127))) + 256) & 255);
-    return `${toBase64(bytes)}~${Number(scale.toPrecision(6))}~${taste.count}`;
+    const bytes = one.vector.map((x) => (Math.max(-127, Math.min(127, Math.round(x / scale * 127))) + 256) & 255);
+    return `${toBase64(bytes)}~${Number(scale.toPrecision(6))}~${one.count}`;
   }
 
-  function readTasteBlob(text, dim = 384) {
+  function readOne(text, dim) {
     const parts = String(text || "").split("~");
     if (parts.length !== 3) return null;
     const scale = parseFloat(parts[1]), count = parseInt(parts[2], 10);
@@ -104,6 +114,19 @@
     const vector = new Array(dim);
     for (let i = 0; i < dim; i++) vector[i] = signedByte(bytes[i]) / 127 * scale;
     return { vector, count };
+  }
+
+  // Several averages, so several blobs, separated by "!" — which a fragment
+  // carries as itself and never percent-encodes.
+  const tasteBlob = (taste) => (taste || []).map(oneBlob).join("!");
+
+  function readTasteBlob(text, dim = 384) {
+    const out = [];
+    for (const part of String(text || "").split("!")) {
+      const one = readOne(part, dim);
+      if (one) out.push(one);
+    }
+    return out;
   }
 
   // A taste is an average you press things into. A press folds one post in;
@@ -116,19 +139,54 @@
   // two-hundredth — a taste that cannot set.
   const weightOf = (count) => Math.min(count, CAP);
 
+  function foldIn(one, vector) {
+    const w = weightOf(one.count), out = new Array(vector.length);
+    for (let i = 0; i < vector.length; i++) out[i] = (one.vector[i] * w + vector[i]) / (w + 1);
+    return { vector: out, count: one.count + 1 };
+  }
+
+  function foldOut(one, vector) {
+    if (one.count <= 1) return null;
+    const w = weightOf(one.count - 1), out = new Array(vector.length);
+    for (let i = 0; i < vector.length; i++) out[i] = (one.vector[i] * (w + 1) - vector[i]) / w;
+    return { vector: out, count: one.count - 1 };
+  }
+
+  // Which average a post belongs to. The one it is nearest, if it is near at
+  // all; otherwise a new one, up to MOST. Nothing is labelled and nothing is
+  // chosen by the reader: liking two unrelated things is just two averages.
+  function whichOne(taste, vector) {
+    let best = -1, near = -Infinity;
+    for (let i = 0; i < taste.length; i++) {
+      const c = cosine(vector, taste[i].vector);
+      if (c > near) { near = c; best = i; }
+    }
+    return { best, near };
+  }
+
   function press(taste, vector) {
-    if (!taste || !taste.count) return { vector: vector.slice(), count: 1 };
-    const w = weightOf(taste.count), out = new Array(vector.length);
-    for (let i = 0; i < vector.length; i++) out[i] = (taste.vector[i] * w + vector[i]) / (w + 1);
-    return { vector: out, count: taste.count + 1 };
+    const out = (taste || []).slice();
+    const { best, near } = whichOne(out, vector);
+    if (best >= 0 && (near >= NEAR || out.length >= MOST)) out[best] = foldIn(out[best], vector);
+    else out.push({ vector: vector.slice(), count: 1 });
+    return out;
   }
 
+  // The same post back out of the same average, so a box can be ticked and
+  // unticked all day and the taste lands where it started.
   function unpress(taste, vector) {
-    if (!taste || taste.count <= 1) return null;
-    const w = weightOf(taste.count - 1), out = new Array(vector.length);
-    for (let i = 0; i < vector.length; i++) out[i] = (taste.vector[i] * (w + 1) - vector[i]) / w;
-    return { vector: out, count: taste.count - 1 };
+    const out = (taste || []).slice();
+    const { best } = whichOne(out, vector);
+    if (best < 0) return out;
+    const left = foldOut(out[best], vector);
+    if (left) out[best] = left;
+    else out.splice(best, 1);
+    return out;
   }
 
-  return { LAMBDA, CAP, cosine, meanVector, dequantize, rank, tasteBlob, readTasteBlob, press, unpress };
+  const tasteOf = (vectors) => vectors.reduce(press, []);
+  const pressesIn = (taste) => (taste || []).reduce((n, one) => n + one.count, 0);
+
+  return { LAMBDA, CAP, NEAR, MOST, cosine, meanVector, dequantize, rank, nearness,
+           tasteBlob, readTasteBlob, press, unpress, tasteOf, pressesIn };
 });

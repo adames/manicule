@@ -1,56 +1,44 @@
-// sw.js — so yesterday's pool reads on a train.
+// sw.js — so yesterday's pool reads on a train, and nothing else.
 //
-// The build stamps every local asset with the commit (manicule.css?v=abc), so a
-// stamped URL is immutable: cache it under its exact address and a new build
-// asks for an address that is not in the cache. Matching loosely here would
-// undo that stamping and serve a new page an old script.
-//
-// Pages and the two data files go to the network first, so anyone online is
-// reading today's pool from today's page, and fall back to the cache when the
-// train goes into a tunnel.
-const SHELL = "manicule-shell-1";
-const DATA = "manicule-data-1";
+// Everything goes to the network first and falls back to the cache. Serving a
+// cached copy first would be faster and is how most of these are written, and
+// it is wrong here: a page and the script that runs it have to agree, and one
+// asset missed by the build's ?v= stamping would then be cached forever. An
+// offline fallback cannot go stale, because online never reads it.
+const CACHE = "manicule-1";
 const PAGES = ["./", "index.html", "method.html", "fork.html"];
-const IS_DATA = /\/(posts\.json|vectors\.bin)$/;
-
-const keep = (cacheName, request, response) => {
-  const copy = response.clone();
-  caches.open(cacheName).then((cache) => cache.put(request, copy));
-  return response;
-};
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(SHELL).then((cache) => cache.addAll(PAGES)).then(() => self.skipWaiting()),
+    caches.open(CACHE).then((cache) => cache.addAll(PAGES)).then(() => self.skipWaiting()),
   );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((names) => Promise.all(names.filter((n) => n !== SHELL && n !== DATA).map((n) => caches.delete(n))))
+      .then((names) => Promise.all(names.filter((n) => n !== CACHE).map((n) => caches.delete(n))))
       .then(() => self.clients.claim()),
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  const url = new URL(request.url);
-  if (request.method !== "GET" || url.origin !== location.origin) return;
+  if (request.method !== "GET" || new URL(request.url).origin !== location.origin) return;
 
-  // Newest wins, cache is the fallback: a page, and the pool it reads.
-  if (request.mode === "navigate" || IS_DATA.test(url.pathname)) {
-    const where = IS_DATA.test(url.pathname) ? DATA : SHELL;
-    event.respondWith(
-      fetch(request)
-        .then((response) => keep(where, request, response))
-        .catch(() => caches.match(request).then((hit) => hit || caches.match("./"))),
-    );
-    return;
-  }
-
-  // Everything else is stamped, so its address is its version.
   event.respondWith(
-    caches.match(request).then((hit) => hit || fetch(request).then((response) => keep(SHELL, request, response))),
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      // Stamped assets change address every build, so the cached copy of an
+      // old one is matched loosely rather than not at all: offline, a slightly
+      // old script beats a blank page.
+      .catch(() => caches.match(request, { ignoreSearch: true })
+        .then((hit) => hit || (request.mode === "navigate" ? caches.match("./") : undefined))),
   );
 });

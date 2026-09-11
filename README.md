@@ -16,6 +16,12 @@ score(post) = cos(post, picked) − λ · cos(post, passed)
 `picked` is the average of the vectors you picked. `passed` is the average of
 the ones you passed on. two averages and a subtraction (and a λ).
 
+with one exception, and it is the useful one. a pick that sits near none of
+your averages starts another instead of dragging one off its subject, up to
+three, and a post is scored against the average it is nearest. cooking and
+compilers would otherwise average into a direction pointing at neither. pick
+from one subject and it behaves exactly as one average always did.
+
 λ is how much a pass counts. at 0.25, the default, a pass takes away a quarter
 of what the same closeness to a pick would add. at 1.0 the two cancel.
 
@@ -36,17 +42,22 @@ unreleased library I was developing.
 
 the ranker gets tested against a label it can't see: the feed a post came
 from. pick a few posts from one feed, leave the rest in the pile, see where
-they land. median rank of the rest, out of 297, on a recent build:
+they land. median rank of the rest, out of 1626, on a recent build:
 
 | picks | the ranker | shared words | newest first | shuffled |
 |---|---|---|---|---|
-| 1 | 24 | 39 | 149 | 148 |
-| 2 | 14 | 29 | 148 | 148 |
-| 5 | 8 | 18 | 142 | 140 |
+| 1 | 72 | 219 | 687 | 808 |
+| 2 | 45 | 92 | 670 | 812 |
+| 3 | 38 | 60 | 666 | 813 |
 
 newest first is the same as shuffled. that's the argument for the whole thing.
 same feed only stands in for same taste, so read it as necessary, not
 sufficient. it runs at every build and the method page prints today's numbers.
+
+the several-averages part is tested against a reader with two unrelated
+tastes: pick two posts from each of two feeds that sit apart, and 23 of every
+100 held-out posts land in the top ten, against 13 with a single average. a
+reader picking from one feed loses nothing.
 
 ```bash
 uv run manicule.py evaluate site/posts.json
@@ -92,21 +103,22 @@ the URL, so a link is a taste.
 
 ## Your taste is the link
 
-there is no account because there is nothing to keep one for. the ranking uses
-two averages, so a link carrying the two averages carries the whole taste — on
-any day, against any pool, on anyone's fork. about 1.1KB of it.
+there is no account because there is nothing to keep one for. the ranking only
+ever sees your averages, so a link carrying them carries the whole taste — on
+any day, against any pool, on anyone's fork. about 1.1KB with one average a
+side, 2.1KB with the most it will ever hold.
 
 ```
-#v=<384 int8, base64>~<scale>~<count>&w=<the same, passed>&k=<model>&l=<λ>
+#v=<384 int8, base64>~<scale>~<count>[!another]&w=<the same, passed>&k=<model>&l=<λ>
 ```
 
 a press folds a post into the average; pressing again takes exactly the same
 post back out. the ids in `m=` only tick the boxes, and stop meaning anything
 when those posts leave the pool. the averages do not.
 
-an average carried in is worth at most twenty presses, so a taste cannot set:
-come back with two hundred presses behind you and the next one still turns it
-by a twentieth.
+an average is worth at most twenty presses against a new one, so a taste cannot
+set: come back with two hundred presses behind you and the next one still turns
+it by a twentieth.
 
 `k=` is the model that wrote the numbers. a link from a different one is not
 wrong, it is unreadable, and the page says so rather than ranking by noise.

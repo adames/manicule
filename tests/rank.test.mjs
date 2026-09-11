@@ -8,8 +8,8 @@ const FIX = JSON.parse(readFileSync(new URL("./fixture.json", import.meta.url)))
 
 test("fixture order and scores match Python", () => {
   const byId = Object.fromEntries(FIX.posts.map((e) => [e.id, e.vector]));
-  const picked = FIX.picked.map((i) => byId[i]);
-  const passed = FIX.passed.map((i) => byId[i]);
+  const picked = M.tasteOf(FIX.picked.map((i) => byId[i]));
+  const passed = M.tasteOf(FIX.passed.map((i) => byId[i]));
   const pickedById = Object.fromEntries(FIX.picked.map((i) => [i, byId[i]]));
   const ranked = M.rank(FIX.posts, picked, passed, FIX.lambda, pickedById);
   assert.deepEqual(ranked.map((s) => s.post.id), FIX.expected_order);
@@ -21,7 +21,7 @@ test("fixture order and scores match Python", () => {
 });
 
 test("cold start returns null", () => {
-  assert.equal(M.rank(FIX.posts, [], [[0, 1, 0, 0]]), null);
+  assert.equal(M.rank(FIX.posts, [], M.tasteOf([[0, 1, 0, 0]])), null);
 });
 
 test("dequantize round-trips cosine", () => {
@@ -33,34 +33,47 @@ test("dequantize round-trips cosine", () => {
 
 test("a taste blob is written and read the same in both languages", () => {
   const T = FIX.taste;
-  assert.equal(M.tasteBlob({ vector: T.vector, count: T.count }), T.blob);
+  assert.equal(M.tasteBlob([{ vector: T.vector, count: T.count }]), T.blob);
   const back = M.readTasteBlob(T.blob, T.vector.length);
-  assert.equal(back.count, T.count);
-  assert.ok(M.cosine(back.vector, T.vector) > 0.9999);
+  assert.equal(back.length, 1);
+  assert.equal(back[0].count, T.count);
+  assert.ok(M.cosine(back[0].vector, T.vector) > 0.9999);
 
-  let step = null;
-  for (const vector of T.presses) step = M.press(step, vector);
-  assert.equal(step.count, T.pressed_count);
-  step.vector.forEach((x, i) => assert.ok(Math.abs(x - T.pressed_vector[i]) < 1e-9, `dim ${i}`));
+  const built = M.tasteOf(T.presses);
+  assert.deepEqual(built.map((one) => one.count), T.pressed_counts);
+  built.forEach((one, k) => one.vector.forEach((x, i) =>
+    assert.ok(Math.abs(x - T.pressed_vectors[k][i]) < 1e-9, `average ${k} dim ${i}`)));
 });
 
 test("a hand-edited taste reads as no taste, never as a crash", () => {
-  for (const bad of ["", "garbage", "a~b~c", "AAAA~1~0", "AAAA~0~5", null, undefined]) {
-    assert.equal(M.readTasteBlob(bad, 8), null, String(bad));
+  for (const bad of ["", "garbage", "a~b~c", "AAAA~1~0", "AAAA~0~5", "!!", null, undefined]) {
+    assert.deepEqual(M.readTasteBlob(bad, 8), [], String(bad));
   }
-  assert.equal(M.unpress(null, [1, 0]), null);
-  assert.equal(M.unpress({ vector: [1, 0], count: 1 }, [1, 0]), null);
+  // One readable average beside one ruined one keeps the readable one.
+  const good = M.tasteBlob([{ vector: new Array(8).fill(1), count: 3 }]);
+  assert.equal(M.readTasteBlob(good + "!wrecked", 8).length, 1);
+  assert.deepEqual(M.unpress(null, [1, 0]), []);
+  assert.deepEqual(M.unpress([{ vector: [1, 0], count: 1 }], [1, 0]), []);
 });
 
-test("unpressing puts the average back", () => {
+test("unpressing puts the taste back", () => {
   const posts = Array.from({ length: 30 }, (_, k) => Array.from({ length: 8 }, (_, i) => Math.sin(k * 3 + i)));
-  let taste = null;
-  for (const v of posts) taste = M.press(taste, v);
+  const taste = M.tasteOf(posts);
   let undone = taste;
   for (const v of [...posts.slice(-5)].reverse()) undone = M.unpress(undone, v);
-  assert.equal(undone.count, 25);
   let again = undone;
   for (const v of posts.slice(-5)) again = M.press(again, v);
-  assert.equal(again.count, taste.count);
-  again.vector.forEach((x, i) => assert.ok(Math.abs(x - taste.vector[i]) < 1e-9, `dim ${i}`));
+  assert.deepEqual(again.map((o) => o.count), taste.map((o) => o.count));
+  again.forEach((one, k) => one.vector.forEach((x, i) =>
+    assert.ok(Math.abs(x - taste[k].vector[i]) < 1e-9, `average ${k} dim ${i}`)));
+});
+
+test("two unrelated tastes do not average into neither", () => {
+  const a = [1, 0, 0], b = [0, 1, 0];
+  const taste = M.tasteOf([a, [0.98, 0.2, 0], b]);
+  assert.equal(taste.length, 2);
+  assert.ok(M.nearness(taste, b) > 0.99);
+  assert.ok(M.cosine(M.meanVector([a, [0.98, 0.2, 0], b]), b) < 0.7);
+  const many = M.tasteOf([[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0]]);
+  assert.equal(many.length, M.MOST);
 });
