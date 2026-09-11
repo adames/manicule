@@ -93,3 +93,29 @@ def test_a_feed_that_never_answers_is_skipped_not_fatal(monkeypatch):
     posts = fetch([("d", "https://dead.example/f"), ("a", "https://a.example/f")],
                   per_feed=1, workers=2)
     assert len(posts) == 1
+
+
+def test_a_lone_host_waits_for_nothing(monkeypatch):
+    """The pause is for hosts carrying many feeds, not for the other three hundred."""
+    lock = threading.Lock()
+    monkeypatch.setattr(urllib.request, "urlopen",
+                        lambda req, timeout=None: Fake(req.full_url, [0], [0], lock))
+    feeds = [(f"f{i}", f"https://h{i}.example/f") for i in range(8)]
+    started = time.monotonic()
+    posts = fetch(feeds, per_feed=1, workers=8, per_host_pause=1.0)
+    took = time.monotonic() - started
+    assert len(posts) == 8
+    assert took < 0.5, f"eight different hosts paused for each other: {took:.2f}s"
+
+
+def test_a_crowded_host_waits_longer(monkeypatch):
+    """Eight feeds on one host queue, and the wait between them is real."""
+    lock = threading.Lock()
+    monkeypatch.setattr(urllib.request, "urlopen",
+                        lambda req, timeout=None: Fake(req.full_url, [0], [0], lock))
+    feeds = [(f"f{i}", f"https://one.example/{i}") for i in range(8)]
+    started = time.monotonic()
+    fetch(feeds, per_feed=1, workers=8, per_host_pause=0.1)
+    took = time.monotonic() - started
+    # Seven gaps of 0.7s each, give or take, on top of the reads.
+    assert took > 4.0, f"the crowded host was not paced: {took:.2f}s"

@@ -248,19 +248,22 @@ def raw_summary(item) -> str:
 
 
 def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | None = None,
-          workers: int = 16, timeout: int = 20, tries: int = 2) -> list[Post]:
+          workers: int = 16, timeout: int = 20, tries: int = 3, per_host_pause: float = 0.15) -> list[Post]:
     """Fetch every feed at once, keep the newest few of each, drop the old.
 
     Feeds go out in parallel with a timeout each: at a few hundred feeds one
     slow host must not hold the build. A feed that fails is skipped and
     yesterday's file keeps serving.
 
-    One host at a time, though. Twenty-nine of these feeds are YouTube, and
-    firing them all at once got nine of them refused — a different nine on the
-    next run, which is what rate limiting looks like from the outside. Requests
-    to the same host queue behind each other with a pause between, and anything
-    that still fails gets one more go. Hosts with a single feed, which is most
-    of them, are unaffected.
+    One host at a time, though. Twenty-eight of these feeds are YouTube, and
+    firing them all at once got half of them refused — a different half on the
+    next run, which is what rate limiting looks like from the outside.
+
+    So requests to one host queue behind each other, and the pause between them
+    grows with how many feeds that host is carrying: a host with one feed waits
+    nothing, YouTube waits seconds. A refusal gets two more goes, backing off
+    each time. The three hundred hosts with a single feed are untouched by all
+    of this, and one slow host still cannot hold up the build.
     """
     import threading
     import urllib.request
@@ -269,10 +272,18 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
 
     locks: dict[str, threading.Lock] = {}
     guard = threading.Lock()
+    load: dict[str, int] = {}
+    for _, url in feeds:
+        host = urlparse(url).netloc
+        load[host] = load.get(host, 0) + 1
 
     def lock_for(host):
         with guard:
             return locks.setdefault(host, threading.Lock())
+
+    # A host carrying one feed is not being hammered and waits for nothing.
+    def pause_for(host):
+        return min(per_host_pause * (load.get(host, 1) - 1), 3.0)
 
     def get(url):
         req = urllib.request.Request(url, headers={"User-Agent": "manicule/0.1 (+https://manicule.adames.cc)"})
@@ -287,12 +298,12 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | 
             try:
                 with lock_for(host):
                     body = get(url)
-                    time.sleep(0.4)   # inside the lock: the pause is the point
+                    time.sleep(pause_for(host))   # inside the lock: the wait is the point
                 return title, url, feedparser.parse(body), None
-            except Exception as e:  # noqa: BLE001 — any failure is worth one more go
+            except Exception as e:  # noqa: BLE001 — any failure is worth another go
                 why = e
                 if attempt + 1 < tries:
-                    time.sleep(2)
+                    time.sleep(2 * (attempt + 1) ** 2)
         return title, url, None, why
 
     oldest = None
