@@ -193,19 +193,17 @@
       <outline text="things magazine" type="rss" xmlUrl="https://thingsmagazine.net/feed"/>
       <outline text="V&amp;A Blog" type="rss" xmlUrl="https://www.vam.ac.uk/blog/feed"/>
     </outline>
-    <outline text="art + history">
+    <outline text="art">
       <outline text="Art in America" type="rss" xmlUrl="https://www.artnews.com/c/art-in-america/feed/"/>
-      <outline text="Atlas Obscura" type="rss" xmlUrl="https://www.atlasobscura.com/feeds/latest"/>
       <outline text="Elephant" type="rss" xmlUrl="https://elephant.art/feed/"/>
       <outline text="Hyperallergic" type="rss" xmlUrl="https://hyperallergic.com/feed/"/>
       <outline text="Momus" type="rss" xmlUrl="https://momus.ca/feed/"/>
       <outline text="Open Culture" type="rss" xmlUrl="https://www.openculture.com/feed"/>
-      <outline text="The Paris Review" type="rss" xmlUrl="https://www.theparisreview.org/blog/feed/"/>
-      <outline text="The Public Domain Review" type="rss" xmlUrl="https://publicdomainreview.org/rss.xml"/>
       <outline text="Two Coats of Paint" type="rss" xmlUrl="https://twocoatsofpaint.com/feed"/>
       <outline text="We Are the Mutants" type="rss" xmlUrl="https://wearethemutants.com/feed/"/>
     </outline>
     <outline text="history">
+      <outline text="The Public Domain Review" type="rss" xmlUrl="https://publicdomainreview.org/rss.xml"/>
       <outline text="A Collection of Unmitigated Pedantry" type="rss" xmlUrl="https://acoup.blog/feed/"/>
       <outline text="Age of Revolutions" type="rss" xmlUrl="https://ageofrevolutions.com/feed/"/>
       <outline text="Antigone" type="rss" xmlUrl="https://antigonejournal.com/feed/"/>
@@ -227,6 +225,7 @@
       <outline text="World History Encyclopedia" type="rss" xmlUrl="https://www.worldhistory.org/rss/"/>
     </outline>
     <outline text="books + writing">
+      <outline text="The Paris Review" type="rss" xmlUrl="https://www.theparisreview.org/blog/feed/"/>
       <outline text="Asymptote Blog" type="rss" xmlUrl="https://www.asymptotejournal.com/blog/feed/"/>
       <outline text="Chicago Review of Books" type="rss" xmlUrl="https://chireviewofbooks.com/feed/"/>
       <outline text="Clarkesworld" type="rss" xmlUrl="https://clarkesworldmagazine.com/feed/"/>
@@ -452,6 +451,7 @@
       <outline text="Streetsblog USA" type="rss" xmlUrl="https://usa.streetsblog.org/feed"/>
     </outline>
     <outline text="travel">
+      <outline text="Atlas Obscura" type="rss" xmlUrl="https://www.atlasobscura.com/feeds/latest"/>
       <outline text="Everything Everywhere Daily" type="rss" xmlUrl="https://everything-everywhere.com/feed/"/>
       <outline text="Legal Nomads" type="rss" xmlUrl="https://www.legalnomads.com/feed/"/>
       <outline text="Nomadic Notes" type="rss" xmlUrl="https://www.nomadicnotes.com/feed/"/>
