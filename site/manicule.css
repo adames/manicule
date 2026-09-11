@@ -859,7 +859,7 @@ section .ruler-wrap {
   opacity: .6;
 } /* a real space precedes each span (for screen readers); the left margin makes up the difference */
 
-/* your tastes, read off the pool: one line an average, in the status's voice */
+/* your tastes, read off the feed: one line an average, in the status's voice */
 .tastes {
   list-style: none;
   margin: var(--space-2) 0 0;

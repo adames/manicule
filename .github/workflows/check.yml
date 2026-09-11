@@ -1,4 +1,4 @@
-# Fetch the pool from a runner and say what it could not reach. Builds to
+# Fetch the feed from a runner and say what it could not reach. Builds to
 # /tmp and deploys nothing: the point is the last "skipped" line. A runner
 # reaches the web from a different address than a laptop does, and some hosts
 # answer it differently, so a source is not verified until this has run.
@@ -7,8 +7,8 @@
 #
 #     gh workflow run check.yml --ref your-branch
 #
-# It ran on every claude/** push while the pool was being rebuilt, which was
-# right then and noise now: the pool changes a few sources at a time.
+# It ran on every claude/** push while the feed was being rebuilt, which was
+# right then and noise now: the feed changes a few sources at a time.
 name: check
 on:
   workflow_dispatch:

@@ -9,7 +9,7 @@
   // A taste is a few averages a side. The page calls each average a taste
   // ("taste 1 · 3 picks · about cooking"); in here one side is a Taste and
   // each entry is `one`. A link that carries the averages carries all of it —
-  // on any day, against any pool, on anyone's fork. Ids cannot: the pool
+  // on any day, against any feed, on anyone's fork. Ids cannot: the feed
   // turns over and they stop pointing at anything.
   //
   // A blob is <base64 of 384 int8>~<scale>~<count>: the direction, the size
@@ -56,7 +56,7 @@
   //   words  — the uncommon words in the headlines nearest the average, which
   //            is where "lanterns" comes from when the label says "tv shows".
   //   sources  — where those nearest posts came from.
-  // All of it is read off today's pool, so it is as true of a taste carried
+  // All of it is read off today's feed, so it is as true of a taste carried
   // in by a link as of one pressed just now.
   const STOP = new Set(("a an the and or but of to in on at for with from by as is are was were be been " +
     "it its this that these those there here than then so if not no yes about after again also among another " +
@@ -70,7 +70,7 @@
 
   // The phrases in a headline: every run of one to three words with no
   // stopword in it. "iphone 17 pro" and "iphone air" are what an announcement
-  // is called in the pool's own words; single words alone gave "shine, event".
+  // is called in the feed's own words; single words alone gave "shine, event".
   function phrasesOf(text) {
     const words = tokens(text);
     const out = new Set();
@@ -85,7 +85,7 @@
     return out;
   }
 
-  // How many headlines each phrase is in, once per pool.
+  // How many headlines each phrase is in, once per feed.
   const dfOf = new WeakMap();
   function documentFrequency(posts) {
     if (dfOf.has(posts)) return dfOf.get(posts);
@@ -96,7 +96,7 @@
   }
 
   // The k posts nearest an average, nearest first. A running top-k rather than
-  // a sort of the whole pool: this runs on every press.
+  // a sort of the whole feed: this runs on every press.
   function nearestTo(one, posts, k) {
     const nearest = [];
     for (const post of posts) {
@@ -126,7 +126,7 @@
   }
 
   // A phrase scores by how many of the nearest headlines it is in, weighed
-  // by how rare it is in the pool, with a nod to length: "iphone 17 pro"
+  // by how rare it is in the feed, with a nod to length: "iphone 17 pro"
   // over "iphone" when both are there. It has to be in two headlines or
   // it is one headline's phrase and not the taste's, and a phrase the
   // label already says is not the specific thing.
@@ -157,7 +157,7 @@
     return words;
   }
 
-  // A category's nearest posts are spread across the pool's ninety days.
+  // A category's nearest posts are spread across the feed's ninety days.
   // An announcement's are many sources within days of each other: eleven
   // of the twelve nearest to an iphone launch were two days old, while
   // recipes, wine and an essay on liberalism ran ten to eighty. So: when

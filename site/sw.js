@@ -1,11 +1,13 @@
-// sw.js — so yesterday's pool reads on a train, and nothing else.
+// sw.js — so yesterday's feed reads on a train, and nothing else.
 //
 // Everything goes to the network first and falls back to the cache. Serving a
 // cached copy first would be faster and is how most of these are written, and
 // it is wrong here: a page and the script that runs it have to agree, and one
 // asset missed by the build's ?v= stamping would then be cached forever. An
 // offline fallback cannot go stale, because online never reads it.
-const CACHE = "manicule-1";
+// Bumped when a cached asset changes name: activate drops every other
+// cache, so an offline copy can never point at a script that is gone.
+const CACHE = "manicule-2";
 const PAGES = ["./", "index.html", "method.html", "fork.html"];
 
 self.addEventListener("install", (event) => {

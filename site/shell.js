@@ -56,7 +56,7 @@
   // ── the active tab ───────────────────────────────────────────────────────
 
   const file = location.pathname.split("/").pop() || "index.html";
-  const thisPage = file.replace(/\.html$/, "").replace(/^index$/, "pool");
+  const thisPage = file.replace(/\.html$/, "").replace(/^index$/, "feed");
   for (const link of all("[data-page]")) {
     const here = link.dataset.page === thisPage;
     link.classList.toggle("active", here);

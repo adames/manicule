@@ -501,7 +501,7 @@ def evaluate(posts: list[Post], trials_per_source: int = 30, seed: int = 7,
             "shuffled": places(rng.permutation(rest), held_out),
         }
 
-    # A big pool has hundreds of sources; testing every one at thirty trials
+    # A big feed has hundreds of sources; testing every one at thirty trials
     # each would take the build hostage. A fixed sample, same seed every day,
     # is the same test on a comparable slice.
     tested = sorted(set(sources))
@@ -598,10 +598,10 @@ def print_proof(proof: dict | None) -> None:
 def spread(posts: list[Post], count: int = 30) -> list[str]:
     """Ids of `count` posts chosen to sit as far apart as possible.
 
-    Cold start is the hard part of a big pool: a thousand posts and no reason
+    Cold start is the hard part of a big feed: a thousand posts and no reason
     to press any of them. Newest-first answers "what is new", which is not the
     question. This answers "what is here" — farthest-point sampling, so every
-    corner of the pool gets one seat and whatever a reader is into, something
+    corner of the feed gets one seat and whatever a reader is into, something
     on the first screen is near it.
 
     It is what categories would be for, done without asking anyone to read a
@@ -615,7 +615,7 @@ def spread(posts: list[Post], count: int = 30) -> list[str]:
     vectors = np.array([p.vector for p in rows])
     vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
 
-    # Start at the middle of the pool, so the run is the same every build and
+    # Start at the middle of the feed, so the run is the same every build and
     # the first seat is the most ordinary thing here, not the strangest.
     middle = vectors.mean(axis=0)
     chosen = [int(np.argmax(vectors @ middle))]
@@ -682,8 +682,8 @@ def taste_blob(taste: Taste) -> str:
     """A taste is several averages, so a blob is several blobs.
 
     The whole taste fits in a link, which is why there is no account: the
-    ranking only ever sees these averages, on any day and against any pool.
-    Ids cannot do this — the pool turns over and they stop pointing at
+    ranking only ever sees these averages, on any day and against any feed.
+    Ids cannot do this — the feed turns over and they stop pointing at
     anything. "!" separates them because a fragment carries it as itself.
     """
     return "!".join(one_blob(mean, count) for mean, count in (taste or []))
@@ -787,7 +787,7 @@ def nearest_labels(vectors: list[list[float] | None], label_vectors: list[list[f
     """For each vector, the indices of the `count` labels it sits nearest,
     nearest first. None where there is no vector or no labels.
 
-    Two, not one: on the live pool half the posts sit within 0.02 of two
+    Two, not one: on the live feed half the posts sit within 0.02 of two
     labels, and the pair reads true where either alone is a guess.
     """
     if not label_vectors:
@@ -973,7 +973,7 @@ def main(argv: list[str] | None = None) -> int:
     # wider sample.
     demo.add_argument("--per-source", type=int, default=5)
     # Wide, not recent: a good blog that posts twice a year belongs in the
-    # pool, and newest-first already sinks its older posts to the bottom. The
+    # feed, and newest-first already sinks its older posts to the bottom. The
     # cutoff is only here to keep a source that died last year out.
     demo.add_argument("--max-age", type=int, default=90, help="days; older posts are left out")
     demo.set_defaults(fn=cmd_posts)

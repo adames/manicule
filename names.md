@@ -1,7 +1,7 @@
 # names
 
 one vocabulary for manicule: the site, the code, and the two files that shape
-the pool. four were chosen separately and in one day. this is what they are,
+the feed. four were chosen separately and in one day. this is what they are,
 where they disagree, and what to do about each. everything in it is
 applied and marked **done**.
 
@@ -97,6 +97,22 @@ three places disagree.
    title is `manicule · pool`, the script is `pool.js`, and copy that meant
    the page says "the pool". the pitch line, "a feed that reorders around what you point at", stays: there
    it is the product, not the tab.
+
+   **reversed later the same day.** the owner read the tab as a feed and said
+   so, and the pitch line had been saying it all along. so the swap went the
+   other way: the page, the tab, the title and the script are the **feed**,
+   and where a post came from is a **source** — the column, `Post.source`,
+   `posts.json`'s `source` and `sources`, `--per-source`.
+
+   the argument above, that the source meaning cannot move because readers
+   know what an rss feed is, is the real cost of this and it is paid: "source"
+   is a plainer word than "feed" and carries none of the rss familiarity. what
+   it buys is that no sentence has to do both jobs at once, which is what
+   "the feed a post came from" was asking of a page called the feed.
+
+   three spellings keep the old word because they are not ours to name:
+   `feedparser`, `parsed.feed` (that library's own attribute), and
+   `feeds.opml`, which is an interchange format an rss reader writes.
 
 ## the kinds
 

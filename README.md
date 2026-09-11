@@ -40,7 +40,7 @@ unreleased library I was developing.
 
 ## What a taste is about
 
-the pool says, above the rows, one line an average:
+the feed says, above the rows, one line an average:
 
 ```
 ☞ taste 1 · 3 picks · about cooking · sourdough, starter, hydration
@@ -54,7 +54,7 @@ about whichever label its average sits nearest. the specific part is the
 phrases in the twelve headlines nearest the average — "iphone 17 pro" over
 "iphone" — and a phrase has to be in at least two of them.
 
-two more things the pool can tell, and the line says when it can:
+two more things the feed can tell, and the line says when it can:
 
 - a phrase in half the nearest headlines is what the taste is about, and it
   leads: `about lanterns · tv shows and streaming series`.
@@ -62,11 +62,11 @@ two more things the pool can tell, and the line says when it can:
   several sources, is something happening rather than a field: `about apple and
   iphone · today: iphone duo, apple surprise, shine event`. an announcement is
   many sources saying the same thing at once; a category is spread across the
-  pool's ninety days.
+  feed's ninety days.
 
 the method page shows the cosines and says which rule fired.
 
-it is read off today's pool, so it is as true of a taste carried in by a link
+it is read off today's feed, so it is as true of a taste carried in by a link
 as of one pressed just now. the cli prints the same labels in its heading.
 
 ## Does it work
@@ -123,7 +123,7 @@ pressing a post changes the scores and leaves the order alone; `order by taste`
 sorts on them when you ask. λ lives on the method page, next to the paragraph
 that explains it.
 
-it installs, too: a manifest and a small service worker, so yesterday's pool
+it installs, too: a manifest and a small service worker, so yesterday's feed
 reads on a train.
 
 vectors ship as int8 with one scale each, packed in `vectors.bin` beside
@@ -136,7 +136,7 @@ the URL, so a link is a taste.
 
 there is no account because there is nothing to keep one for. the ranking only
 ever sees your averages, so a link carrying them carries the whole taste — on
-any day, against any pool, on anyone's fork. about 1.1KB with one average a
+any day, against any feed, on anyone's fork. about 1.1KB with one average a
 side, 2.1KB with the most it will ever hold.
 
 ```
@@ -145,7 +145,7 @@ side, 2.1KB with the most it will ever hold.
 
 a press folds a post into the average; pressing again takes exactly the same
 post back out. the ids in `m=` only tick the boxes, and stop meaning anything
-when those posts leave the pool. the averages do not.
+when those posts leave the feed. the averages do not.
 
 an average is worth at most twenty presses against a new one, so a taste cannot
 set: come back with two hundred presses behind you and the next one still turns
@@ -159,7 +159,7 @@ you. lose it and it is gone: that is the whole of it, and it is why nothing
 here has to hold anything about you.
 
 **a link is a pointer, not a diary.** an average is not anonymous — anyone with
-the pool can rank it and see what you would pick — but it does not name a
+the feed can rank it and see what you would pick — but it does not name a
 single thing you read.
 
 ## Make it yours: fork it

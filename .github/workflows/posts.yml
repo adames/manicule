@@ -49,7 +49,7 @@ jobs:
       - name: stamp the assets
         run: |
           v=$(git rev-parse --short HEAD)
-          sed -i -E 's/(href="manicule\.css|src="(rank|shell|pool|method)\.js)"/\1?v='"$v"'"/g' site/*.html
+          sed -i -E 's/(href="manicule\.css|src="(rank|shell|feed|method)\.js)"/\1?v='"$v"'"/g' site/*.html
           grep -o 'v=[0-9a-f]*' site/index.html | head -1
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }

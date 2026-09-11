@@ -1,11 +1,11 @@
-// pool.js — the pool page: load the posts, rank them by what you picked,
+// feed.js — the feed page: load the posts, rank them by what you picked,
 // and print every score with its arithmetic. Nothing is stored anywhere: the
 // link is the state, and localStorage only remembers it for a bare visit.
 //
 // The link carries two things, and only one of them ranks. The two averages
-// are the taste itself: they mean the same thing on any day, against any pool,
+// are the taste itself: they mean the same thing on any day, against any feed,
 // on anyone's fork. The ids are there to keep the right boxes ticked, and they
-// stop meaning anything the moment those posts leave the pool.
+// stop meaning anything the moment those posts leave the feed.
 (function () {
   const ROWS_PER_PAGE = 20;
 
@@ -120,7 +120,7 @@
   // The taste is already a few averages a side, which is all the ranking ever
   // wanted. Nothing is averaged here: it was averaged as it was pressed.
   function rankBy(lambda) {
-    // Only posts still in the pool can be named as the closest pick. An
+    // Only posts still in the feed can be named as the closest pick. An
     // average is not a post, so a carried taste ranks without a near line.
     const pickedById = {};
     for (const id of state.picked) {
@@ -176,9 +176,9 @@
   function nearHtml(scored, isPicked, isPassed) {
     if (scored.score === -Infinity || isPicked || isPassed) return NO_NEAR;
     // With several tastes, the number is the thing worth saying: it is what
-    // the lines above the pool are numbered by, and a run of rows from one
+    // the lines above the feed are numbered by, and a run of rows from one
     // taste then another is the whole picture. The pick is named when there
-    // is one in the pool to name; a taste carried in by a link has none.
+    // is one in the feed to name; a taste carried in by a link has none.
     const several = state.taste.picked.length > 1;
     const nearest = scored.nearest && postById[scored.nearest];
     const key = `${several ? scored.which : ""}:${nearest ? scored.nearest : ""}`;
@@ -330,12 +330,12 @@
     if (banner.hidden) return;
     const stillHaveOne = state.taste.picked.length || state.taste.passed.length;
     el("banner-says").innerHTML = state.unreadable
-      ? `<b>this link was written for a different model</b> · the numbers in it mean nothing here, so ${stillHaveOne ? "your own taste is showing instead" : "the pool starts cold"}`
+      ? `<b>this link was written for a different model</b> · the numbers in it mean nothing here, so ${stillHaveOne ? "your own taste is showing instead" : "the feed starts cold"}`
       : `<b>this link carries someone else's taste</b> · press the box beside anything you'd read and it becomes yours`;
   }
 
-  // What your taste is about, said in the pool's own words: for each average,
-  // the sources its nearest posts come from. Read off the pool, not stored, so
+  // What your taste is about, said in the feed's own words: for each average,
+  // the sources its nearest posts come from. Read off the feed, not stored, so
   // it is as true of a taste carried in by a link as of one pressed just now.
   // This is the see-through view of a vector, and the reason a number in the
   // status line ("in 2 tastes") means something.
@@ -362,7 +362,7 @@
       const said = about.focus
         ? [`about <b>${esc(about.focus)}</b>`, label, specifics].filter(Boolean).join(" · ")
         : [label ? `about <b>${label}</b>` : "", specifics].filter(Boolean).join(" · ")
-          || "near nothing in today's pool";
+          || "near nothing in today's feed";
       const where = about.sources.length ? ` title="near ${esc(about.sources.join(", "))}"` : "";
       return `<li>${hand(isPass ? "bird" : "rest")}${k}${n}<span class="sources"${where}>${said}</span></li>`;
     };
@@ -411,10 +411,10 @@
   }
 
   // A thousand posts and no reason to press any of them is the hard part of a
-  // big pool. Newest first answers "what is new", which nobody asked. The
+  // big feed. Newest first answers "what is new", which nobody asked. The
   // spread answers "what is here": posts chosen at build time to sit as far
   // apart as possible, so whatever you are into, something up here is near it.
-  // The rest of the pool follows, newest first, and one press ends the whole
+  // The rest of the feed follows, newest first, and one press ends the whole
   // arrangement.
   function coldOrder() {
     const seats = (posts.spread || []).map((id) => postById[id]).filter(Boolean);
