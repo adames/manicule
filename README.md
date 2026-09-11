@@ -70,7 +70,7 @@ put it on a cron and read `today.md` with coffee.
 
 ## The demo
 
-`site/` is a static page. a GitHub Action rebuilds `site/posts.json` daily
+`site/` is a static page. a GitHub Action rebuilds `site/posts.json` and `site/vectors.bin` daily
 (`manicule.py posts feeds.opml`) from the mixed sample in `feeds.opml`: code,
 science, essays, podcasts, sports, food, games. mixed on purpose, so picking
 two things visibly reorders everything.
@@ -78,8 +78,9 @@ two things visibly reorders everything.
 a first visit lands newest first. pressing a post changes the scores and
 leaves the order alone; `order by taste` sorts on them when you ask.
 
-vectors ship as int8 with one scale each, a quarter the size of float32 in
-JSON and too small a rounding error for the ranking to feel. the browser does
+vectors ship as int8 with one scale each, packed in `vectors.bin` beside
+`posts.json`, a fifth the size of the same numbers as text and too small a
+rounding error for the ranking to feel. the browser does
 the math in `site/rank.js`, the same math as the Python. your taste lives in
 the URL, so a link is a taste.
 

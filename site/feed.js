@@ -373,25 +373,16 @@
 
   // ── boot ─────────────────────────────────────────────────────────────────
 
-  fetch("posts.json", { cache: "no-cache" })
-    .then((response) => response.json())
+  Shell.loadPosts()
     .then((loaded) => {
       posts = loaded;
-      for (const post of posts.posts) {
-        post.vector = post.q ? Manicule.dequantize(post.q, post.s) : null;
-        delete post.q;
-        postById[post.id] = post;
-      }
+      for (const post of posts.posts) postById[post.id] = post;
 
       el("spec").innerHTML = [
         `<span title="${esc(utcStamp(posts.generated))}">updated ${esc(timeAgo(posts.generated))}</span>`,
         `<span>updates once a day</span>`,
         `<span>${posts.feeds.length} feeds, mixed on purpose</span>`,
       ].join(" ");
-
-      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = posts.posts.length;
-
-      try { localStorage.setItem("manicule-count", posts.posts.length); } catch (_) {}
 
       drawEverything();
     })

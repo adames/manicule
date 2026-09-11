@@ -15,7 +15,7 @@ average to measure against, so the list stays newest-first.
 Three subcommands:
 
     manicule.py rank     feeds.opml --picked notes/ [--passed nope/]  # your daily page
-    manicule.py posts    feeds.opml -o site/posts.json                # the demo's data
+    manicule.py posts    feeds.opml -o site/posts.json                # the demo's data (+ vectors.bin)
     manicule.py evaluate [site/posts.json]                            # the proof, printed
 
 Every post becomes a vector of 384 numbers, computed on this machine by
@@ -31,7 +31,7 @@ import re
 import sys
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -229,21 +229,54 @@ def raw_summary(item) -> str:
     return content[0].get("value", "") if content else ""
 
 
-def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Post]:
+def fetch(feeds: list[tuple[str, str]], per_feed: int = 20, max_age_days: int | None = None,
+          workers: int = 16, timeout: int = 20) -> list[Post]:
+    """Fetch every feed at once, keep the newest few of each, drop the old.
+
+    Feeds go out in parallel with a timeout each: at a few hundred feeds one
+    slow host must not hold the build. A feed that fails is skipped and
+    yesterday's file keeps serving.
+    """
+    import urllib.request
+    from concurrent.futures import ThreadPoolExecutor
+
+    def pull(feed):
+        title, url = feed
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "manicule/0.1 (+https://manicule.adames.cc)"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                body = r.read()
+        except Exception as why:  # noqa: BLE001 — any failure is a skip
+            return title, url, None, why
+        parsed = feedparser.parse(body)
+        return title, url, parsed, None
+
+    oldest = None
+    if max_age_days is not None:
+        oldest = (datetime.now(UTC) - timedelta(days=max_age_days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     posts: list[Post] = []
     seen: set[str] = set()
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        results = list(pool.map(pull, feeds))
 
-    for title, url in feeds:
-        parsed = feedparser.parse(url)
-        if parsed.bozo and not parsed.entries:
-            why = getattr(parsed, "bozo_exception", "unreadable")
+    for title, url, parsed, why in results:
+        if parsed is None or (parsed.bozo and not parsed.entries):
+            why = why or getattr(parsed, "bozo_exception", "unreadable")
             print(f"  skip {title}: {why}", file=sys.stderr)
             continue
 
         feed_title = (parsed.feed.get("title") or title).strip()
-        for item in parsed.entries[:per_feed]:
+        kept = 0
+        for item in parsed.entries:
+            if kept >= per_feed:
+                break
             link = (item.get("link") or "").strip()
             if not link:
+                continue
+            when = published_at(item)
+            # Undated posts stay: a feed that never dates anything is still a feed.
+            if oldest and when and when < oldest:
                 continue
             # The guid identifies a post; the link sometimes does not. Radiolab
             # gives every episode the same link, its homepage, so hashing the
@@ -252,16 +285,17 @@ def fetch(feeds: list[tuple[str, str]], per_feed: int = 20) -> list[Post]:
             if uid in seen:
                 continue
             seen.add(uid)
+            kept += 1
             posts.append(Post(
                 id=hashlib.sha1(uid.encode()).hexdigest()[:8],
                 title=snippet(item.get("title"), 200),
                 link=link,
                 snippet=snippet(raw_summary(item)),
                 feed=feed_title,
-                published=published_at(item),
+                published=when,
                 kind=kind_of(link, item),
             ))
-        print(f"  {feed_title}: {min(len(parsed.entries), per_feed)}", file=sys.stderr)
+        print(f"  {feed_title}: {kept}", file=sys.stderr)
 
     # Newest first is the cold-start order; undated posts sink.
     posts.sort(key=lambda post: post.published, reverse=True)
@@ -285,7 +319,8 @@ def read_notes(folder: Path | None) -> list[str]:
 
 # ---------------------------------------------------------------- the proof
 
-def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7) -> dict | None:
+def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7,
+             feed_sample: int | None = 40) -> dict | None:
     """Does picking a few things surface more of what you want?
 
     The test needs a label the ranker cannot see. The feed a post came from
@@ -341,10 +376,17 @@ def evaluate(posts: list[Post], trials_per_feed: int = 30, seed: int = 7) -> dic
             "shuffled": places(rng.permutation(rest), held_out),
         }
 
+    # A big pool has hundreds of feeds; testing every one at thirty trials
+    # each would take the build hostage. A fixed sample, same seed every day,
+    # is the same test on a comparable slice.
+    tested = sorted(set(feeds))
+    if feed_sample and len(tested) > feed_sample:
+        tested = sorted(np.random.default_rng(seed).choice(tested, feed_sample, replace=False))
+
     def trials(picks_per_trial, only=None):
         got = {name: [] for name in ("ranker", "words", "newest", "shuffled")}
         count = 0
-        for feed in sorted(set(feeds)):
+        for feed in tested:
             members = np.where(feeds == feed)[0]
             if only:
                 members = np.array([i for i in members if kinds[i] in only])
@@ -479,6 +521,26 @@ def quantize(vector: list[float]) -> tuple[list[int], float]:
     return [max(-127, min(127, round(x / scale * 127))) for x in vector], scale
 
 
+def write_vectors(posts: list[Post], out: Path) -> None:
+    """The int8 vectors, packed, one after another in posts.json's order.
+
+    A post with no vector writes 384 zeros; the JSON row has no scale, and
+    that is how a reader knows. Binary is a fifth the size of the same numbers
+    as JSON text, and the browser can read it straight into a typed array.
+    """
+    import numpy as np
+    zeros = [0] * DIM
+    block = np.array([quantize(p.vector)[0] if p.vector is not None else zeros for p in posts], dtype=np.int8)
+    out.write_bytes(block.tobytes())
+
+
+def read_vectors(rows: list[dict], path: Path) -> list[list[float] | None]:
+    """Mirror of write_vectors: the same rows back, dequantized by the JSON scale."""
+    import numpy as np
+    block = np.frombuffer(path.read_bytes(), dtype=np.int8).reshape(len(rows), DIM)
+    return [dequantize(block[i].tolist(), row["s"]) if "s" in row else None for i, row in enumerate(rows)]
+
+
 def dequantize(q: list[int], scale: float) -> list[float]:
     """The reverse, as rank.js reads it."""
     return [x / 127 * scale for x in q]
@@ -529,7 +591,7 @@ def cmd_posts(args: argparse.Namespace) -> int:
     """The same feeds, embedded once, as the static page's data."""
     feeds = parse_opml(Path(args.opml))
     print(f"fetching {len(feeds)} feeds…", file=sys.stderr)
-    posts = fetch(feeds, per_feed=args.per_feed)
+    posts = fetch(feeds, per_feed=args.per_feed, max_age_days=args.max_age)
     print(f"embedding {len(posts)} posts…", file=sys.stderr)
     embed_posts(posts)
 
@@ -541,7 +603,7 @@ def cmd_posts(args: argparse.Namespace) -> int:
             "published": post.published, "kind": post.kind,
         }
         if post.vector is not None:
-            row["q"], row["s"] = quantize(post.vector)
+            row["s"] = quantize(post.vector)[1]
         rows.append(row)
 
     payload = {
@@ -554,19 +616,23 @@ def cmd_posts(args: argparse.Namespace) -> int:
         "proof": evaluate(posts),
         "posts": rows,
     }
-    Path(args.out).write_text(json.dumps(payload, separators=(",", ":")))
-    print(f"wrote {args.out}: {len(posts)} posts from {len(payload['feeds'])} feeds",
+    out = Path(args.out)
+    out.write_text(json.dumps(payload, separators=(",", ":")))
+    write_vectors(posts, out.with_name("vectors.bin"))
+    print(f"wrote {out} and vectors.bin: {len(posts)} posts from {len(payload['feeds'])} feeds",
           file=sys.stderr)
     return 0
 
 
 def cmd_evaluate(args: argparse.Namespace) -> int:
     """Rerun the proof on a posts.json, without fetching or embedding."""
-    payload = json.loads(Path(args.posts).read_text())
+    where = Path(args.posts)
+    payload = json.loads(where.read_text())
+    vectors = read_vectors(payload["posts"], where.with_name("vectors.bin"))
     posts = [
         Post(row["id"], row["title"], row["link"], row["snippet"], row["feed"],
-              row["published"], row["kind"], dequantize(row["q"], row["s"]) if "q" in row else None)
-        for row in payload["posts"]
+              row["published"], row["kind"], vector)
+        for row, vector in zip(payload["posts"], vectors)
     ]
     print_proof(evaluate(posts))
     return 0
@@ -592,7 +658,8 @@ def main(argv: list[str] | None = None) -> int:
     # The browser downloads every post, so the demo keeps fewer per feed than
     # the CLI does: more feeds at fewer each is the same page weight and a much
     # wider sample.
-    demo.add_argument("--per-feed", type=int, default=7)
+    demo.add_argument("--per-feed", type=int, default=5)
+    demo.add_argument("--max-age", type=int, default=14, help="days; older posts are left out")
     demo.set_defaults(fn=cmd_posts)
 
     proof = commands.add_parser("evaluate", help="rerun the proof on a posts.json and print it")

@@ -87,6 +87,25 @@
     return parts.length ? "#" + parts.join("&") : "";
   }
 
+  // ── the data ─────────────────────────────────────────────────────────────
+  // posts.json is the words; vectors.bin is the numbers, int8, 384 per post,
+  // in the same order. Both come down, and every post gets a .vector or null.
+  function loadPosts() {
+    const noCache = { cache: "no-cache" };
+    return Promise.all([
+      fetch("posts.json", noCache).then((r) => r.json()),
+      fetch("vectors.bin", noCache).then((r) => r.arrayBuffer()),
+    ]).then(([data, buffer]) => {
+      const block = new Int8Array(buffer), dim = data.dim;
+      data.posts.forEach((post, i) => {
+        post.vector = "s" in post ? Manicule.dequantize(block.subarray(i * dim, (i + 1) * dim), post.s) : null;
+      });
+      try { localStorage.setItem("manicule-count", data.posts.length); } catch (_) {}
+      for (const slot of all("[data-count]")) slot.textContent = data.posts.length;
+      return data;
+    });
+  }
+
   function mirror() {
     try { return JSON.parse(localStorage.getItem("manicule") || "null"); } catch (_) { return null; }
   }
@@ -209,5 +228,5 @@
 
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  window.Shell = { hand, toast, carry, renderAddrs, tasteIn, mirror, hashOf, lam, isTaste, esc, feedKey, signed, plain };
+  window.Shell = { hand, toast, carry, loadPosts, renderAddrs, tasteIn, mirror, hashOf, lam, isTaste, esc, feedKey, signed, plain };
 })();

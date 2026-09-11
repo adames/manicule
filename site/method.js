@@ -363,18 +363,11 @@
 
   fetchSource().then(renderListing);
 
-  fetch("posts.json", { cache: "no-cache" })
-    .then((response) => response.json())
+  Shell.loadPosts()
     .then((loaded) => {
       today = loaded;
-      for (const post of today.posts) {
-        post.vector = post.q ? Manicule.dequantize(post.q, post.s) : null;
-        delete post.q;
-        postById[post.id] = post;
-      }
+      for (const post of today.posts) postById[post.id] = post;
       el("dims").textContent = `${today.posts.length} × ${today.dim}`;
-      for (const slot of document.querySelectorAll("[data-count]")) slot.textContent = today.posts.length;
-      try { localStorage.setItem("manicule-count", today.posts.length); } catch (_) {}
 
       renderProof(today.proof);
       renderWorked();

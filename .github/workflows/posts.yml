@@ -28,7 +28,7 @@ jobs:
         run: |
           git config user.name "manicule-bot"
           git config user.email "manicule-bot@users.noreply.github.com"
-          git add site/posts.json
+          git add site/posts.json site/vectors.bin
           git diff --cached --quiet || git commit -m "posts: $(date -u +%F)"
           git push
       # Stamp every local asset with the commit, so a browser can never mix a

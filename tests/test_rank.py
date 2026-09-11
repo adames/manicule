@@ -69,3 +69,20 @@ def test_snippet_drops_feed_tails():
     yt = "ADHD meds change signalling. #kurzgesagt #science #adhd Sources & further reading: https://example.org/x"
     assert snippet(yt) == "ADHD meds change signalling."
     assert snippet("C# and F# are languages") == "C# and F# are languages"
+
+
+def test_vectors_bin_round_trips(tmp_path):
+    from manicule import DIM, quantize, read_vectors, write_vectors
+    import random
+    rng = random.Random(3)
+    posts = [Post("a", "a", "", "", "", "", "article", [rng.gauss(0, 1) for _ in range(DIM)]),
+             Post("b", "b", "", "", "", "", "article", None),
+             Post("c", "c", "", "", "", "", "article", [rng.gauss(0, 1) for _ in range(DIM)])]
+    rows = [{"s": quantize(p.vector)[1]} if p.vector else {} for p in posts]
+    path = tmp_path / "vectors.bin"
+    write_vectors(posts, path)
+    assert path.stat().st_size == len(posts) * DIM
+    back = read_vectors(rows, path)
+    assert back[1] is None
+    for p, v in zip((posts[0], posts[2]), (back[0], back[2])):
+        assert cosine(p.vector, v) > 0.999
