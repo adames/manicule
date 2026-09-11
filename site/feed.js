@@ -295,9 +295,11 @@
 
   // The order on screen is a choice, not a consequence: a press changes the
   // scores and nothing moves until the button is pressed.
-  // The same shape in every state, so the line never wraps differently and
-  // never moves the feed below it.
-  function drawStatus(cold) {
+  // A control is drawn only while pressing it would do something. Cold there
+  // is no taste to order by and nothing to forget, so the line is the words
+  // alone; ordered and untouched since, "order by taste" would be a no-op and
+  // is not offered. "forget" sits beside the counts it clears.
+  function drawStatus(cold, stale) {
     const { picked, passed } = state.taste;
     // Two averages is a fact about your taste worth a word; one is just how
     // averages work, and saying "1 taste" would be noise on every other visit.
@@ -305,9 +307,11 @@
     const counts = cold
       ? `<span class="n">nothing picked</span>`
       : `<span class="n">${Manicule.pressesIn(picked)} picked</span>${shape} <span class="n">${Manicule.pressesIn(passed)} passed</span> <a class="n lam" href="method.html">λ ${state.lambda.toFixed(2)}</a>`;
+    const acts = cold ? "" :
+      (stale ? ` <button class="btn quiet" data-act="order" type="button">order by taste</button>` : "") +
+      ` <button class="btn quiet" data-act="forget" type="button" title="clears everything you have picked and passed">forget</button>`;
     el("status").innerHTML =
-      `<b>${state.order ? "by taste" : cold ? "a spread of what is here" : "newest first"}</b> ${counts} ` +
-      `<button class="btn quiet" data-act="order" type="button">order by taste</button>`;
+      `<b>${state.order ? "by taste" : cold ? "a spread of what is here" : "newest first"}</b> ${counts}${acts}`;
   }
 
   // Two things can be true of an arriving link, and only one of them is worth
@@ -374,10 +378,14 @@
       : coldOrder();
     const visible = inOrder.map((post) => scoredById[post.id] || { post });
 
+    // The order is stale when the ranking would place something differently
+    // than the screen does: after any press, or before the first ordering.
+    const stale = !cold && (!state.order || ranked.some((row, i) => row.post.id !== state.order[i]));
+
     const ledger = el("ledger");
     ledger.classList.toggle("cold", cold);
     ledger.classList.toggle("borrowed", state.borrowed);
-    drawStatus(cold);
+    drawStatus(cold, stale);
     drawTastes();
     drawBanner();
 
@@ -433,8 +441,8 @@
     state.order = null;
     state.rowsShown = ROWS_PER_PAGE;
     gliding(draw);
-    // The button that was pressed may be gone: the banner hides, and the
-    // toolbar's actions fold away once there is nothing to share.
+    // The button that was pressed is gone: the banner hides, and the status
+    // line drops "forget" once there is nothing to forget.
     const focused = document.activeElement;
     if (!focused || focused === document.body || !focused.offsetParent) {
       el("list").focus({ preventScroll: true });
