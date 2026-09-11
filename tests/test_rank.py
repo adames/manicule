@@ -250,3 +250,15 @@ def test_about_names_the_nearest_label_per_average():
     assert about(taste, labels, vectors) == ["cooking", "tv shows"]
     assert about([], labels, vectors) == []
     assert about(taste, [], []) == ["", ""]
+
+
+def test_nearest_labels_gives_two_per_post_nearest_first():
+    """A post gets the two labels it sits nearest, as indices, nearest first;
+    a post with no vector gets none, and no labels means none for anyone."""
+    from manicule import nearest_labels
+    labels = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.7, 0.7, 0.0]]
+    posts = [[0.9, 0.1, 0.0], None, [0.0, 0.0, 1.0]]
+    got = nearest_labels(posts, labels)
+    assert got[0] == [0, 2] and got[1] is None and len(got[2]) == 2
+    assert nearest_labels(posts, []) == [None, None, None]
+    assert nearest_labels([None], labels) == [None]

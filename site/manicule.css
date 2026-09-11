@@ -1003,6 +1003,19 @@ section .ruler-wrap {
   white-space: nowrap;
 }
 
+/* what the post is about: two labels, read as a pair */
+.meta .about::before {
+  content: "\00b7  ";
+}
+.meta .about {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 34ch;
+}
+
 .kind {
   display: inline-flex;
   align-items: center;
@@ -1827,6 +1840,9 @@ pre .c {
   }
   .meta .feed {
     max-width: 16ch;
+  }
+  .meta .about {
+    display: none;
   }
   .banner {
     flex-wrap: nowrap;

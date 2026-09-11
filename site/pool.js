@@ -202,6 +202,13 @@
     return `<button class="mk ${shape}" type="button" data-act="cycle" aria-label="${says}" title="${now}" aria-describedby="t-${esc(post.id)}">${drawing}</button>`;
   }
 
+  // "recipes · baking and bread": the two labels the post sits nearest,
+  // indices into posts.labels. Read the pair; either alone is a guess.
+  function aboutHtml(post) {
+    const labels = (post.a || []).map((i) => ((posts.labels || [])[i] || {}).text).filter(Boolean);
+    return labels.length ? `<span class="about">${labels.map(esc).join(" · ")}</span>` : "";
+  }
+
   function rowHtml(scored, place, cold) {
     const post = scored.post;
     const isPicked = state.picked.has(post.id);
@@ -211,7 +218,7 @@
     return `<li class="row${isPicked ? " picked" : ""}${isPassed ? " passed" : ""}" data-id="${esc(post.id)}">
           <span class="n" aria-hidden="true">${place}</span>
           <div class="body">
-            <div class="meta"><span class="kind">${esc(post.kind || "text")}</span><span class="feed" title="${esc(post.feed)}">${esc(post.feed)}</span><time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
+            <div class="meta"><span class="kind">${esc(post.kind || "text")}</span><span class="feed" title="${esc(post.feed)}">${esc(post.feed)}</span>${aboutHtml(post)}<time datetime="${esc(published)}" title="${esc(published.slice(0, 10))}">${timeAgo(published)}</time></div>
             <h2 class="title" id="t-${esc(post.id)}"><a href="${esc(post.link)}" rel="noopener" target="_blank" aria-describedby="newtab">${esc(post.title || post.link)}</a></h2>
             ${blurb ? `<p class="snip">${esc(blurb)}</p>` : ""}
             ${cold ? NO_NEAR : nearHtml(scored, isPicked, isPassed)}

@@ -732,6 +732,29 @@ def about(taste: Taste, labels: list[str], label_vectors: list[list[float]]) -> 
     return out
 
 
+def nearest_labels(vectors: list[list[float] | None], label_vectors: list[list[float]],
+                   count: int = 2) -> list[list[int] | None]:
+    """For each vector, the indices of the `count` labels it sits nearest,
+    nearest first. None where there is no vector or no labels.
+
+    Two, not one: on the live pool half the posts sit within 0.02 of two
+    labels, and the pair reads true where either alone is a guess.
+    """
+    if not label_vectors:
+        return [None for _ in vectors]
+    import numpy as np
+    unit = lambda m: m / np.maximum(np.linalg.norm(m, axis=1, keepdims=True), 1e-9)
+    have = [i for i, v in enumerate(vectors) if v is not None]
+    out: list[list[int] | None] = [None] * len(vectors)
+    if not have:
+        return out
+    sims = unit(np.array([vectors[i] for i in have])) @ unit(np.array(label_vectors)).T
+    order = np.argsort(-sims, axis=1)[:, :count]
+    for i, row in zip(have, order, strict=True):
+        out[i] = [int(j) for j in row]
+    return out
+
+
 def write_vectors(posts: list[Post], out: Path, labels: list[list[float]] = ()) -> None:
     """The int8 vectors, packed, one after another in posts.json's order, then
     the label vectors after them in labels' order.
@@ -821,17 +844,6 @@ def cmd_posts(args: argparse.Namespace) -> int:
     print(f"embedding {len(posts)} posts…", file=sys.stderr)
     embed_posts(posts)
 
-    rows = []
-    for post in posts:
-        row = {
-            "id": post.id, "title": post.title, "link": post.link,
-            "snippet": post.snippet, "feed": post.feed,
-            "published": post.published, "kind": post.kind,
-        }
-        if post.vector is not None:
-            row["s"] = quantize(post.vector)[1]
-        rows.append(row)
-
     # What a taste can be about. The labels ride in the same model as the
     # posts, so "cooking" is a direction like any headline, and a taste is
     # about whichever label its average sits nearest. No runtime model, no
@@ -839,6 +851,22 @@ def cmd_posts(args: argparse.Namespace) -> int:
     labels = read_labels(Path(__file__).with_name("labels.txt"))
     label_vectors = embed(labels) if labels else []
     print(f"embedding {len(labels)} labels…", file=sys.stderr)
+    # And what each post is about: the two labels it sits nearest, as
+    # indices into "labels". Context on the card, never a filter.
+    abouts = nearest_labels([post.vector for post in posts], label_vectors)
+
+    rows = []
+    for post, about_ in zip(posts, abouts, strict=True):
+        row = {
+            "id": post.id, "title": post.title, "link": post.link,
+            "snippet": post.snippet, "feed": post.feed,
+            "published": post.published, "kind": post.kind,
+        }
+        if post.vector is not None:
+            row["s"] = quantize(post.vector)[1]
+        if about_:
+            row["a"] = about_
+        rows.append(row)
 
     payload = {
         "generated": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
