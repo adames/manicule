@@ -5,9 +5,10 @@
 // it is wrong here: a page and the script that runs it have to agree, and one
 // asset missed by the build's ?v= stamping would then be cached forever. An
 // offline fallback cannot go stale, because online never reads it.
-// Bumped when a cached asset changes name: activate drops every other
-// cache, so an offline copy can never point at a script that is gone.
-const CACHE = "manicule-2";
+// Bumped when a cached page's content changes, or a cached asset changes
+// name: activate drops every other cache, so an offline copy can never be
+// a page that no longer exists or point at a script that is gone.
+const CACHE = "manicule-3";
 const PAGES = ["./", "index.html", "method.html", "fork.html"];
 
 self.addEventListener("install", (event) => {
