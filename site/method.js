@@ -109,10 +109,30 @@
 
   let today = null;
   let postById = {};
+  let sampled = null; // drawn once a visit: moving the ruler must not reshuffle it
 
-  // The link first, then this browser's mirror. With nothing picked there are
-  // no numbers to show, so a pretend taste stands in: the newest post picked,
-  // the next newest passed.
+  // A taste to look at when the visitor has none. The old stand-in picked the
+  // newest post and passed the next one, which is not what a taste looks like:
+  // two posts about nothing in common produce one average pointing nowhere and
+  // every table reads as noise. So sample one instead. Take a post at random,
+  // pick it and the two that sit nearest it, and pass a fourth from a little
+  // further out. That is a subject with an edge, which is what a real taste is,
+  // and it is different on every visit, so nobody reads one draw as the method.
+  function sampleTaste(posts) {
+    const withWords = posts.filter((post) => post.vector);
+    if (withWords.length < 8) return { picked: withWords.slice(0, 1).map((p) => p.id), passed: [] };
+    const seed = withWords[Math.floor(Math.random() * withWords.length)];
+    const near = withWords
+      .filter((post) => post.id !== seed.id)
+      .map((post) => ({ post, cos: Manicule.cosine(seed.vector, post.vector) }))
+      .sort((a, b) => b.cos - a.cos);
+    return {
+      picked: [seed.id, near[0].post.id, near[1].post.id],
+      passed: [near[5].post.id],
+    };
+  }
+
+  // The link first, then this browser's mirror, then a sampled taste.
   function tasteNow() {
     const link = Shell.tasteIn(location.hash);
     let picked = link.m;
@@ -133,13 +153,9 @@
     picked = picked.filter(hasWords);
     passed = passed.filter(hasWords);
 
-    const pretend = !picked.length;
-    if (pretend) {
-      const withWords = today.posts.filter((post) => post.vector);
-      picked = [withWords[0].id];
-      passed = withWords[1] ? [withWords[1].id] : [];
-    }
-    return { picked, passed, lambda, pretend };
+    const sample = !picked.length;
+    if (sample) ({ picked, passed } = sampled || (sampled = sampleTaste(today.posts)));
+    return { picked, passed, lambda, sample };
   }
 
   function rankAt(taste, lambda) {
@@ -151,7 +167,7 @@
   }
 
   // Links from here open the feed in the same taste, so the row number they
-  // quote is true even when the taste is pretend.
+  // quote is true even when the taste is a sample.
   const linkTo = (taste) => Shell.hashOf({ m: taste.picked, d: taste.passed, l: taste.lambda });
 
   const percent = (x) => (Math.min(1, Math.max(0, x)) * 100).toFixed(1) + "%";
@@ -199,8 +215,10 @@
     el("worked-link").textContent = `row ${place} on the feed`;
     el("worked-link").href = "./" + linkTo(taste);
     el("worked-link").hidden = false;
-    el("worked-note").hidden = !taste.pretend;
-    el("worked-note").textContent = taste.pretend ? "pretend taste · newest picked, next newest passed" : "";
+    el("worked-note").hidden = !taste.sample;
+    el("worked-note").textContent = taste.sample
+      ? "a sample taste, drawn at random this visit · three posts that sit near each other picked, a fourth from further out passed"
+      : "";
   }
 
   function renderLambdaTable(taste, post) {
@@ -215,10 +233,10 @@
         : "your λ";
       return `<tr${theirs ? ' class="now"' : ""}><td class="mono">${plain(lambda)}</td><td class="num">${signed(ranked[place].score)}</td><td class="num">${place + 1}</td><td class="lc">${reads}</td></tr>`;
     }).join("");
-    el("lam-cap").textContent = taste.pretend ? "on the pretend taste, live" : "on your taste, live";
+    el("lam-cap").textContent = taste.sample ? "on the sample taste, live" : "on your taste, live";
     // The real link is a kilobyte of base64; the shape is what is worth showing.
     const shape = (hash) => hash.replace(/=[A-Za-z0-9_\-]{40,}[^&]*/g, "=…");
-    el("hash").textContent = taste.pretend ? "#m=…&v=…&k=…&l=0.25" : shape(location.hash || linkTo(taste));
+    el("hash").textContent = taste.sample ? "#m=…&v=…&k=…&l=0.25" : shape(location.hash || linkTo(taste));
   }
 
   // ── what picking does ────────────────────────────────────────────────────
@@ -343,11 +361,11 @@
   // whole of the clustering: nothing is labelled and nobody chose it.
   // The same lines as the feed, with the working shown: the three nearest
   // labels and their cosines, then the words, then the sources.
-  function renderTastes(built, pretend) {
+  function renderTastes(built, sample) {
     const several = built.length > 1;
     el("tastes").innerHTML = Manicule.describe(built, today.posts, today.labels).map((about, i) => {
       const k = several ? `<span class="k">taste ${i + 1}</span>` : "";
-      const n = `<span class="n">${about.count} ${about.count === 1 ? "pick" : "picks"}${pretend ? ", pretend" : ""}</span>`;
+      const n = `<span class="n">${about.count} ${about.count === 1 ? "pick" : "picks"}${sample ? ", sampled" : ""}</span>`;
       const labels = about.labels.map((l, j) => `${j ? "" : "about "}<b>${esc(l.text)}</b> <span class="mono">${signed(l.cos)}</span>`).join(", ");
       const focus = about.focus ? `<b>${esc(about.focus)}</b> is in half the nearest headlines, so it leads` : "";
       const when = about.happening ? `<b>${about.happening}</b>: three quarters of the nearest posts are within three days of each other, so this is something happening, not a field` : "";
@@ -358,7 +376,7 @@
 
   function renderPicks(taste) {
     const built = Manicule.tasteOf(taste.picked.map((id) => postById[id].vector));
-    renderTastes(built, taste.pretend);
+    renderTastes(built, taste.sample);
     const whichOne = (vector) => {
       let best = 0, near = -Infinity;
       built.forEach((one, i) => {
@@ -376,8 +394,8 @@
       const label = built.length > 1 ? `<td class="lc">${best + 1} of ${built.length}</td>` : "";
       return `<tr><td><span class="t">${esc(pick.title)}</span></td><td class="lc">${esc(pick.source)}</td>${label}<td class="num">${signed(near)}</td></tr>`;
     }).join("");
-    el("picks-cap").textContent = taste.pretend
-      ? "on the pretend taste. pick a few things on the feed and this table is yours"
+    el("picks-cap").textContent = taste.sample
+      ? "a taste sampled at random, because you have none yet: three posts that sit near each other. pick a few things on the feed and this table is yours"
       : built.length > 1
         ? `each pick against its own average. these picks made ${built.length} of them: a pick that sits near none of the averages starts another rather than dragging one off its subject`
         : "each pick against the average of all of them. these picks all sit together, so they made one average";
