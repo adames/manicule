@@ -55,7 +55,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           <span class="side"><span class="op">−</span><span class="term"><span>λ · cos(post, passed)</span><span class="lbl">passed</span></span></span>
         </div>
         <p class="kicker-line">two averages and a subtraction</p>
-        <p class="prior">taste algorithm: <a href="https://tullie.ai/blog/building-a-hackernews-for-you-feed">tullie murrell's hn for-you feed</a>, cosine to the mean of your favorites. this one has a second hand</p>
+        <p class="prior"><span data-hand="rest"></span> <a href="https://tullie.ai/blog/building-a-hackernews-for-you-feed">tullie murrell's hn for-you feed</a>, cosine to the mean of your favorites</p>
       </div>
 
       <!-- a post is a direction, and the cosine is the whole measure. the
@@ -63,7 +63,34 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <section class="prose" aria-labelledby="vectors">
         <h2 class="sect" id="vectors"><span>a post is a direction</span></h2>
         <p>a vector is a list of numbers. every post here has 384 of them, produced by a small language model reading the headline and the first 400 characters of the blurb. the model runs once, when this page is built. it never sees you</p>
-        <p>384 numbers are 384 directions, so the list is a direction. posts whose words mean similar things come out pointing the same way. the measure of that is the cosine of the angle between two of them: +1 is the same direction, 0 is unrelated, below 0 is opposite. every number on this site is one of those cosines</p>
+        <p>384 numbers are a reading on 384 scales, and together they name one direction. posts whose words mean similar things come out pointing the same way. the measure of that is the cosine of the angle between two of them: +1 is the same direction, 0 is a right angle, below 0 is opposite. every number on this site is one of those cosines</p>
+        <figure class="fig">
+          <svg viewBox="0 0 700 190" role="img" aria-label="three pairs of arrows from one origin: a small angle at +0.82, a right angle at 0.00, and arrows turned around at −0.91">
+            <g transform="translate(120,135)">
+              <line class="fig-hair" x1="-70" y1="0" x2="90" y2="0"/>
+              <line class="fig-em" x1="0" y1="0" x2="75" y2="-45"/><polygon class="fig-emf" points="75,-45 65,-45 71,-38"/>
+              <line class="fig-ink" x1="0" y1="0" x2="80" y2="-30"/><polygon class="fig-inkf" points="80,-30 70,-31 74,-24"/>
+              <text class="fig-lab b" x="-6" y="-66" text-anchor="middle">+0.82</text>
+              <text class="fig-lab" x="10" y="24" text-anchor="middle">a small angle</text>
+            </g>
+            <g transform="translate(350,135)">
+              <line class="fig-hair" x1="-70" y1="0" x2="90" y2="0"/>
+              <line class="fig-em" x1="0" y1="0" x2="85" y2="-10"/><polygon class="fig-emf" points="85,-10 75,-13 76,-6"/>
+              <line class="fig-ink" x1="0" y1="0" x2="20" y2="-83"/><polygon class="fig-inkf" points="20,-83 13,-76 21,-75"/>
+              <path class="fig-hair" d="M55,-6 A55,55 0 0 0 13,-53"/>
+              <text class="fig-lab b" x="0" y="-96" text-anchor="middle">0.00</text>
+              <text class="fig-lab" x="10" y="24" text-anchor="middle">a right angle</text>
+            </g>
+            <g transform="translate(580,135)">
+              <line class="fig-hair" x1="-90" y1="0" x2="70" y2="0"/>
+              <line class="fig-em" x1="0" y1="0" x2="70" y2="-25"/><polygon class="fig-emf" points="70,-25 60,-26 64,-19"/>
+              <line class="fig-ink" x1="0" y1="0" x2="-70" y2="25"/><polygon class="fig-inkf" points="-70,25 -60,24 -64,17"/>
+              <text class="fig-lab b" x="0" y="-46" text-anchor="middle">−0.91</text>
+              <text class="fig-lab" x="0" y="24" text-anchor="middle">turned around</text>
+            </g>
+          </svg>
+          <figcaption class="caption">the cosine is the angle and nothing else. length never enters it</figcaption>
+        </figure>
         <div class="dt-wrap">
           <table class="dt">
             <thead><tr><th scope="col" class="grow">against the top post on your source</th><th scope="col">source</th><th scope="col" class="num">cos</th></tr></thead>
@@ -71,14 +98,44 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="neighbours-cap">the three nearest and the three farthest</p>
+        <p>that scale is the geometry, not this feed. two posts here with nothing to do with each other score about +0.49, and 999 pairs in every 1000 fall between +0.27 and +0.75. read every number on this site inside that band: +0.62 is very near, +0.40 is far, and below 0 never happens</p>
+        <p>the band is narrow for two reasons. in 384 dimensions a random pair of directions comes out near a right angle almost every time; every angle being equally likely is true on a flat page, which is what the arrows above quietly suggest. and every post here is english written by a person, so any two share that much before they share a subject, which lifts the whole feed off 0</p>
         <p>a post with no words has no vector, so it sinks to the bottom. it is never dropped</p>
       </section>
 
       <section class="prose" aria-labelledby="average">
         <h2 class="sect" id="average"><span>an average is a taste</span></h2>
         <p>add the vectors of everything you picked and divide by how many there are. one vector comes out. that is your taste here: no profile, no history, an average</p>
-        <p>with one exception, and it is the useful one. an average points one way, so it holds one taste: cooking and compilers would average into a direction pointing at neither. so a pick that sits near none of your averages starts another instead of dragging one off its subject, up to three, and a post is scored against the average it is nearest. pick from one subject and it behaves exactly as one average always did</p>
-        <p>measured once, on a feed of about two thousand: picking from two unrelated sources put 23 of every 100 held-out posts in the top ten, against 13 with a single average, and picking from one source lost nothing. that pair of numbers is from that one run. every other number on this page is today's</p>
+        <p>one average can hold only one taste, because it points one way: cooking and compilers would average into a direction pointing at neither. so a pick that sits near none of your averages starts its own rather than dragging one off its subject, up to three of them, and every post is scored against the average it sits nearest. pick from one subject and nothing changes: one average, as before</p>
+        <figure class="fig">
+          <svg viewBox="0 0 700 210" role="img" aria-label="four picks close together with their average, then the same four with one odd pick added and the average swung away from them">
+            <g transform="translate(180,140)">
+              <line class="fig-hair" x1="-100" y1="0" x2="110" y2="0"/>
+              <g class="fig-ink">
+                <line x1="0" y1="0" x2="88" y2="-40"/><line x1="0" y1="0" x2="78" y2="-58"/>
+                <line x1="0" y1="0" x2="94" y2="-22"/><line x1="0" y1="0" x2="70" y2="-70"/>
+              </g>
+              <line class="fig-em" x1="0" y1="0" x2="87" y2="-52"/><polygon class="fig-emf" points="87,-52 77,-50 80,-43"/>
+              <text class="fig-lab b" x="100" y="-58">the average</text>
+              <text class="fig-lab" x="0" y="26" text-anchor="middle">four picks about one thing</text>
+            </g>
+            <g transform="translate(520,140)">
+              <line class="fig-hair" x1="-120" y1="0" x2="110" y2="0"/>
+              <g class="fig-ink">
+                <line x1="0" y1="0" x2="88" y2="-40"/><line x1="0" y1="0" x2="78" y2="-58"/>
+                <line x1="0" y1="0" x2="94" y2="-22"/><line x1="0" y1="0" x2="70" y2="-70"/>
+                <line x1="0" y1="0" x2="-80" y2="-62" stroke-dasharray="3 3"/>
+              </g>
+              <line class="fig-em" x1="0" y1="0" x2="52" y2="-83"/><polygon class="fig-emf" points="52,-83 47,-74 55,-74"/>
+              <path class="fig-hair" d="M74,-44 A88,88 0 0 0 47,-74" stroke-dasharray="2 3"/>
+              <text class="fig-lab b" x="58" y="-94">it swings</text>
+              <text class="fig-lab" x="-96" y="-68">one odd pick</text>
+              <text class="fig-lab" x="0" y="26" text-anchor="middle">so it starts a second taste instead</text>
+            </g>
+          </svg>
+          <figcaption class="caption">why a pick that sits near nothing you have starts its own average rather than joining one</figcaption>
+        </figure>
+        <p>measured once, on a feed of about two thousand: picking from two unrelated sources put 23 of every 100 hidden posts in the top ten, against 13 with a single average, and with picks from one source the two matched. that pair of numbers is from that one run. every other number on this page is today's</p>
         <p>cos(post, picked) is the cosine between a post and that average. sort on it, highest first, and the feed is ordered</p>
         <div class="dt-wrap">
           <table class="dt">
@@ -87,15 +144,15 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="picks-cap">each pick against the average of all of them. picks about one subject all score high; one odd pick pulls the average off the rest and every number drops</p>
-        <p>what each taste is about is read off the feed rather than stored: the sources its nearest posts come from. the feed prints it above the rows, and it is here too</p>
+        <p>what each taste is about is not stored; it is read off the feed, from the sources its nearest posts come from. the feed prints it above the rows, and it is here too</p>
         <ol class="tastes" id="tastes" aria-label="your tastes"></ol>
-        <p>the near line under a row names the single pick that row sits nearest, and, with several tastes, which taste. neither is a label anyone chose. it is where the vectors point</p>
+        <p>the near line under a row names the one pick that row sits nearest to, and which taste, when you have several. neither is a label anyone chose; both are where the vectors point</p>
         <p>with nothing picked there is no average to measure against, so the feed stays newest first</p>
       </section>
 
       <section class="prose" aria-labelledby="second">
         <h2 class="sect" id="second"><span>the second hand</span></h2>
-        <p>what you pass on averages the same way, into a second vector. cos(post, passed) is the cosine against that one, and λ decides how much of it comes off the score</p>
+        <p>what you pass averages the same way, into a second vector. cos(post, passed) is the cosine against that one, and λ decides how much of it comes off the score</p>
         <p>at 0.25, the default, a pass takes away a quarter of what the same closeness to a pick would add; at 1 the two cancel. further down there is one post worked at every setting, with the ruler that moves it</p>
       </section>
 
@@ -103,7 +160,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
            one section. today's numbers, recomputed at every build -->
       <section aria-label="does it work" id="proof">
         <h2 class="sect"><span>does it work</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">evaluate()</a></h2>
-        <p class="caption">the test needs an answer the ranker can't see. the source a post came from is one: the vector never carries it, and posts from one source share a subject and a voice. so: take one source. pick a few of its posts, hide the rest in the pile of <span id="proof-n">…</span>, and see where the ranker puts them. lower is better; 1st means the rest of that source came straight to the top</p>
+        <p class="caption">a test needs a right answer the ranker cannot see. the source a post came from is one: the vector never carries it, and posts from one source share a subject and a voice. so take one source, pick a few of its posts, hide the rest in the pile of <span id="proof-n">…</span>, and see where the ranker puts them. lower is better; 1st means the rest of that source came straight to the top</p>
         <div id="chart"></div>
         <p class="caption" id="chart-cap"></p>
         <div class="choices" id="chart-pick"></div>
@@ -117,10 +174,10 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <dl class="kv kv--tight" id="proof-notes"></dl>
       </section>
 
-      <!-- one row, worked: the visitor's own top unmarked row (cold: a pretend taste, named beside the title) -->
+      <!-- one row, worked: the visitor's own top unmarked row (cold: a taste sampled at random, named beside the title) -->
       <section aria-label="one row, worked">
         <h2 class="sect"><span>one row, worked<small id="worked-note" hidden></small></span><a id="worked-link" href="./" hidden></a></h2>
-        <p class="caption">the feed prints the result on its own. this is the arithmetic under it, for the top post you have not marked</p>
+        <p class="caption">the feed prints only the result. this is the arithmetic under it, for the top post you have not marked</p>
         <div class="formula" id="worked-sum" role="img" aria-label="the score of this post, with the numbers filled in"></div>
         <dl class="kv kv--wide" id="worked"><dt>post</dt><dd>loading</dd></dl>
         <p class="caption" id="worked-cap">solid is the score. the dashed part is what λ took</p>
@@ -143,14 +200,14 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
             <output id="lamv" for="lam" aria-live="off">0.25</output><!-- not live: the slider's valuetext already says the number -->
           </div>
           <div class="ruler-ends" aria-hidden="true"><span>a little</span><span>as much as a pick</span></div>
-          <p class="caption">moving this moves it on the feed too: λ rides in the link with the rest of your taste</p>
+          <p class="caption">moving this moves the row on the feed too: λ rides in the link with the rest of your taste</p>
         </div>
       </section>
 
       <!-- the listing: rank(), fetched live from main -->
       <section aria-label="the listing">
         <h2 class="sect"><span>the listing</span><a id="listing-github" href="https://github.com/adames/manicule/blob/main/manicule.py">on github</a></h2>
-        <p class="caption">the function, as it is on main right now. the notes in the margin point at the lines above</p>
+        <p class="caption">the function, as it is on main right now. each note in the margin belongs to the line beside it</p>
         <div class="listing" id="listing">
           <div class="cap"><span><b>manicule.py</b> · rank()</span><span>loading</span></div>
         </div>
@@ -161,9 +218,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
       <section aria-label="where your data lives">
         <h2 class="sect"><span>where your data lives</span></h2>
         <dl class="kv">
-          <dt>your taste</dt><dd>in the link and in this browser: the averages themselves, int8 and base64, beside the ids that tick the boxes. <span class="mono" id="hash">#v=…</span>. nothing is sent anywhere</dd>
+          <dt>your taste</dt><dd>in the link and in this browser: the averages themselves, int8 and base64, beside the ids of the rows you marked. <span class="mono" id="hash">#v=…</span>. nothing is sent anywhere</dd>
           <dt>the vectors</dt><dd>made when the page is built, by fastembed's bge-small, on the build machine. they come down in vectors.bin, next to posts.json, <span class="mono" id="dims">270 × 384</span> int8, and rank.js does the math here</dd>
-          <dt>the cli</dt><dd>manicule.py rank, on your machine. a markdown page from an opml and a folder of notes. the only traffic is the source fetches</dd>
+          <dt>the cli</dt><dd>manicule.py rank, on your machine. it writes a markdown page from an opml and a folder of notes. the only traffic is the source fetches</dd>
           <dt>refresh</dt><dd>once a day, by a github action. the page is rebuilt from the sources, nothing of yours goes into it</dd>
         </dl>
       </section>

@@ -676,6 +676,71 @@ samp {
   text-wrap: pretty;
 }
 
+/* the hand does the work the words "taste algorithm:" used to: it points at
+   whose idea this was. sized to the line it sits in, not to the page's */
+.prior .hand-svg {
+  display: inline-block; /* svg is display:block up in the reset */
+  width: var(--hand-sm);
+  height: var(--hand-sm);
+  vertical-align: -.15em;
+  color: var(--ember);
+}
+
+/* the drawn figures: the same hairlines as everything else, one ember, and
+   they carry their own caption. mono labels, because they are all numbers */
+
+.fig {
+  margin: var(--space-4) 0 0;
+}
+
+.fig svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: var(--border-w) solid var(--border);
+  background: var(--surface);
+}
+
+.fig figcaption {
+  margin-top: var(--space-2);
+}
+
+.fig-ink {
+  stroke: var(--text);
+  fill: none;
+  stroke-width: 1;
+}
+
+.fig-hair {
+  stroke: var(--border-strong);
+  fill: none;
+  stroke-width: 1;
+}
+
+.fig-em {
+  stroke: var(--ember);
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.fig-emf {
+  fill: var(--ember);
+}
+
+.fig-inkf {
+  fill: var(--text);
+}
+
+.fig-lab {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--muted);
+}
+
+.fig-lab.b {
+  fill: var(--text);
+}
+
 /* the details: hairlines above and below, +/− at right; the method.html link sits beside the summary, not inside it */
 
 /* the ruler in prose: it is the method page's control, not a toolbar's */
