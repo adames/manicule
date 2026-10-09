@@ -44,7 +44,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <main id="main" tabindex="-1">
       <section class="mast" aria-label="the method">
         <h1>how it works</h1>
-        <p class="reading">every post becomes a list of numbers. pick a few posts and your browser averages their lists. the rest of the feed is sorted by how close each post comes to that average</p>
+        <p class="reading">a feed usually ranks by your history, everything you ever clicked. this one ranks by your taste. pick a few posts and the page averages them. that average is all it knows about you, and it lives in the link</p>
         <p class="spec"><span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></span><span>rank()</span><span>same math in rank.js</span></p>
       </section>
 
@@ -58,13 +58,12 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
         <p class="prior"><span data-hand="rest"></span> <a href="https://tullie.ai/blog/building-a-hackernews-for-you-feed">tullie murrell's hn for-you feed</a>, cosine to the mean of your favorites</p>
       </div>
 
-      <!-- a post is a direction, and the cosine is the whole measure. the
+      <!-- a post is an arrow, and the cosine is the whole measure. the
            nearest/farthest table is here because it is what a cosine looks like -->
       <section class="prose" aria-labelledby="vectors">
-        <h2 class="sect" id="vectors"><span>a post is a direction</span></h2>
-        <p>start with one post. a small language model reads its headline and the first 400 characters of its blurb and writes down 384 numbers. that list is the post's vector. the model runs once, when the page is built, on the build machine. it never sees you or what you pick</p>
-        <p>you could not read the numbers and learn anything. what matters is that two posts about the same thing get similar lists, and two posts about different things get different ones. think of each list as an arrow. posts about the same thing point the same way</p>
-        <p>to compare two posts you measure the angle between their arrows. the cosine of that angle is the number you see everywhere on this site. +1 means they point the same way, 0 means a right angle, below 0 means they point apart. how long the arrows are does not matter, only the angle</p>
+        <h2 class="sect" id="vectors"><span>a post is an arrow</span></h2>
+        <p>a small language model reads each post's headline and the first 400 characters of its blurb and writes down 384 numbers. that runs once, when the page is built. the model never sees you</p>
+        <p>think of the 384 numbers as an arrow. posts about the same thing point the same way. to compare two posts you measure the angle between their arrows, and the cosine of that angle is the number you see all over this site. +1 is the same direction, 0 is a right angle, below 0 is opposite</p>
         <figure class="fig">
           <svg viewBox="0 0 700 190" role="img" aria-label="three pairs of arrows from one origin: a small angle at +0.82, a right angle at 0.00, and arrows turned around at −0.91">
             <g transform="translate(120,135)">
@@ -99,15 +98,13 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="neighbours-cap">the three nearest and the three farthest</p>
-        <p>in practice the numbers on this feed never use the whole range. two posts picked at random score about +0.49, and nearly every pair lands between +0.27 and +0.75. so read the numbers against that: +0.62 is close, +0.40 is far, and below 0 does not happen here</p>
-        <p>two reasons for the narrow range. with 384 numbers in each arrow, two random arrows land near a right angle almost every time, so the spread is tight. and every post here is english written by a person. that alone is something in common, and it lifts the whole feed above 0 before any subject comes into it</p>
-        <p>a post with no text gets no vector. it goes to the bottom of the feed and stays in the feed</p>
+        <p>on this feed almost every pair lands between +0.27 and +0.75. so +0.62 is close and +0.40 is far</p>
       </section>
 
       <section class="prose" aria-labelledby="average">
-        <h2 class="sect" id="average"><span>an average is a taste</span></h2>
-        <p>pick a post and the page keeps its vector. pick another and it adds the two lists, number by number, and divides by two. that is the average, and the average is your taste. there is no profile and no history. one list of 384 numbers that moves a little every time you pick</p>
-        <p>one average can only point one way. pick a post about sourdough and a post about compilers and the average points somewhere between them, at nothing. so the page keeps up to three averages. a pick that lands near none of them starts a new one, and every post is scored against whichever average it is closest to. if all your picks are about one thing you only ever have one average and none of this comes up</p>
+        <h2 class="sect" id="average"><span>your taste is an average</span></h2>
+        <p>pick a post and the page keeps its arrow. pick another and it averages the two. that average is your taste. no profile, no history, one arrow that moves a little every time you pick</p>
+        <p>an average can only point one way, and you are allowed to like more than one thing. so when a pick lands far from everything you have picked so far, it starts a second average instead of dragging the first off its subject. up to three. each post is scored against the one it is closest to</p>
         <figure class="fig">
           <svg viewBox="0 0 700 210" role="img" aria-label="four picks close together with their average, then the same four with one odd pick added and the average swung away from them">
             <g transform="translate(180,140)">
@@ -134,10 +131,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
               <text class="fig-lab" x="0" y="26" text-anchor="middle">so it starts a second taste instead</text>
             </g>
           </svg>
-          <figcaption class="caption">left: four picks about one thing, and the average sits among them. right: add one pick about something else and the average swings off toward nothing. so the odd pick starts its own average instead</figcaption>
+          <figcaption class="caption">four picks about one thing and their average sits among them. one pick about something else swings it toward nothing. so that pick starts its own</figcaption>
         </figure>
-        <p>I measured this once, on a feed of about two thousand posts. with picks from two unrelated sources, one average put 13 of every 100 hidden posts in the top ten. three averages put 23 there. with picks from one source both did the same. those two numbers are from that one run. everything else on this page is computed from today's feed</p>
-        <p>cos(post, picked) is a post's angle to your average. sort the feed by it, biggest first, and that is the order you see</p>
+        <p>cos(post, picked) is a post's angle to your average. the feed is sorted by it, closest first</p>
         <div class="dt-wrap">
           <table class="dt">
             <thead id="picks-head"><tr><th scope="col" class="grow">what you picked</th><th scope="col">source</th><th scope="col" class="num">cos to the average</th></tr></thead>
@@ -145,16 +141,15 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="picks-cap">each pick measured against the average of all your picks. picks about one subject all score high. one pick about something else drags the average off and every number drops</p>
-        <p>the line above the feed that says what a taste is about is not stored anywhere. it is read off today's feed: which label from a list sits nearest the average, and which words the nearest headlines share. the same lines are here, with the numbers behind them</p>
+        <p>what a taste is about is not stored either. the page reads it off today's feed each time: the nearest label from a short list, and the words its nearest headlines share</p>
         <ol class="tastes" id="tastes" aria-label="your tastes"></ol>
-        <p>under each row the feed names the one pick that row sits nearest, and which taste when you have more than one. nobody chose those. it is where the arrows point</p>
-        <p>pick nothing and there is no average to measure against. the feed stays newest first</p>
+        <p>pick nothing and there is no average. the feed stays newest first</p>
       </section>
 
       <section class="prose" aria-labelledby="second">
         <h2 class="sect" id="second"><span>the second hand</span></h2>
-        <p>passing on a post works the same way. the posts you pass are averaged into their own vector. cos(post, passed) is a post's angle to that one, and it comes off the score</p>
-        <p>λ sets how much comes off. at 0.25, the default, a pass counts a quarter of what a pick does: sitting close to something you passed costs a quarter of what sitting equally close to something you picked earns. at 1 a pass cancels a pick. further down one post is worked at every setting, with a ruler you can move</p>
+        <p>what you pass on is averaged too, into a second arrow, and a post's closeness to that one comes off its score</p>
+        <p>λ is how much comes off. at 0.25, the default, a pass counts a quarter of what a pick does. at 1 a pass cancels a pick. one post is worked at every setting further down, with a ruler</p>
       </section>
 
       <!-- the proof: the picture and the medians are one argument, so they are
