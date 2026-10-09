@@ -101,7 +101,7 @@
       ["newest first", `${mono(nth(two.newest))}, against ${mono(nth(two.shuffled))} shuffled. date order is a shuffle`],
       ["the vectors", `${mono(nth(two.ranker))}, against ${mono(nth(two.words))} from shared words alone. blog posts only, no video or podcast blurbs: ${mono(nth(proof.written.ranker))} against ${mono(nth(proof.written.words))}`],
       ["λ", `pass on two from a source and the rest of it sinks: ${sweep}. the default counts a little`],
-      ["the catch", "same source only stands in for same taste, so read it as necessary, not sufficient"],
+      ["the catch", "two posts from one source are not always about one thing. a good score here is needed, but on its own it does not prove much"],
     ].map(([key, words]) => `<dt>${key}</dt><dd>${words}</dd>`).join("");
   }
 
