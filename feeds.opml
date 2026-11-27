@@ -156,7 +156,6 @@
       <outline text="JSTOR Daily" type="rss" xmlUrl="https://daily.jstor.org/feed/"/>
       <outline text="Library of Congress Blog" type="rss" xmlUrl="https://blogs.loc.gov/loc/feed/"/>
       <outline text="Medievalists.net" type="rss" xmlUrl="https://www.medievalists.net/feed/"/>
-      <outline text="The National WWII Museum" type="rss" xmlUrl="https://www.nationalww2museum.org/rss.xml"/>
       <outline text="The Public Domain Review" type="rss" xmlUrl="https://publicdomainreview.org/rss.xml"/>
       <outline text="Smithsonian – history" type="rss" xmlUrl="https://www.smithsonianmag.com/rss/history/"/>
       <outline text="Tasting History with Max Miller (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCsaGKqPZnGp_7N80hcHySGQ"/>
@@ -175,7 +174,6 @@
       <outline text="The Millions" type="rss" xmlUrl="https://themillions.com/feed"/>
       <outline text="The New York Review of Books" type="rss" xmlUrl="http://feeds.feedburner.com/nybooks"/>
       <outline text="The New Yorker – Books" type="rss" xmlUrl="https://www.newyorker.com/feed/books/page-turner"/>
-      <outline text="NPR Books" type="rss" xmlUrl="https://www.npr.org/rss/rss.php?id=1032"/>
       <outline text="NYT &gt; Books" type="rss" xmlUrl="https://rss.nytimes.com/services/xml/rss/nyt/Books.xml"/>
       <outline text="The Paris Review" type="rss" xmlUrl="https://www.theparisreview.org/blog/feed/"/>
       <outline text="Reactor" type="rss" xmlUrl="https://reactormag.com/feed/"/>
@@ -269,7 +267,6 @@
       <outline text="Feature Shoot" type="rss" xmlUrl="https://www.featureshoot.com/feed/"/>
       <outline text="The Guardian – Photography" type="rss" xmlUrl="https://www.theguardian.com/artanddesign/photography/rss"/>
       <outline text="LensCulture" type="rss" xmlUrl="https://www.lensculture.com/feeds/flipboard.rss"/>
-      <outline text="Magnum Photos" type="rss" xmlUrl="https://www.magnumphotos.com/feed/"/>
       <outline text="NASA Image of the Day" type="rss" xmlUrl="https://www.nasa.gov/feeds/iotd-feed/"/>
       <outline text="PetaPixel" type="rss" xmlUrl="https://petapixel.com/feed/"/>
     </outline>
@@ -390,7 +387,6 @@
       <outline text="Money – The Guardian" type="rss" xmlUrl="https://www.theguardian.com/money/rss"/>
       <outline text="Money – Vox" type="rss" xmlUrl="https://www.vox.com/rss/money/index.xml"/>
       <outline text="Musings on Markets" type="rss" xmlUrl="https://aswathdamodaran.blogspot.com/feeds/posts/default"/>
-      <outline text="NPR Business" type="rss" xmlUrl="https://www.npr.org/rss/rss.php?id=1006"/>
       <outline text="NYT Business" type="rss" xmlUrl="https://rss.nytimes.com/services/xml/rss/nyt/Business.xml"/>
       <outline text="Of Dollars And Data" type="rss" xmlUrl="https://ofdollarsanddata.com/feed/"/>
       <outline text="Our World in Data" type="rss" xmlUrl="https://ourworldindata.org/atom.xml"/>
@@ -452,7 +448,6 @@
       <outline text="BBC News - World" type="rss" xmlUrl="https://feeds.bbci.co.uk/news/world/rss.xml"/>
       <outline text="Bellingcat" type="rss" xmlUrl="https://www.bellingcat.com/feed/"/>
       <outline text="Best of The Atlantic" type="rss" xmlUrl="https://www.theatlantic.com/feed/best-of/"/>
-      <outline text="CBC News - World" type="rss" xmlUrl="https://www.cbc.ca/webfeed/rss/rss-world"/>
       <outline text="The Christian Science Monitor" type="rss" xmlUrl="https://rss.csmonitor.com/feeds/all"/>
       <outline text="Coda Story" type="rss" xmlUrl="https://www.codastory.com/feed/"/>
       <outline text="Columbia Journalism Review" type="rss" xmlUrl="https://www.cjr.org/feed"/>
