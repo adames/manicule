@@ -44,7 +44,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
     <main id="main" tabindex="-1">
       <section class="mast" aria-label="the method">
         <h1>how it works</h1>
-        <p class="reading">a feed usually ranks by your history, everything you ever clicked. this one ranks by your taste. pick a few posts and the page averages them. that average is all it knows about you, and it lives in the link</p>
+        <p class="reading">point at a few posts you like and posts like them rise to the top. pick two about the nba and the rest of the basketball news moves up. the page does it by averaging what you picked. that average is all it knows about you, and it lives in the link</p>
         <p class="spec"><span><a href="https://github.com/adames/manicule/blob/main/manicule.py">manicule.py</a></span><span>rank()</span><span>same math in rank.js</span></p>
       </section>
 
@@ -62,8 +62,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
            nearest/farthest table is here because it is what a cosine looks like -->
       <section class="prose" aria-labelledby="vectors">
         <h2 class="sect" id="vectors"><span>a post is an arrow</span></h2>
-        <p>a small language model reads each post's headline and the first 400 characters of its blurb and writes down 384 numbers. that runs once, when the page is built. the model never sees you</p>
-        <p>think of the 384 numbers as an arrow. posts about the same thing point the same way. to compare two posts you measure the angle between their arrows, and the cosine of that angle is the number you see all over this site. +1 is the same direction, 0 is a right angle, below 0 is opposite</p>
+        <p>a small language model reads each post's headline and the first 400 characters of its blurb and turns them into 384 numbers. that runs once, when the page is built. the model never sees you. think of the numbers as an arrow. a post about the lakers and one about the celtics point nearly the same way. a sourdough recipe points somewhere else. the cosine of the angle between two arrows is the number you see all over this site. +1 is the same direction, 0 is unrelated, below 0 is opposite</p>
         <figure class="fig">
           <svg viewBox="0 0 700 190" role="img" aria-label="three pairs of arrows from one origin: a small angle at +0.82, a right angle at 0.00, and arrows turned around at −0.91">
             <g transform="translate(120,135)">
@@ -103,8 +102,7 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
 
       <section class="prose" aria-labelledby="average">
         <h2 class="sect" id="average"><span>your taste is an average</span></h2>
-        <p>pick a post and the page keeps its arrow. pick another and it averages the two. that average is your taste. no profile, no history, one arrow that moves a little every time you pick</p>
-        <p>an average can only point one way, and you are allowed to like more than one thing. so when a pick lands far from everything you have picked so far, it starts a second average instead of dragging the first off its subject. up to three. each post is scored against the one it is closest to</p>
+        <p>pick a post about the lakers and the page keeps its arrow. pick one about the celtics and it averages the two. that average is your taste. no profile, no history, one arrow that moves a little each time you pick. now pick a sourdough recipe. one average of all three would point at neither, so a pick far from everything you have picked starts a second average. up to three. each post is scored against the one it is closest to</p>
         <figure class="fig">
           <svg viewBox="0 0 700 210" role="img" aria-label="four picks close together with their average, then the same four with one odd pick added and the average swung away from them">
             <g transform="translate(180,140)">
@@ -131,9 +129,9 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
               <text class="fig-lab" x="0" y="26" text-anchor="middle">so it starts a second taste instead</text>
             </g>
           </svg>
-          <figcaption class="caption">four picks about one thing and their average sits among them. one pick about something else swings it toward nothing. so that pick starts its own</figcaption>
+          <figcaption class="caption">four nba picks and their average sits among them. one sourdough pick swings it toward nothing, so that pick starts its own</figcaption>
         </figure>
-        <p>cos(post, picked) is a post's angle to your average. the feed is sorted by it, closest first</p>
+        <p>cos(post, picked) is a post's closeness to the nearest of your averages. the feed is sorted by it, closest first</p>
         <div class="dt-wrap">
           <table class="dt">
             <thead id="picks-head"><tr><th scope="col" class="grow">what you picked</th><th scope="col">source</th><th scope="col" class="num">cos to the average</th></tr></thead>
@@ -141,22 +139,22 @@ try{var t=new URLSearchParams(location.search).get("theme")||localStorage.getIte
           </table>
         </div>
         <p class="caption" id="picks-cap">each pick measured against the average of all your picks. picks about one subject all score high. one pick about something else drags the average off and every number drops</p>
-        <p>what a taste is about is not stored either. the page reads it off today's feed each time: the nearest label from a short list, and the words its nearest headlines share</p>
+        <p>what a taste is about is not stored either. the page reads it off today's feed each time: the nearest label from a short list, and the words its nearest headlines share. the sourdough one might read baking and bread · sourdough, starter, hydration</p>
         <ol class="tastes" id="tastes" aria-label="your tastes"></ol>
         <p>pick nothing and there is no average. the feed stays newest first</p>
       </section>
 
       <section class="prose" aria-labelledby="second">
         <h2 class="sect" id="second"><span>the second hand</span></h2>
-        <p>what you pass on is averaged too, into a second arrow, and a post's closeness to that one comes off its score</p>
-        <p>λ is how much comes off. at 0.25, the default, a pass counts a quarter of what a pick does. at 1 a pass cancels a pick. one post is worked at every setting further down, with a ruler</p>
+        <p>pass on a post about the new iphone and it goes into an average of its own. the closer a post is to that one, the more comes off its score, so other iphone posts sink a little. passes split by subject the same way picks do</p>
+        <p>λ is how much comes off. at 0.25, the default, a pass counts a quarter of what the same closeness to a pick does. at 1 the two cancel. one post is worked at every setting further down, with a ruler</p>
       </section>
 
       <!-- the proof: the picture and the medians are one argument, so they are
            one section. today's numbers, recomputed at every build -->
       <section aria-label="does it work" id="proof">
         <h2 class="sect"><span>does it work</span><a href="https://github.com/adames/manicule/blob/main/manicule.py">evaluate()</a></h2>
-        <p class="caption">to test a ranker you need a right answer it cannot see. the source a post came from is a good one. the vector does not carry it, and posts from one source tend to share a subject and a voice. so take one source, pick two of its posts, drop the rest back into the pile of <span id="proof-n">…</span>, and see where they end up. lower is better. 1st means the rest of that source came straight to the top</p>
+        <p class="caption">to test a ranker you need a right answer it cannot see. the source a post came from is one. the arrow does not carry it, and posts from one source tend to share a subject. so take one source, pick two of its posts, drop the rest back into the pile of <span id="proof-n">…</span>, and see where they land. lower is better. 1st means the rest of that source came straight to the top</p>
         <div id="chart"></div>
         <p class="caption" id="chart-cap"></p>
         <div class="choices" id="chart-pick"></div>

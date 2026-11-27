@@ -13,61 +13,73 @@ full explanation, with today's numbers: <https://manicule.adames.cc/method.html>
 score(post) = cos(post, picked) − λ · cos(post, passed)
 ```
 
-`picked` is the average of the vectors you picked. `passed` is the average of
-the ones you passed on. two averages and a subtraction (and a λ).
+say you pick two posts about the NBA, one on the Lakers and one on the
+Celtics, then a sourdough recipe, and you pass on one about the new iPhone.
 
-with one exception, and it is the useful one. a pick that sits near none of
-your averages starts another instead of dragging one off its subject, up to
-three, and a post is scored against the average it is nearest. cooking and
-compilers would otherwise average into a direction pointing at neither. pick
-from one subject and it behaves exactly as one average always did.
+every post becomes a vector, 384 numbers from its headline plus the first 400
+characters of its blurb, made by
+[fastembed](https://github.com/qdrant/fastembed) (`BAAI/bge-small-en-v1.5`).
+think of each one as an arrow. posts about the same thing point the same way,
+so the Lakers and the Celtics land close and sourdough lands far from both.
+
+`cos` is the cosine of the angle between two arrows: +1 the same direction, 0
+unrelated, below 0 opposite.
+
+`picked` is the average of your two NBA posts. that one arrow is your taste.
+
+the sourdough pick sits near none of your averages, so it starts a second one
+instead of dragging the first toward neither. up to three, and a post is scored
+against the average it is nearest. pick from one subject and it behaves as a
+single average.
+
+`passed` is the average of what you passed on, here the iPhone post. passes
+split by subject the same way. a post close to it loses some score, so other
+iPhone posts sink a little.
 
 λ is how much a pass counts. at 0.25, the default, a pass takes away a quarter
 of what the same closeness to a pick would add. at 1.0 the two cancel.
 
-every post becomes a vector, 384 numbers from its headline plus a short blurb,
-computed on your machine by
-[fastembed](https://github.com/qdrant/fastembed) (`BAAI/bge-small-en-v1.5`).
-`cos` is the cosine of the angle between two of those vectors: +1 the same
-direction, 0 unrelated, below 0 opposite. nothing leaves your machine but the
-source fetches.
-
 pick nothing and there's no taste to rank by, so it stays newest first. a post
 with no words sinks to the bottom, but it never gets dropped.
+
+the vectors are computed on your machine. nothing leaves it but the source
+fetches.
 
 the idea comes from [Commonplace](https://github.com/adames/commonplace), an
 unreleased library I was developing.
 
 ## What a taste is about
 
-the feed says, above the rows, one line an average:
+above the rows, the feed gives each taste one line:
 
 ```
-☞ taste 1 · 3 picks · about cooking · sourdough, starter, hydration
-☞ taste 2 · 1 pick · about tv shows and streaming series · lanterns
+☞ taste 1 · 2 picks · about basketball · lakers, celtics
+☞ taste 2 · 1 pick · about baking and bread · sourdough, starter, hydration
 ```
 
-nobody chose those words and nothing is stored. `labels.txt` is a vocabulary
-of things a taste can be about, from "news" down to "nintendo and consoles";
-the build embeds every line with the same model as the posts, and a taste is
-about whichever label its average sits nearest. the specific part is the
-phrases in the twelve headlines nearest the average — "iphone 17 pro" over
-"iphone" — and a phrase has to be in at least two of them.
+nobody chose those words and nothing is stored. `labels.txt` is a short list of
+things a taste can be about, from "news" to "basketball" to "nintendo and
+consoles". the build embeds every line with the same model as the posts, and a
+taste gets whichever label its average sits nearest.
 
-two more things the feed can tell, and the line says when it can:
+the specific words are phrases from the twelve headlines nearest the average.
+a phrase has to be in at least two of them, and longer ones win, so "iphone 17
+pro" beats "iphone".
+
+two more rules, and the line says when one fires:
 
 - a phrase in half the nearest headlines is what the taste is about, and it
   leads: `about lanterns · tv shows and streaming series`.
-- three quarters of the nearest posts within three days of each other, from
-  several sources, is something happening rather than a field: `about apple and
-  iphone · today: iphone duo, apple surprise, shine event`. an announcement is
-  many sources saying the same thing at once; a category is spread across the
+- when three quarters of the nearest posts land within three days of each
+  other, from several sources, the taste is news, not a subject: `about apple
+  and iphone · today: iphone duo, apple surprise, shine event`. an announcement
+  is many sources saying the same thing at once. a subject is spread across the
   feed's ninety days.
 
 the method page shows the cosines and says which rule fired.
 
-it is read off today's feed, so it is as true of a taste carried in by a link
-as of one pressed just now. the cli prints the same labels in its heading.
+it is read off today's feed, so it works the same for a taste opened from a
+link as for one you just made. the cli prints the same labels in its heading.
 
 ## Does it work
 
