@@ -9,7 +9,6 @@
       <outline text="Citation Needed" type="rss" xmlUrl="https://www.citationneeded.news/rss/"/>
       <outline text="Cloudflare Blog" type="rss" xmlUrl="https://blog.cloudflare.com/rss/"/>
       <outline text="Coding Horror" type="rss" xmlUrl="https://blog.codinghorror.com/rss/"/>
-      <outline text="Computerphile (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA"/>
       <outline text="CSS-Tricks" type="rss" xmlUrl="https://css-tricks.com/feed/"/>
       <outline text="Daring Fireball" type="rss" xmlUrl="https://daringfireball.net/feeds/main"/>
       <outline text="Don&#x27;t Worry About the Vase" type="rss" xmlUrl="https://thezvi.wordpress.com/feed/"/>
@@ -56,9 +55,7 @@
       <outline text="Nautilus" type="rss" xmlUrl="https://nautil.us/feed/"/>
       <outline text="New Scientist" type="rss" xmlUrl="https://www.newscientist.com/feed/home/"/>
       <outline text="NPR – science" type="rss" xmlUrl="https://feeds.npr.org/1007/rss.xml"/>
-      <outline text="Numberphile" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCoxcjq-8xIDTYp3uz647V5A"/>
       <outline text="NYT – science" type="rss" xmlUrl="https://rss.nytimes.com/services/xml/rss/nyt/Science.xml"/>
-      <outline text="PBS Space Time" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC7_gcs09iThXybpVgjHZ_7g"/>
       <outline text="The Planetary Society" type="rss" xmlUrl="https://www.planetary.org/rss/articles"/>
       <outline text="Quanta Magazine" type="rss" xmlUrl="https://www.quantamagazine.org/feed/"/>
       <outline text="Retraction Watch" type="rss" xmlUrl="https://retractionwatch.com/feed/"/>
@@ -66,10 +63,8 @@
       <outline text="Science – news" type="rss" xmlUrl="https://www.science.org/rss/news_current.xml"/>
       <outline text="ScienceAlert" type="rss" xmlUrl="https://www.sciencealert.com/feed"/>
       <outline text="Scientific American" type="rss" xmlUrl="http://rss.sciam.com/ScientificAmerican-Global"/>
-      <outline text="SciShow (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCZYTClx2T1of7BRZ86-8fow"/>
       <outline text="SmarterEveryDay (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC6107grRI4m0o2-emgoDnAA"/>
       <outline text="Smithsonian – science + nature" type="rss" xmlUrl="https://www.smithsonianmag.com/rss/science-nature/"/>
-      <outline text="Steve Mould (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCEIwxahdLz7bap-VDs9h35A"/>
       <outline text="Undark Magazine" type="rss" xmlUrl="https://undark.org/feed/"/>
       <outline text="Universe Today" type="rss" xmlUrl="https://www.universetoday.com/feed"/>
       <outline text="Veritasium" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA"/>
@@ -78,18 +73,14 @@
     </outline>
     <outline text="making + engineering">
       <outline text="Adam Savage&#x27;s Tested (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCiDJtJKMICpb9B1qf7qjEOA"/>
-      <outline text="Applied Science (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCivA7_KLKWo43tFcCkFvydw"/>
       <outline text="bunnie&#x27;s blog" type="rss" xmlUrl="https://www.bunniestudios.com/blog/feed/"/>
-      <outline text="Clickspring (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCworsKCR-Sx6R6-BnIjS2MA"/>
       <outline text="Construction Physics" type="rss" xmlUrl="https://www.construction-physics.com/feed"/>
       <outline text="Hackaday" type="rss" xmlUrl="https://hackaday.com/feed/"/>
       <outline text="IEEE Spectrum" type="rss" xmlUrl="https://spectrum.ieee.org/feeds/feed.rss"/>
       <outline text="Ken Shirriff&#x27;s blog" type="rss" xmlUrl="https://www.righto.com/feeds/posts/default"/>
       <outline text="Make:" type="rss" xmlUrl="https://makezine.com/feed/"/>
       <outline text="Practical Engineering" type="rss" xmlUrl="https://practical.engineering/blog?format=rss"/>
-      <outline text="Real Engineering (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCR1IuLEqb6UEA_zQ81kwXfg"/>
       <outline text="Technology Connections" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCy0tKL1T7wFoYcxCe0xjN6Q"/>
-      <outline text="Wintergatan (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCcXhhVwCT6_WqjkEniejRJQ"/>
     </outline>
     <outline text="essays + ideas">
       <outline text="Aeon" type="rss" xmlUrl="https://aeon.co/feed.rss"/>
@@ -120,7 +111,6 @@
       <outline text="The Pudding" type="rss" xmlUrl="https://pudding.cool/rss.xml"/>
       <outline text="Seth&#x27;s Blog" type="rss" xmlUrl="https://seths.blog/feed/"/>
       <outline text="The Technium" type="rss" xmlUrl="https://kk.org/thetechnium/feed/"/>
-      <outline text="TED-Ed (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCsooa4yRKGN_zEE8iknghZA"/>
       <outline text="Works in Progress" type="rss" xmlUrl="https://worksinprogress.co/rss.xml"/>
     </outline>
     <outline text="design + architecture">
@@ -160,10 +150,8 @@
       <outline text="A Collection of Unmitigated Pedantry" type="rss" xmlUrl="https://acoup.blog/feed/"/>
       <outline text="Archaeology – The Guardian" type="rss" xmlUrl="https://www.theguardian.com/science/archaeology/rss"/>
       <outline text="The Bowery Boys: New York City History" type="rss" xmlUrl="https://www.boweryboyshistory.com/feed"/>
-      <outline text="Extra History (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCCODtTcd5M1JavPCOr_Uydg"/>
       <outline text="HISTORY" type="rss" xmlUrl="https://www.history.com/news/rss"/>
       <outline text="History Hit" type="rss" xmlUrl="https://www.historyhit.com/feed/"/>
-      <outline text="History Matters (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC22BdTgxefuvUivrjesETjg"/>
       <outline text="HistoryExtra" type="rss" xmlUrl="https://www.historyextra.com/feed/"/>
       <outline text="JSTOR Daily" type="rss" xmlUrl="https://daily.jstor.org/feed/"/>
       <outline text="Library of Congress Blog" type="rss" xmlUrl="https://blogs.loc.gov/loc/feed/"/>
@@ -234,7 +222,6 @@
       <outline text="Billboard" type="rss" xmlUrl="https://www.billboard.com/feed/"/>
       <outline text="Consequence" type="rss" xmlUrl="https://consequence.net/feed/"/>
       <outline text="Hearing Things" type="rss" xmlUrl="https://www.hearingthings.co/latest/rss/"/>
-      <outline text="KEXP (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC3I2GFN_F8WudD_2jUZbojA"/>
       <outline text="Louder" type="rss" xmlUrl="https://www.loudersound.com/feeds.xml"/>
       <outline text="Music | The Guardian" type="rss" xmlUrl="https://www.theguardian.com/music/rss"/>
       <outline text="NME" type="rss" xmlUrl="https://www.nme.com/feed"/>
@@ -265,13 +252,11 @@
       <outline text="The Hollywood Reporter" type="rss" xmlUrl="https://www.hollywoodreporter.com/feed/"/>
       <outline text="IndieWire" type="rss" xmlUrl="https://www.indiewire.com/feed/"/>
       <outline text="Letterboxd Journal" type="rss" xmlUrl="https://letterboxd.com/journal/rss/"/>
-      <outline text="Nerdwriter1 (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCJkMlOu7faDgqh4PfzbpLdg"/>
       <outline text="NPR Topics: Movies" type="rss" xmlUrl="https://feeds.npr.org/1045/rss.xml"/>
       <outline text="NYT &gt; Arts &gt; Television" type="rss" xmlUrl="https://rss.nytimes.com/services/xml/rss/nyt/Television.xml"/>
       <outline text="NYT &gt; Movies" type="rss" xmlUrl="https://rss.nytimes.com/services/xml/rss/nyt/Movies.xml"/>
       <outline text="Roger Ebert" type="rss" xmlUrl="https://www.rogerebert.com/feed"/>
       <outline text="Rotten Tomatoes Editorial" type="rss" xmlUrl="https://editorial.rottentomatoes.com/feed/"/>
-      <outline text="Screen Junkies (YouTube)" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCOpcACMWblDls9Z6GERVi1A"/>
       <outline text="Sight and Sound" type="rss" xmlUrl="https://www.bfi.org.uk/rss-feed"/>
       <outline text="TV and radio | The Guardian" type="rss" xmlUrl="https://www.theguardian.com/tv-and-radio/rss"/>
       <outline text="Variety Film" type="rss" xmlUrl="https://variety.com/v/film/feed/"/>
@@ -336,12 +321,10 @@
       <outline text="Binging with Babish" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCJHA_jMfCvEnv-3kRjTCQXw"/>
       <outline text="Bon Appétit" type="rss" xmlUrl="https://www.bonappetit.com/feed/rss"/>
       <outline text="Budget Bytes" type="rss" xmlUrl="https://www.budgetbytes.com/feed/"/>
-      <outline text="Chinese Cooking Demystified" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UC54SLBnD5k5U3Q6N__UjbAw"/>
       <outline text="Civil Eats" type="rss" xmlUrl="https://civileats.com/feed/"/>
       <outline text="Cookie and Kate" type="rss" xmlUrl="https://cookieandkate.com/feed/"/>
       <outline text="David Lebovitz" type="rss" xmlUrl="https://www.davidlebovitz.com/feed/"/>
       <outline text="Eater" type="rss" xmlUrl="https://www.eater.com/rss/index.xml"/>
-      <outline text="Ethan Chlebowski" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCDq5v10l4wkV5-ZBIJJFbzQ"/>
       <outline text="The Food Programme" type="rss" xmlUrl="https://podcasts.files.bbci.co.uk/b006qnx3.rss"/>
       <outline text="Food – The Guardian" type="rss" xmlUrl="https://www.theguardian.com/food/rss"/>
       <outline text="Gastropod" type="rss" xmlUrl="https://gastropod.com/feed/"/>
@@ -416,7 +399,6 @@
     </outline>
     <outline text="cars + transit">
       <outline text="Car and Driver" type="rss" xmlUrl="https://www.caranddriver.com/rss/all.xml/"/>
-      <outline text="CityNerd" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCfgtNfWCtsLKutY-BHzIb9Q"/>
       <outline text="The Drive" type="rss" xmlUrl="https://www.thedrive.com/feed"/>
       <outline text="Electrek" type="rss" xmlUrl="https://electrek.co/feed/"/>
       <outline text="Hagerty Media" type="rss" xmlUrl="https://www.hagerty.com/media/feed/"/>
@@ -431,7 +413,6 @@
       <outline text="Atlas Obscura" type="rss" xmlUrl="https://www.atlasobscura.com/feeds/latest"/>
       <outline text="Condé Nast Traveler" type="rss" xmlUrl="https://www.cntraveler.com/feed/rss"/>
       <outline text="Everything Everywhere Daily" type="rss" xmlUrl="https://everything-everywhere.com/feed/"/>
-      <outline text="Mark Wiens" type="rss" xmlUrl="https://www.youtube.com/feeds/videos.xml?channel_id=UCyEd6QBSgat5kkC6svyjudA"/>
       <outline text="NYT Travel" type="rss" xmlUrl="https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml"/>
       <outline text="One Mile at a Time" type="rss" xmlUrl="https://onemileatatime.com/feed/"/>
       <outline text="Perceptive Travel" type="rss" xmlUrl="https://www.perceptivetravel.com/blog/feed/"/>
